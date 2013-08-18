@@ -1,0 +1,38 @@
+{{/*
+Copyright 2013 Ibrahim Ghazal. All rights reserved.
+Use of this source code is governed by a BSD-style
+license that can be found in the LICENSE file.
+*/}}
+
+{{define "title"}}Students{{end}}
+{{define "content"}}
+<p>
+	<a class="btn btn-primary btn-large" href="/students/details?id=new">Add Student</a>
+</p>
+<div>
+	<table class="table table-bordered table-condensed">
+		<thead>
+			<tr>
+				<th scope="col">Student ID</th>
+				<th scope="col">Student Name</th>
+				<th scope="col">Class</th>
+				<th scope="col">Options</th>
+			</tr>
+		</thead>
+		<tbody>
+			{{range .}}
+			<tr>
+				<td>{{.ID}}</td>
+				<td>{{.Name}}</td>
+				<td>{{.Class}}{{.Section}}</td>
+				<td><a class="btn btn-small" href="/students/details?id={{.ID}}">Edit</a></td>
+			</tr>
+			{{else}}
+			<tr class="info">
+				<td colspan="4"><p class="text-center">No students found.</p></td>
+			</tr>
+			{{end}}
+		</tbody>
+	</table>
+</div>
+{{end}}

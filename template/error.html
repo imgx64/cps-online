@@ -1,0 +1,15 @@
+{{/*
+Copyright 2013 Ibrahim Ghazal. All rights reserved.
+Use of this source code is governed by a BSD-style
+license that can be found in the LICENSE file.
+*/}}
+
+{{define "title"}}Error {{.Code}}{{end}}
+{{define "content"}}
+<div class="hero-unit">
+	<h1>Error {{.Code}}</h1>
+	<p>An error has occured:</p>
+	<p class="text-error">{{.Description}}</p>
+	<a class="btn btn-primary btn-large cps-go-back">Go back</a>
+</div>
+{{end}}
