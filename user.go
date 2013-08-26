@@ -14,20 +14,24 @@ import (
 type user struct {
 	Email string
 	Name  string
-	Roles role
+	Roles roles
 	Links []link
 }
 
-type role uint32
+type roles struct {
+	Student bool
+
+	Admin   bool
+	HR      bool
+	Teacher bool
+}
 
 var (
-	student = role(0x1)
+	student_role = roles{Student: true}
 
-	admin   = role(0x2)
-	hr      = role(0x4)
-	teacher = role(0x8)
-
-	superadmin = admin | hr | teacher
+	admin_role   = roles{Admin: true}
+	hr_role      = roles{HR: true}
+	teacher_role = roles{Teacher: true}
 )
 
 func getUser(r *http.Request) (user, error) {
@@ -36,14 +40,19 @@ func getUser(r *http.Request) (user, error) {
 
 	name := u.String()
 
-	roles := role(0) //TODO
+	userRoles := roles{} //TODO
 	if u.Admin {
-		roles = superadmin
+		userRoles = roles{
+			Student: false,
+			Admin:   true,
+			HR:      true,
+			Teacher: true,
+		}
 	}
 
 	var links []link
 	for _, page := range pages {
-		if can_access(roles, page.URL) {
+		if can_access(userRoles, page.URL) {
 			if r.URL.Path == page.URL {
 				page.Active = true
 			}
@@ -53,8 +62,8 @@ func getUser(r *http.Request) (user, error) {
 
 	user := user{
 		Email: u.Email,
-		Name: name,
-		Roles: roles,
+		Name:  name,
+		Roles: userRoles,
 		Links: links,
 	}
 

@@ -13,6 +13,13 @@ indexes:
 - kind: student
   ancestor: yes
   properties:
+  - name: Class
+  - name: Section
+  - name: ID
+
+- kind: student
+  ancestor: yes
+  properties:
   - name: ID
 
 - kind: student

@@ -66,10 +66,10 @@ func getStudents(r *http.Request, classSection string) ([]studentType, error) {
 		}
 		class := cs[0]
 		section := cs[1]
-		q = q.Filter("Class =", class).Order("Class").
-			Filter("Section =", section).Order("Section")
+		q = q.Filter("Class =", class).
+			Filter("Section =", section)
 	}
-	q = q.Order("ID")
+	q = q.Order("Class").Order("Section").Order("ID")
 	var students []studentType
 	_, err = q.GetAll(c, &students)
 	if err != nil {
@@ -242,11 +242,8 @@ func studentsSaveHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if err := render(w, r, "debug", stu); err != nil {
-		c.Errorf("Could not render template debug: %s", err)
-		renderError(w, r, http.StatusInternalServerError)
-		return
-	}
+	// TODO: message of success
+	http.Redirect(w, r, "/students", http.StatusFound)
 
 }
 

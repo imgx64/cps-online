@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"time"
+	"reflect"
 )
 
 type templateData struct {
@@ -69,6 +70,9 @@ func render(w http.ResponseWriter, r *http.Request,
 var funcMap = htmltemplate.FuncMap{
 	"formatDate": func(t time.Time) string {
 		return t.Format("2006-01-02")
+	},
+	"equal": func(item1, item2 interface{}) bool {
+		return reflect.DeepEqual(item1, item2)
 	},
 }
 

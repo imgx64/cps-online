@@ -1,0 +1,38 @@
+{{/*
+Copyright 2013 Ibrahim Ghazal. All rights reserved.
+Use of this source code is governed by a BSD-style
+license that can be found in the LICENSE file.
+*/}}
+
+{{define "title"}}Employees{{end}}
+{{define "content"}}
+<p>
+	<a class="btn btn-primary btn-large" href="/employees/details?id=new">Add Employee</a>
+</p>
+<div>
+	<table class="table table-bordered table-condensed">
+		<thead>
+			<tr>
+				<th scope="col">Employee Name</th>
+				<th scope="col">Type</th>
+				<th scope="col">Job Description</th>
+				<th scope="col">Options</th>
+			</tr>
+		</thead>
+		<tbody>
+			{{range .}}
+			<tr>
+				<td>{{.Name}}</td>
+				<td>{{.Type}}</td>
+				<td>{{.JobDescription}}</td>
+				<td><a class="btn btn-small" href="/employees/details?id={{.ID}}">Edit</a></td>
+			</tr>
+			{{else}}
+			<tr class="info">
+				<td colspan="4"><p class="text-center">No employees found.</p></td>
+			</tr>
+			{{end}}
+		</tbody>
+	</table>
+</div>
+{{end}}

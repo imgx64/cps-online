@@ -16,28 +16,33 @@ type link struct {
 	Active bool
 }
 
-var access = map[string]role{
-	"/users":   admin,
-	"/reports": admin,
-	"/backup":  admin,
+var access = map[string]roles{
+	"/users":   admin_role,
+	"/reports": admin_role,
+	"/backup":  admin_role,
 
-	"/students":         hr,
-	"/students/details": hr,
-	"/students/save":    hr,
-	"/payments":         hr,
-	"/employees":        hr,
-	"/classes":          hr,
-	"/publish":          hr,
+	"/students":         hr_role,
+	"/students/details": hr_role,
+	"/students/save":    hr_role,
 
-	"/grades":     teacher,
-	"/upload":     teacher,
-	"/attendance": teacher,
-	"/behavior":   teacher,
+	"/payments": hr_role,
 
-	"/reportcard":     student,
-	"/documents":      student,
-	"/viewattendance": student,
-	"/viewbehavior":   student,
+	"/employees":         hr_role,
+	"/employees/details": hr_role,
+	"/employees/save": hr_role,
+
+	"/classes": hr_role,
+	"/publish": hr_role,
+
+	"/marks":     teacher_role,
+	"/upload":     teacher_role,
+	"/attendance": teacher_role,
+	"/behavior":   teacher_role,
+
+	"/reportcard":     student_role,
+	"/documents":      student_role,
+	"/viewattendance": student_role,
+	"/viewbehavior":   student_role,
 }
 
 func accessHandler(f func(w http.ResponseWriter, r *http.Request)) func(w http.ResponseWriter, r *http.Request) {
@@ -68,7 +73,7 @@ var pages = []link{
 	{Name: "Classes", URL: "/classes"},
 	{Name: "Publish Reportcards", URL: "/publish"},
 
-	{Name: "Enter Grades", URL: "/grades"},
+	{Name: "Enter Marks", URL: "/marks"},
 	{Name: "Upload documents", URL: "/upload"},
 	{Name: "Attendance", URL: "/attendance"},
 	{Name: "Behavior", URL: "/behavior"},
@@ -79,6 +84,10 @@ var pages = []link{
 	{Name: "Behavior", URL: "/viewbehavior"},
 }
 
-func can_access(role role, url string) bool {
-	return (access[url] & role) != 0
+func can_access(userRoles roles, url string) bool {
+	urlRoles := access[url]
+	return (urlRoles.Student && userRoles.Student) ||
+		(urlRoles.Admin && userRoles.Admin) ||
+		(urlRoles.HR && userRoles.HR) ||
+		(urlRoles.Teacher && userRoles.Teacher)
 }

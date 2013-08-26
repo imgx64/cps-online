@@ -42,14 +42,15 @@ license that can be found in the LICENSE file.
 			<label class="control-label" for="classSection">Class*</label>
 			<div class="controls">
 				<select id="classSection" name="ClassSection" required="required" pattern="^.+$">
-					<option selected="selected" value="{{.S.Class}}|{{.S.Section}}">
-						{{.S.Class}}{{.S.Section}}
-					</option>
+					{{$sclass := .S.Class}}
+					{{$ssection := .S.Section}}
 					{{range .CG}}
 					{{$class := .Class}}
 					<optgroup label="{{.Class}}">
 						{{range .Sections}}
-						<option value="{{$class}}|{{.}}">{{$class}}{{.}}</option>
+						<option value="{{$class}}|{{.}}"
+						{{if equal $class $sclass | and (equal . $ssection)}} selected="selected"{{end}}
+						>{{$class}}{{.}}</option>
 						{{end}}
 					</optgroup>
 					{{end}}
@@ -69,12 +70,10 @@ license that can be found in the LICENSE file.
 			<label class="control-label" for="Nationality">Nationality*</label>
 			<div class="controls">
 				<select id="Nationality" name="Nationality">
-					<option selected="selected" value="{{.S.Nationality}}"
-						required="required">
-					{{.S.Nationality}}
-					</option>
+					{{$country := .S.Nationality}}
 					{{range .C}}
-					<option value="{{.}}">{{.}}</option>
+					<option {{if equal . $country}}selected="selected"{{end}}
+					value="{{.}}">{{.}}</option>
 					{{end}}
 				</select>
 				<span class="help-inline"></span>

@@ -43,7 +43,7 @@ var sections = map[string][]string{
 }
 
 type classGroup struct {
-	Class string
+	Class    string
 	Sections []string
 }
 
@@ -57,7 +57,7 @@ func init() {
 			continue
 		}
 		group := classGroup{
-			Class: c,
+			Class:    c,
 			Sections: s,
 		}
 		classGroups = append(classGroups, group)
