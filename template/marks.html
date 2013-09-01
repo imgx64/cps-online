@@ -1,0 +1,85 @@
+{{/*
+Copyright 2013 Ibrahim Ghazal. All rights reserved.
+Use of this source code is governed by a BSD-style
+license that can be found in the LICENSE file.
+*/}}
+
+{{define "title"}}Enter Marks{{end}}
+{{define "content"}}
+<form class="form-inline" action="/marks">
+	<select id="Term" name="Term" required="required" class="span3">
+		{{$term := .Term.Value}}
+		{{range .Terms}}
+		<option {{if equal .Value $term}}selected="selected"{{end}}
+		value="{{.Value}}">{{.}}</option>
+		{{end}}
+	</select>
+	<select id="classSection" name="ClassSection" required="required" class="span2">
+		{{$sclass := .Class}}
+		{{$ssection := .Section}}
+		{{range .CG}}
+		{{$class := .Class}}
+		<optgroup label="{{.Class}}">
+			{{range .Sections}}
+			<option value="{{$class}}|{{.}}"
+			{{if equal $class $sclass | and (equal . $ssection)}} selected="selected"{{end}}
+			>{{$class}}{{.}}</option>
+			{{end}}
+		</optgroup>
+		{{end}}
+	</select>
+	<select id="Subject" name="Subject" required="required" class="span3">
+		{{$subject := .Subject}}
+		{{range .Subjects}}
+		<option {{if equal . $subject}}selected="selected"{{end}}
+		value="{{.}}">{{.}}</option>
+		{{end}}
+	</select>
+	<button type="submit" class="btn">Go</button>
+</form>
+{{if .Subject}}
+<form action="/marks/save" method="post">
+	<input type="hidden" name="Term" value="{{.Term.Value}}">
+	<input type="hidden" name="ClassSection" value="{{.Class}}|{{.Section}}">
+	<input type="hidden" name="Subject" value="{{.Subject}}">
+	<table class="table table-bordered table-condensed">
+		<thead>
+			<tr>
+				<th scope="col">Student Name</th>
+				{{range .Cols}}
+				<th scope="col">{{.Name}}</th>
+				{{end}}
+			</tr>
+			<tr>
+				<th scope="col"></th>
+				{{range .Cols}}
+				<th scope="col">{{.Max}}</th>
+				{{end}}
+			</tr>
+		</thead>
+		<tbody>
+		{{$cols := .Cols}}
+		{{range .Students}}
+		{{$id := .ID}}
+			<tr>
+				<th scope="row">{{.Name}}</td>
+				{{range $i, $m := .Marks}}
+				{{$c := index $cols $i}}
+				<td><input type="number" name="{{$id}}|{{$i}}" value="{{mark $m}}"
+					min="0" max="{{$c.Max}}" class="cps-mark"
+					{{if not $c.Editable}}disabled="disabled"{{end}}></td>
+				{{end}}
+			</tr>
+		{{else}}
+			<tr class="info">
+				<td>
+					<p class="text-center">Subject does not apply to class.</p>
+				</td>
+			</tr>
+		{{end}}
+		</tbody>
+	</table>
+	<button type="submit" class="btn btn-primary">Save</button>
+</form>
+{{end}}
+{{end}}

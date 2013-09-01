@@ -4,6 +4,11 @@
 
 package main
 
+import (
+	"fmt"
+	"strings"
+)
+
 // TODO: change these into configuration
 
 var classes = []string{
@@ -25,8 +30,8 @@ var classes = []string{
 }
 
 var sections = map[string][]string{
-	"KG1": {"A", "B", "C"},
-	"KG2": {"A", "B", "C"},
+	"KG1": {"A", "B", "C", "D"},
+	"KG2": {"A", "B", "C", "D"},
 	"1":   {"A", "B", "C"},
 	"2":   {"A", "B", "C"},
 	"3":   {"A", "B"},
@@ -40,6 +45,16 @@ var sections = map[string][]string{
 	"11":  {},
 	"12":  {},
 	"SN":  {""},
+}
+
+func parseClassSection(classSection string) (class, section string, err error) {
+	cs := strings.Split(classSection, "|")
+	if len(cs) != 2 {
+		return "", "", fmt.Errorf("Unable to parse class and section: %s", classSection)
+	}
+	class = cs[0]
+	section = cs[1]
+	return class, section, nil
 }
 
 type classGroup struct {

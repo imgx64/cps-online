@@ -158,17 +158,12 @@ func studentsSaveHandler(w http.ResponseWriter, r *http.Request) {
 
 	f := r.PostForm
 	name := f.Get("Name")
-	cs := strings.Split(f.Get("ClassSection"), "|")
-	var class, section string
-	if len(cs) == 2 {
-		class = cs[0]
-		section = cs[1]
-	}
-	dateOfBirth, err := time.Parse("2006-01-02", f.Get("DateOfBirth"))
-	if name == "" || class == "" || err != nil {
+	class, section, err1 := parseClassSection(f.Get("ClassSection"))
+	dateOfBirth, err2 := time.Parse("2006-01-02", f.Get("DateOfBirth"))
+	if name == "" || err1 != nil || err2 != nil {
 		// TODO: message to user
-		c.Errorf("Error saving student: Name: %q, Class: %q, DateOfBirth err: %s",
-			name, class, err)
+		c.Errorf("Error saving student: Name: %q, Class err: %s, DateOfBirth err: %s",
+			name, err1, err2)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}

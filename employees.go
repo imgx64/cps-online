@@ -70,13 +70,13 @@ func getEmployees(r *http.Request, typ string) ([]employeeType, error) {
 	q = q.Order("Type")
 	var employees []employeeType
 	keys, err := q.GetAll(c, &employees)
+	if err != nil {
+		return nil, err
+	}
 	for i, k := range keys {
 		e := employees[i]
 		e.ID = k.IntID()
 		employees[i] = e
-	}
-	if err != nil {
-		return nil, err
 	}
 
 	return employees, nil
@@ -142,9 +142,9 @@ func employeesDetailsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := struct {
-		E employeeType
-		T []string
-		C []string
+		E     employeeType
+		T     []string
+		C     []string
 		Admin bool
 	}{
 		emp,
@@ -229,7 +229,6 @@ func employeesSaveHandler(w http.ResponseWriter, r *http.Request) {
 	emp.HealthInfo = f.Get("HealthInfo")
 	emp.Comments = f.Get("Comments")
 
-	// FIXME: update employee if already exists
 	var key *datastore.Key
 	if empExists {
 		key = datastore.NewKey(c, "employee", "", emp.ID, nil)

@@ -20,6 +20,7 @@ var access = map[string]roles{
 	"/users":   admin_role,
 	"/reports": admin_role,
 	"/backup":  admin_role,
+	"/publish": admin_role,
 
 	"/students":         hr_role,
 	"/students/details": hr_role,
@@ -29,12 +30,12 @@ var access = map[string]roles{
 
 	"/employees":         hr_role,
 	"/employees/details": hr_role,
-	"/employees/save": hr_role,
+	"/employees/save":    hr_role,
 
 	"/classes": hr_role,
-	"/publish": hr_role,
 
-	"/marks":     teacher_role,
+	"/marks":      teacher_role,
+	"/marks/save": teacher_role,
 	"/upload":     teacher_role,
 	"/attendance": teacher_role,
 	"/behavior":   teacher_role,
@@ -63,25 +64,25 @@ func accessHandler(f func(w http.ResponseWriter, r *http.Request)) func(w http.R
 }
 
 var pages = []link{
-	{Name: "Users", URL: "/users"},
-	{Name: "Reports", URL: "/reports"},
-	{Name: "Backup/Restore", URL: "/backup"},
+	//{Name: "Users", URL: "/users"},
+	//{Name: "Reports", URL: "/reports"},
+	//{Name: "Backup/Restore", URL: "/backup"},
 
 	{Name: "Students", URL: "/students"},
-	{Name: "Payment Structure", URL: "/payments"},
+	//{Name: "Payment Structure", URL: "/payments"},
 	{Name: "Employees", URL: "/employees"},
-	{Name: "Classes", URL: "/classes"},
-	{Name: "Publish Reportcards", URL: "/publish"},
+	//{Name: "Classes", URL: "/classes"},
+	//{Name: "Publish Reportcards", URL: "/publish"},
 
 	{Name: "Enter Marks", URL: "/marks"},
-	{Name: "Upload documents", URL: "/upload"},
-	{Name: "Attendance", URL: "/attendance"},
-	{Name: "Behavior", URL: "/behavior"},
+	//{Name: "Upload documents", URL: "/upload"},
+	//{Name: "Attendance", URL: "/attendance"},
+	//{Name: "Behavior", URL: "/behavior"},
 
-	{Name: "Reportcard", URL: "/reportcard"},
-	{Name: "Download Documents", URL: "/documents"},
-	{Name: "Attendance", URL: "/viewattendance"},
-	{Name: "Behavior", URL: "/viewbehavior"},
+	//{Name: "Reportcard", URL: "/reportcard"},
+	//{Name: "Download Documents", URL: "/documents"},
+	//{Name: "Attendance", URL: "/viewattendance"},
+	//{Name: "Behavior", URL: "/viewbehavior"},
 }
 
 func can_access(userRoles roles, url string) bool {

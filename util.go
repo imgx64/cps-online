@@ -7,11 +7,13 @@ package main
 import (
 	"appengine"
 
+	"fmt"
 	htmltemplate "html/template"
+	"math"
 	"net/http"
 	"path/filepath"
-	"time"
 	"reflect"
+	"time"
 )
 
 type templateData struct {
@@ -73,6 +75,13 @@ var funcMap = htmltemplate.FuncMap{
 	},
 	"equal": func(item1, item2 interface{}) bool {
 		return reflect.DeepEqual(item1, item2)
+	},
+	"mark": func(mark float64) string {
+		if math.Signbit(mark) {
+			// negative zero
+			return ""
+		}
+		return fmt.Sprintf("%.2f", mark)
 	},
 }
 
