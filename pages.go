@@ -25,6 +25,8 @@ var access = map[string]roles{
 	"/students":         hr_role,
 	"/students/details": hr_role,
 	"/students/save":    hr_role,
+	"/students/import":  hr_role,
+	"/students/export":  hr_role,
 
 	"/payments": hr_role,
 

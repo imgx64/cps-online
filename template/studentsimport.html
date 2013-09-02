@@ -1,0 +1,20 @@
+{{/*
+Copyright 2013 Ibrahim Ghazal. All rights reserved.
+Use of this source code is governed by a BSD-style
+license that can be found in the LICENSE file.
+*/}}
+
+{{define "title"}}Import Students{{end}}
+{{define "content"}}
+{{if .Class}}
+<div class="{{.Class}}">
+  <button type="button" class="close" data-dismiss="alert">&times;</button>
+  {{.Msg}}
+</div>
+{{end}}
+<a href="/students/export?class=empty">Download Template</a>
+<form action="/students/import" method="post" enctype="multipart/form-data">
+	<input type="file" name="csvfile" accept="text/csv">
+	<button type="submit" class="btn btn-primary">Import Students</button>
+</form>
+{{end}}
