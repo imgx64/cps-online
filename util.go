@@ -47,6 +47,7 @@ func renderError(w http.ResponseWriter, r *http.Request, code int) {
 
 func render(w http.ResponseWriter, r *http.Request,
 	template string, data interface{}) error {
+	c := appengine.NewContext(r)
 	baseTemplate := filepath.Join("template", "base.html")
 	templateFile := filepath.Join("template", template+".html")
 	tmpl, err := htmltemplate.New("base.html").Funcs(funcMap).
@@ -57,7 +58,7 @@ func render(w http.ResponseWriter, r *http.Request,
 
 	user, err := getUser(r)
 	if err != nil {
-		return err
+		c.Errorf("Could not get user: %s", user.Email)
 	}
 
 	tmplData := templateData{user.Name, user.Links, data}

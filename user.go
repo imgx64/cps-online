@@ -40,13 +40,28 @@ func getUser(r *http.Request) (user, error) {
 
 	name := u.String()
 
-	userRoles := roles{} //TODO
+	var userRoles roles
 	if u.Admin {
 		userRoles = roles{
 			Student: false,
 			Admin:   true,
 			HR:      true,
 			Teacher: true,
+		}
+	} else {
+		if isStudentEmail(r, u.Email) {
+			userRoles = roles{
+				Student: true,
+			}
+		} else {
+			emp, err := getEmployeeFromEmail(r, u.Email)
+			if err != nil {
+				return user{
+					Email: u.Email,
+					Name:  "Unknown",
+				}, err
+			}
+			userRoles = emp.Roles
 		}
 	}
 

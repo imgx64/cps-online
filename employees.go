@@ -8,6 +8,7 @@ import (
 	"appengine"
 	"appengine/datastore"
 
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -80,6 +81,24 @@ func getEmployees(r *http.Request, typ string) ([]employeeType, error) {
 	}
 
 	return employees, nil
+}
+
+func getEmployeeFromEmail(r *http.Request, email string) (employeeType, error) {
+	c := appengine.NewContext(r)
+	q := datastore.NewQuery("employee").Filter("CPSEmail =", email).Limit(2)
+	var employees []employeeType
+	_, err := q.GetAll(c, &employees)
+	if err != nil {
+		return employeeType{}, err
+	}
+
+	if len(employees) == 0 {
+		return employeeType{}, fmt.Errorf("Could not find user with email: %s", email)
+	} else if len(employees) > 1 {
+		return employeeType{}, fmt.Errorf("Users with duplicate emails: %s", email)
+	}
+
+	return employees[0], nil
 }
 
 func init() {

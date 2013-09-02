@@ -17,6 +17,8 @@ import (
 
 const studentPrefix = "S"
 
+const schoolDomain = "cps-bh.com"
+
 type studentType struct {
 	ID             string
 	Enabled        bool
@@ -77,6 +79,26 @@ func getStudents(r *http.Request, classSection string) ([]studentType, error) {
 	}
 
 	return students, nil
+}
+
+func isStudentEmail(r *http.Request, email string) bool {
+	parts := strings.Split(email, "@")
+	if len(parts) != 2 || parts[1] != schoolDomain {
+		// invalid email
+		return false
+	}
+	user := parts[0]
+	if !strings.HasPrefix(user, studentPrefix) {
+		// not a student
+		return false
+	}
+	_, err := getStudent(r, user)
+	if err != nil {
+		// student does not exist
+		return false
+	}
+
+	return true
 }
 
 func init() {
