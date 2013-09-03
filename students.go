@@ -7,6 +7,7 @@ package main
 import (
 	"appengine"
 	"appengine/datastore"
+	"bytes"
 
 	"encoding/csv"
 	"fmt"
@@ -364,7 +365,6 @@ func studentsImportHandler(w http.ResponseWriter, r *http.Request) {
 	var errors []error
 
 	message := struct {
-		Class string
 		Msg   string
 	}{}
 
@@ -372,7 +372,6 @@ func studentsImportHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil || r.MultipartForm == nil || len(r.MultipartForm.File["csvfile"]) != 1 {
 		// nothing to import
 		if err != nil {
-			message.Class = "alert"
 			message.Msg = err.Error()
 		}
 		if err := render(w, r, "studentsimport", message); err != nil {
@@ -392,6 +391,8 @@ func studentsImportHandler(w http.ResponseWriter, r *http.Request) {
 	defer file.Close()
 
 	csvr := csv.NewReader(file)
+	csvr.LazyQuotes = true
+	csvr.TrailingComma = true
 	i := 0
 	for {
 		i++
@@ -406,7 +407,6 @@ func studentsImportHandler(w http.ResponseWriter, r *http.Request) {
 		if i == 1 {
 			// header
 			if !reflect.DeepEqual(record, studentFields) {
-				message.Class = "alert"
 				message.Msg = fmt.Sprintf("Invalid file format: %q", record)
 				if err := render(w, r, "studentsimport", message); err != nil {
 					c.Errorf("Could not render template studentsimport: %s", err)
@@ -455,8 +455,23 @@ func studentsImportHandler(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 	}
-	// TODO: report errors to user
-	http.Redirect(w, r, "/students", http.StatusFound)
+
+	if len(errors) == 0 {
+		// no errors
+		http.Redirect(w, r, "/employees", http.StatusFound)
+		return
+	}
+
+	msg := bytes.NewBuffer([]byte("The following errors were found: "))
+	for _, err := range errors {
+		fmt.Fprintf(msg, "%s,", err)
+	}
+	message.Msg = msg.String()
+	if err := render(w, r, "employeesimport", message); err != nil {
+		c.Errorf("Could not render template employeesimport: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
 
 }
 
@@ -467,8 +482,7 @@ func studentsExportHandler(w http.ResponseWriter, r *http.Request) {
 	var filename string
 
 	r.ParseForm()
-	if r.Form.Get("class") == "empty" {
-		// class=empty when downloading template
+	if r.Form.Get("template") == "true" {
 		filename = "Students-template"
 	} else {
 		filename = fmt.Sprintf("Students-%s", time.Now().Format("2006-01-02"))

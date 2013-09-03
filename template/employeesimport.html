@@ -4,7 +4,7 @@ Use of this source code is governed by a BSD-style
 license that can be found in the LICENSE file.
 */}}
 
-{{define "title"}}Import Students{{end}}
+{{define "title"}}Import Employees{{end}}
 {{define "content"}}
 {{if .Msg}}
 <div class="alert">
@@ -12,9 +12,9 @@ license that can be found in the LICENSE file.
   {{.Msg}}
 </div>
 {{end}}
-<a href="/students/export?template=true">Download Template</a>
-<form action="/students/import" method="post" enctype="multipart/form-data">
+<a href="/employees/export?template=true">Download Template</a>
+<form action="/employees/import" method="post" enctype="multipart/form-data">
 	<input type="file" name="csvfile" accept="text/csv">
-	<button type="submit" class="btn btn-primary">Import Students</button>
+	<button type="submit" class="btn btn-primary">Import Employees</button>
 </form>
 {{end}}

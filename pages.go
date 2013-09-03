@@ -33,6 +33,8 @@ var access = map[string]roles{
 	"/employees":         hr_role,
 	"/employees/details": hr_role,
 	"/employees/save":    hr_role,
+	"/employees/import":  hr_role,
+	"/employees/export":  hr_role,
 
 	"/classes": hr_role,
 
