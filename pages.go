@@ -17,37 +17,37 @@ type link struct {
 }
 
 var access = map[string]roles{
-	"/users":   admin_role,
-	"/reports": admin_role,
-	"/backup":  admin_role,
-	"/publish": admin_role,
+	"/users":   adminRole,
+	"/reports": adminRole,
+	"/backup":  adminRole,
+	"/publish": adminRole,
 
-	"/students":         hr_role,
-	"/students/details": hr_role,
-	"/students/save":    hr_role,
-	"/students/import":  hr_role,
-	"/students/export":  hr_role,
+	"/students":         hrRole,
+	"/students/details": hrRole,
+	"/students/save":    hrRole,
+	"/students/import":  hrRole,
+	"/students/export":  hrRole,
 
-	"/payments": hr_role,
+	"/payments": hrRole,
 
-	"/employees":         hr_role,
-	"/employees/details": hr_role,
-	"/employees/save":    hr_role,
-	"/employees/import":  hr_role,
-	"/employees/export":  hr_role,
+	"/employees":         hrRole,
+	"/employees/details": hrRole,
+	"/employees/save":    hrRole,
+	"/employees/import":  hrRole,
+	"/employees/export":  hrRole,
 
-	"/classes": hr_role,
+	"/classes": hrRole,
 
-	"/marks":      teacher_role,
-	"/marks/save": teacher_role,
-	"/upload":     teacher_role,
-	"/attendance": teacher_role,
-	"/behavior":   teacher_role,
+	"/marks":      teacherRole,
+	"/marks/save": teacherRole,
+	"/upload":     teacherRole,
+	"/attendance": teacherRole,
+	"/behavior":   teacherRole,
 
-	"/reportcard":     student_role,
-	"/documents":      student_role,
-	"/viewattendance": student_role,
-	"/viewbehavior":   student_role,
+	"/reportcard":     studentRole,
+	"/documents":      studentRole,
+	"/viewattendance": studentRole,
+	"/viewbehavior":   studentRole,
 }
 
 func accessHandler(f func(w http.ResponseWriter, r *http.Request)) func(w http.ResponseWriter, r *http.Request) {
@@ -59,7 +59,7 @@ func accessHandler(f func(w http.ResponseWriter, r *http.Request)) func(w http.R
 			renderError(w, r, http.StatusInternalServerError)
 			return
 		}
-		if !can_access(user.Roles, r.URL.Path) {
+		if !canAccess(user.Roles, r.URL.Path) {
 			renderError(w, r, http.StatusForbidden)
 			return
 		}
@@ -89,7 +89,7 @@ var pages = []link{
 	//{Name: "Behavior", URL: "/viewbehavior"},
 }
 
-func can_access(userRoles roles, url string) bool {
+func canAccess(userRoles roles, url string) bool {
 	urlRoles := access[url]
 	return (urlRoles.Student && userRoles.Student) ||
 		(urlRoles.Admin && userRoles.Admin) ||

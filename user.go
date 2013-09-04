@@ -27,11 +27,11 @@ type roles struct {
 }
 
 var (
-	student_role = roles{Student: true}
+	studentRole = roles{Student: true}
 
-	admin_role   = roles{Admin: true}
-	hr_role      = roles{HR: true}
-	teacher_role = roles{Teacher: true}
+	adminRole   = roles{Admin: true}
+	hrRole      = roles{HR: true}
+	teacherRole = roles{Teacher: true}
 )
 
 func getUser(r *http.Request) (user, error) {
@@ -67,7 +67,7 @@ func getUser(r *http.Request) (user, error) {
 
 	var links []link
 	for _, page := range pages {
-		if can_access(userRoles, page.URL) {
+		if canAccess(userRoles, page.URL) {
 			if r.URL.Path == page.URL {
 				page.Active = true
 			}
