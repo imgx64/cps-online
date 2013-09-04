@@ -26,6 +26,7 @@ type employeeType struct {
 	Enabled        bool
 	Name           string
 	ArabicName     string
+	Gender         string
 	Type           string
 	JobDescription string
 	DateOfHiring   time.Time
@@ -99,6 +100,17 @@ func (emp *employeeType) validate(r *http.Request) error {
 
 	if emp.Name == "" {
 		return fmt.Errorf("Name is required")
+	}
+
+	if len(emp.Gender) > 0 {
+		switch emp.Gender[0] {
+		case 'M', 'm':
+			emp.Gender = "M"
+		case 'F', 'f':
+			emp.Gender = "F"
+		default:
+			emp.Gender = ""
+		}
 	}
 
 	if emp.Type == "" {
@@ -321,6 +333,7 @@ func employeesSaveHandler(w http.ResponseWriter, r *http.Request) {
 	emp.Enabled = f.Get("Enabled") == "on"
 	emp.Name = f.Get("Name")
 	emp.ArabicName = f.Get("ArabicName")
+	emp.Gender = f.Get("Gender")
 	emp.Type = f.Get("Type")
 	emp.JobDescription = f.Get("JobDescription")
 	emp.DateOfHiring = dateOfHiring
@@ -364,6 +377,7 @@ var employeeFields = []string{
 	"Enabled",
 	"Name",
 	"ArabicName",
+	"Gender",
 	"Type",
 	"JobDescription",
 	"DateOfHiring",
@@ -389,6 +403,7 @@ var employeeFieldsDesc = []string{
 	"True or False",
 	"Required",
 	"",
+	"M or F",
 	"",
 	"",
 	"YYYY-MM-DD",
@@ -486,13 +501,13 @@ func employeesImportHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		doh, err := time.Parse("2006-01-02", record[10])
+		doh, err := time.Parse("2006-01-02", record[11])
 		if err != nil {
 			errors = append(errors, fmt.Errorf("Error in row %d: %s", i, err))
 			continue
 		}
 
-		dob, err := time.Parse("2006-01-02", record[15])
+		dob, err := time.Parse("2006-01-02", record[16])
 		if err != nil {
 			errors = append(errors, fmt.Errorf("Error in row %d: %s", i, err))
 			continue
@@ -510,19 +525,20 @@ func employeesImportHandler(w http.ResponseWriter, r *http.Request) {
 		emp.Enabled = strings.EqualFold(record[5], "true")
 		emp.Name = record[6]
 		emp.ArabicName = record[7]
-		emp.Type = record[8]
+		emp.Gender = record[8]
+		emp.Type = record[9]
 		emp.JobDescription = record[9]
 		emp.DateOfHiring = doh
-		emp.Qualifications = record[11]
-		emp.Nationality = record[12]
-		emp.CPR = record[13]
-		emp.Passport = record[14]
+		emp.Qualifications = record[12]
+		emp.Nationality = record[13]
+		emp.CPR = record[14]
+		emp.Passport = record[15]
 		emp.DateOfBirth = dob
-		emp.MobilePhone = record[16]
-		emp.Address = record[17]
-		emp.EmergencyPhone = record[18]
-		emp.HealthInfo = record[19]
-		emp.Comments = record[20]
+		emp.MobilePhone = record[17]
+		emp.Address = record[18]
+		emp.EmergencyPhone = record[19]
+		emp.HealthInfo = record[20]
+		emp.Comments = record[21]
 
 		err = emp.validate(r)
 		if err != nil {
@@ -617,6 +633,7 @@ func employeesExportHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		row = append(row, emp.Name)
 		row = append(row, emp.ArabicName)
+		row = append(row, emp.Gender)
 		row = append(row, emp.Type)
 		row = append(row, emp.JobDescription)
 		row = append(row, emp.DateOfHiring.Format("2006-01-02"))

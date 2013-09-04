@@ -28,6 +28,7 @@ type studentType struct {
 	Enabled        bool
 	Name           string
 	ArabicName     string
+	Gender         string
 	Class          string
 	Section        string
 	DateOfBirth    time.Time
@@ -93,6 +94,21 @@ func getStudents(r *http.Request, enabled bool, classSection string) ([]studentT
 func (stu *studentType) validate() error {
 	if stu.ID != "" && !strings.HasPrefix(stu.ID, studentPrefix) {
 		return fmt.Errorf("Invalid student ID: %s", stu.ID)
+	}
+
+	if stu.Name == "" {
+		return fmt.Errorf("Name is required")
+	}
+
+	if len(stu.Gender) > 0 {
+		switch stu.Gender[0] {
+		case 'M', 'm':
+			stu.Gender = "M"
+		case 'F', 'f':
+			stu.Gender = "F"
+		default:
+			stu.Gender = ""
+		}
 	}
 
 	if stu.Class == "" || stu.Section == "" {
@@ -266,8 +282,6 @@ func studentsDetailsHandler(w http.ResponseWriter, r *http.Request) {
 		stu.Enabled = true
 		stu.Nationality = "Bahrain"
 		stu.DateOfBirth = time.Date(1900, 1, 1, 0, 0, 0, 0, time.Local)
-		stu.Class = "1"
-		stu.Section = "A"
 	} else {
 		stu, err = getStudent(r, id)
 		if err != nil {
@@ -320,6 +334,7 @@ func studentsSaveHandler(w http.ResponseWriter, r *http.Request) {
 		Enabled:        f.Get("Enabled") == "on",
 		Name:           name,
 		ArabicName:     f.Get("ArabicName"),
+		Gender:         f.Get("Gender"),
 		Class:          class,
 		Section:        section,
 		DateOfBirth:    dateOfBirth,
@@ -359,6 +374,7 @@ var studentFields = []string{
 	"Enabled",
 	"Name",
 	"ArabicName",
+	"Gender",
 	"Class",
 	"Section",
 	"DateOfBirth",
@@ -377,6 +393,7 @@ var studentFieldsDesc = []string{
 	"True or False",
 	"Required",
 	"",
+	"M or F",
 	"Required",
 	"Required",
 	"YYYY-MM-DD",
@@ -450,7 +467,7 @@ func studentsImportHandler(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		dob, err := time.Parse("2006-01-02", record[6])
+		dob, err := time.Parse("2006-01-02", record[7])
 		if err != nil {
 			errors = append(errors, fmt.Errorf("Error in row %d: %s", i, err))
 			continue
@@ -460,16 +477,17 @@ func studentsImportHandler(w http.ResponseWriter, r *http.Request) {
 			Enabled:        strings.EqualFold(record[1], "true"),
 			Name:           record[2],
 			ArabicName:     record[3],
-			Class:          record[4],
-			Section:        record[5],
+			Gender:         record[4],
+			Class:          record[5],
+			Section:        record[6],
 			DateOfBirth:    dob,
-			Nationality:    record[7],
-			CPR:            record[8],
-			Passport:       record[9],
-			ParentInfo:     record[10],
-			EmergencyPhone: record[11],
-			HealthInfo:     record[12],
-			Comments:       record[13],
+			Nationality:    record[8],
+			CPR:            record[9],
+			Passport:       record[10],
+			ParentInfo:     record[11],
+			EmergencyPhone: record[12],
+			HealthInfo:     record[13],
+			Comments:       record[14],
 		}
 
 		err = stu.validate()
@@ -548,6 +566,7 @@ func studentsExportHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		row = append(row, stu.Name)
 		row = append(row, stu.ArabicName)
+		row = append(row, stu.Gender)
 		row = append(row, stu.Class)
 		row = append(row, stu.Section)
 		row = append(row, stu.DateOfBirth.Format("2006-01-02"))

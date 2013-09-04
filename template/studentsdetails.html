@@ -39,6 +39,21 @@ license that can be found in the LICENSE file.
 			</div>
 		</div>
 		<div class="control-group">
+			<label class="control-label" for="Gender">Gender</label>
+			<div class="controls">
+				<select id="Gender" name="Gender">
+					<option></option>
+					<option value="M"
+					{{if equal .S.Gender "M"}}selected="selected"{{end}}
+					>Male</option>
+					<option value="F"
+					{{if equal .S.Gender "F"}}selected="selected"{{end}}
+					>Female</option>
+				</select>
+				<span class="help-inline"></span>
+			</div>
+		</div>
+		<div class="control-group">
 			<label class="control-label" for="classSection">Class*</label>
 			<div class="controls">
 				<select id="classSection" name="ClassSection" required="required" pattern="^.+$">
