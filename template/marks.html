@@ -38,6 +38,7 @@ license that can be found in the LICENSE file.
 	<button type="submit" class="btn">Go</button>
 </form>
 {{if .Subject}}
+{{$subject := .Subject}}
 <form action="/marks/save" method="post">
 	<input type="hidden" name="Term" value="{{.Term.Value}}">
 	<input type="hidden" name="ClassSection" value="{{.Class}}|{{.Section}}">
@@ -63,11 +64,20 @@ license that can be found in the LICENSE file.
 		{{$id := .ID}}
 			<tr>
 				<th scope="row">{{.Name}}</td>
-				{{range $i, $m := .Marks}}
-				{{$c := index $cols $i}}
-				<td><input type="number" name="{{$id}}|{{$i}}" value="{{mark $m}}"
-					min="0" max="{{$c.Max}}" class="cps-mark"
-					{{if not $c.Editable}}disabled="disabled"{{end}}></td>
+				{{if equal $subject "Remarks"}}
+					<td>
+						<input type="text" name="{{$id}}|0" value="{{.Remark}}"
+						class="span7">
+					</td>
+				{{else}}
+					{{range $i, $m := .Marks}}
+					{{$c := index $cols $i}}
+					<td>
+						<input type="number" name="{{$id}}|{{$i}}" class="cps-mark"
+						min="0" max="{{$c.Max}}" value="{{mark $m}}"
+						{{if not $c.Editable}}disabled="disabled"{{end}}>
+					</td>
+					{{end}}
 				{{end}}
 			</tr>
 		{{else}}

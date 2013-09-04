@@ -119,10 +119,11 @@ var subjects = []string{
 	"Citizenship",
 	"Computer",
 	"P.E.",
+	"Behavior",
+	"Remarks",
 }
 
 func classHasSubject(class, subject string) bool {
-	// TODO: behavior
 	ss, ok := gradingSystems[class]
 	if !ok {
 		// invalid class

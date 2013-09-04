@@ -15,7 +15,7 @@ import (
 )
 
 func init() {
-	http.HandleFunc("/marks", accessHandler(marksSelectHandler))
+	http.HandleFunc("/marks", accessHandler(marksHandler))
 	http.HandleFunc("/marks/save", accessHandler(marksSaveHandler))
 }
 
@@ -63,13 +63,52 @@ func storeMarksRow(r *http.Request, id string, term Term,
 	return nil
 }
 
-type studentRow struct {
-	ID    string
-	Name  string
-	Marks []float64
+// remarksRow will be stored in the datastore
+type remarksRow struct {
+	StudentID string
+	Term      string
+	Remark    string
 }
 
-func marksSelectHandler(w http.ResponseWriter, r *http.Request) {
+func getStudentRemark(r *http.Request, id string, term Term) (string, error) {
+	c := appengine.NewContext(r)
+	q := datastore.NewQuery("remarks").Filter("StudentID =", id).
+		Filter("Term =", term.Value())
+	var remarks []remarksRow
+	_, err := q.GetAll(c, &remarks)
+	if err != nil {
+		return "", err
+	}
+
+	if len(remarks) == 0 {
+		return "", nil
+	}
+
+	return remarks[0].Remark, nil
+}
+
+func storeRemark(r *http.Request, id string, term Term, remark string) error {
+	c := appengine.NewContext(r)
+
+	rr := remarksRow{id, term.Value(), remark}
+	keyStr := fmt.Sprintf("%s|%s", id, term)
+	key := datastore.NewKey(c, "remarks", keyStr, 0, nil)
+	_, err := datastore.Put(c, key, &rr)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+type studentRow struct {
+	ID     string
+	Name   string
+	Marks  []float64
+	Remark string
+}
+
+func marksHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 
 	if err := r.ParseForm(); err != nil {
@@ -112,7 +151,24 @@ func marksSelectHandler(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 			gs.evaluate(term, m) // TODO: check error
-			studentRows = append(studentRows, studentRow{s.ID, s.Name, m[term]})
+			studentRows = append(studentRows, studentRow{s.ID, s.Name, m[term], ""})
+		}
+	} else if subject == "Remarks" {
+		cols = []colDescription{{Name: "Remarks"}}
+		students, err := getStudents(r, true, classSection)
+		if err != nil {
+			c.Errorf("Could not store marks: %s", err)
+			renderError(w, r, http.StatusInternalServerError)
+			return
+		}
+
+		for _, s := range students {
+			rem, err := getStudentRemark(r, s.ID, term)
+			if err != nil {
+				// TODO: report error
+				continue
+			}
+			studentRows = append(studentRows, studentRow{s.ID, s.Name, nil, rem})
 		}
 	}
 
@@ -178,63 +234,83 @@ func marksSaveHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	redirectURL := fmt.Sprintf("/marks?%s", urlValues.Encode())
 
-	if !classHasSubject(class, subject) {
-		http.Redirect(w, r, redirectURL, http.StatusFound)
-		return
-	}
-
-	gs := gradingSystems[class][subject]
-	cols := gs.description(term)
-	hasEditable := false
-	for _, col := range cols {
-		if col.Editable {
-			hasEditable = true
+	if classHasSubject(class, subject) {
+		gs := gradingSystems[class][subject]
+		cols := gs.description(term)
+		hasEditable := false
+		for _, col := range cols {
+			if col.Editable {
+				hasEditable = true
+			}
 		}
-	}
-	if !hasEditable {
-		http.Redirect(w, r, redirectURL, http.StatusFound)
-		return
-	}
+		if !hasEditable {
+			http.Redirect(w, r, redirectURL, http.StatusFound)
+			return
+		}
 
-	students, err := getStudents(r, true, classSection)
-	if err != nil {
-		c.Errorf("Could not store marks: %s", err)
-		renderError(w, r, http.StatusInternalServerError)
-		return
-	}
-
-	for _, s := range students {
-		m, err := getStudentMarks(r, s.ID, subject)
+		students, err := getStudents(r, true, classSection)
 		if err != nil {
-			// TODO: report error
-			continue
+			c.Errorf("Could not store marks: %s", err)
+			renderError(w, r, http.StatusInternalServerError)
+			return
 		}
-		gs.evaluate(term, m) // TODO: check error
 
-		marksChanged := false
-		for i, col := range cols {
-			v, err := strconv.ParseFloat(f.Get(fmt.Sprintf("%s|%d", s.ID, i)), 64)
-			if err != nil || v > col.Max {
-				// invalid or empty marks
-				v = negZero
-			}
-			if m[term][i] != v {
-				marksChanged = true
-				m[term][i] = v
-			}
-
-		}
-		gs.evaluate(term, m) // TODO: check error
-		if marksChanged {
-			err := storeMarksRow(r, s.ID, term, subject, m[term])
+		for _, s := range students {
+			m, err := getStudentMarks(r, s.ID, subject)
 			if err != nil {
-				c.Errorf("Could not store marks: %s", err)
+				// TODO: report error
+				continue
+			}
+			gs.evaluate(term, m) // TODO: check error
+
+			marksChanged := false
+			for i, col := range cols {
+				v, err := strconv.ParseFloat(f.Get(fmt.Sprintf("%s|%d", s.ID, i)), 64)
+				if err != nil || v > col.Max {
+					// invalid or empty marks
+					v = negZero
+				}
+				if m[term][i] != v {
+					marksChanged = true
+					m[term][i] = v
+				}
+
+			}
+			gs.evaluate(term, m) // TODO: check error
+			if marksChanged {
+				err := storeMarksRow(r, s.ID, term, subject, m[term])
+				if err != nil {
+					c.Errorf("Could not store marks: %s", err)
+					renderError(w, r, http.StatusInternalServerError)
+					return
+				}
+			}
+		}
+	} else if subject == "Remarks" {
+		students, err := getStudents(r, true, classSection)
+		if err != nil {
+			c.Errorf("Could not get students: %s", err)
+			renderError(w, r, http.StatusInternalServerError)
+			return
+		}
+
+		for _, s := range students {
+			remarksName := fmt.Sprintf("%s|0", s.ID)
+			if f[remarksName] == nil {
+				// no remark to update
+				continue
+			}
+			remark := f.Get(remarksName)
+
+			err := storeRemark(r, s.ID, term, remark)
+			if err != nil {
+				c.Errorf("Could not store remark: %s", err)
 				renderError(w, r, http.StatusInternalServerError)
 				return
 			}
 		}
 	}
 
-	// TODO: message of success
+	// TODO: message of success/fail
 	http.Redirect(w, r, redirectURL, http.StatusFound)
 }
