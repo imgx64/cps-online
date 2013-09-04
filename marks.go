@@ -27,8 +27,7 @@ type marksRow struct {
 	Marks     []float64
 }
 
-func getStudentMarks(r *http.Request, id, subject string) (studentMarks, error) {
-	c := appengine.NewContext(r)
+func getStudentMarks(c appengine.Context, id, subject string) (studentMarks, error) {
 	q := datastore.NewQuery("marks").Filter("StudentID =", id).Filter("Subject =", subject)
 	var rows []marksRow
 	_, err := q.GetAll(c, &rows)
@@ -48,9 +47,8 @@ func getStudentMarks(r *http.Request, id, subject string) (studentMarks, error) 
 	return marks, nil
 }
 
-func storeMarksRow(r *http.Request, id string, term Term,
+func storeMarksRow(c appengine.Context, id string, term Term,
 	subject string, marks []float64) error {
-	c := appengine.NewContext(r)
 
 	mr := marksRow{id, term.Value(), subject, marks}
 	keyStr := fmt.Sprintf("%s|%s|%s", id, term, subject)
@@ -70,8 +68,7 @@ type remarksRow struct {
 	Remark    string
 }
 
-func getStudentRemark(r *http.Request, id string, term Term) (string, error) {
-	c := appengine.NewContext(r)
+func getStudentRemark(c appengine.Context, id string, term Term) (string, error) {
 	q := datastore.NewQuery("remarks").Filter("StudentID =", id).
 		Filter("Term =", term.Value())
 	var remarks []remarksRow
@@ -87,8 +84,7 @@ func getStudentRemark(r *http.Request, id string, term Term) (string, error) {
 	return remarks[0].Remark, nil
 }
 
-func storeRemark(r *http.Request, id string, term Term, remark string) error {
-	c := appengine.NewContext(r)
+func storeRemark(c appengine.Context, id string, term Term, remark string) error {
 
 	rr := remarksRow{id, term.Value(), remark}
 	keyStr := fmt.Sprintf("%s|%s", id, term)
@@ -137,7 +133,7 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 	if classHasSubject(class, subject) {
 		gs := gradingSystems[class][subject]
 		cols = gs.description(term)
-		students, err := getStudents(r, true, classSection)
+		students, err := getStudents(c, true, classSection)
 		if err != nil {
 			c.Errorf("Could not store marks: %s", err)
 			renderError(w, r, http.StatusInternalServerError)
@@ -145,7 +141,7 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		for _, s := range students {
-			m, err := getStudentMarks(r, s.ID, subject)
+			m, err := getStudentMarks(c, s.ID, subject)
 			if err != nil {
 				// TODO: report error
 				continue
@@ -155,7 +151,7 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	} else if subject == "Remarks" {
 		cols = []colDescription{{Name: "Remarks"}}
-		students, err := getStudents(r, true, classSection)
+		students, err := getStudents(c, true, classSection)
 		if err != nil {
 			c.Errorf("Could not store marks: %s", err)
 			renderError(w, r, http.StatusInternalServerError)
@@ -163,7 +159,7 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		for _, s := range students {
-			rem, err := getStudentRemark(r, s.ID, term)
+			rem, err := getStudentRemark(c, s.ID, term)
 			if err != nil {
 				// TODO: report error
 				continue
@@ -248,7 +244,7 @@ func marksSaveHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		students, err := getStudents(r, true, classSection)
+		students, err := getStudents(c, true, classSection)
 		if err != nil {
 			c.Errorf("Could not store marks: %s", err)
 			renderError(w, r, http.StatusInternalServerError)
@@ -256,7 +252,7 @@ func marksSaveHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		for _, s := range students {
-			m, err := getStudentMarks(r, s.ID, subject)
+			m, err := getStudentMarks(c, s.ID, subject)
 			if err != nil {
 				// TODO: report error
 				continue
@@ -278,7 +274,7 @@ func marksSaveHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			gs.evaluate(term, m) // TODO: check error
 			if marksChanged {
-				err := storeMarksRow(r, s.ID, term, subject, m[term])
+				err := storeMarksRow(c, s.ID, term, subject, m[term])
 				if err != nil {
 					c.Errorf("Could not store marks: %s", err)
 					renderError(w, r, http.StatusInternalServerError)
@@ -287,7 +283,7 @@ func marksSaveHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	} else if subject == "Remarks" {
-		students, err := getStudents(r, true, classSection)
+		students, err := getStudents(c, true, classSection)
 		if err != nil {
 			c.Errorf("Could not get students: %s", err)
 			renderError(w, r, http.StatusInternalServerError)
@@ -302,7 +298,7 @@ func marksSaveHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			remark := f.Get(remarksName)
 
-			err := storeRemark(r, s.ID, term, remark)
+			err := storeRemark(c, s.ID, term, remark)
 			if err != nil {
 				c.Errorf("Could not store remark: %s", err)
 				renderError(w, r, http.StatusInternalServerError)

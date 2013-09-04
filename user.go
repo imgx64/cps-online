@@ -7,15 +7,12 @@ package main
 import (
 	"appengine"
 	appengineuser "appengine/user"
-
-	"net/http"
 )
 
 type user struct {
 	Email string
 	Name  string
 	Roles roles
-	Links []link
 }
 
 type roles struct {
@@ -34,8 +31,7 @@ var (
 	teacherRole = roles{Teacher: true}
 )
 
-func getUser(r *http.Request) (user, error) {
-	c := appengine.NewContext(r)
+func getUser(c appengine.Context) (user, error) {
 	u := appengineuser.Current(c)
 
 	name := u.String()
@@ -49,12 +45,12 @@ func getUser(r *http.Request) (user, error) {
 			Teacher: true,
 		}
 	} else {
-		if isStudentEmail(r, u.Email) {
+		if isStudentEmail(c, u.Email) {
 			userRoles = roles{
 				Student: true,
 			}
 		} else {
-			emp, err := getEmployeeFromEmail(r, u.Email)
+			emp, err := getEmployeeFromEmail(c, u.Email)
 			if err != nil {
 				return user{
 					Email: u.Email,
@@ -65,21 +61,10 @@ func getUser(r *http.Request) (user, error) {
 		}
 	}
 
-	var links []link
-	for _, page := range pages {
-		if canAccess(userRoles, page.URL) {
-			if r.URL.Path == page.URL {
-				page.Active = true
-			}
-			links = append(links, page)
-		}
-	}
-
 	user := user{
 		Email: u.Email,
 		Name:  name,
 		Roles: userRoles,
-		Links: links,
 	}
 
 	return user, nil

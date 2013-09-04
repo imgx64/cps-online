@@ -56,12 +56,22 @@ func render(w http.ResponseWriter, r *http.Request,
 		return err
 	}
 
-	user, err := getUser(r)
+	user, err := getUser(c)
 	if err != nil {
 		c.Errorf("Could not get user: %s", user.Email)
 	}
 
-	tmplData := templateData{user.Name, user.Links, data}
+	var links []link
+	for _, page := range pages {
+		if canAccess(user.Roles, page.URL) {
+			if r.URL.Path == page.URL {
+				page.Active = true
+			}
+			links = append(links, page)
+		}
+	}
+
+	tmplData := templateData{user.Name, links, data}
 
 	if err := tmpl.Execute(w, tmplData); err != nil {
 		return err

@@ -51,8 +51,7 @@ var employeeTypes = []string{
 	"Other",
 }
 
-func getEmployee(r *http.Request, id string) (employeeType, error) {
-	c := appengine.NewContext(r)
+func getEmployee(c appengine.Context, id string) (employeeType, error) {
 	intID, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
 		return employeeType{}, err
@@ -68,8 +67,7 @@ func getEmployee(r *http.Request, id string) (employeeType, error) {
 	return emp, err
 }
 
-func getEmployees(r *http.Request, enabled bool, typ string) ([]employeeType, error) {
-	c := appengine.NewContext(r)
+func getEmployees(c appengine.Context, enabled bool, typ string) ([]employeeType, error) {
 	q := datastore.NewQuery("employee").Filter("Enabled =", enabled)
 	if typ != "" {
 		q = q.Filter("Type =", typ)
@@ -89,10 +87,10 @@ func getEmployees(r *http.Request, enabled bool, typ string) ([]employeeType, er
 	return employees, nil
 }
 
-func (emp *employeeType) validate(r *http.Request) error {
+func (emp *employeeType) validate(c appengine.Context) error {
 	if emp.ID != 0 {
 		// make sure employee actually exists
-		_, err := getEmployee(r, fmt.Sprint(emp.ID))
+		_, err := getEmployee(c, fmt.Sprint(emp.ID))
 		if err != nil {
 			return err
 		}
@@ -138,9 +136,8 @@ func (emp *employeeType) validate(r *http.Request) error {
 	return nil
 }
 
-func (emp *employeeType) save(r *http.Request) error {
-	c := appengine.NewContext(r)
-	err := emp.validate(r)
+func (emp *employeeType) save(c appengine.Context) error {
+	err := emp.validate(c)
 	if err != nil {
 		return err
 	}
@@ -159,8 +156,7 @@ func (emp *employeeType) save(r *http.Request) error {
 	return nil
 }
 
-func getEmployeeFromEmail(r *http.Request, email string) (employeeType, error) {
-	c := appengine.NewContext(r)
+func getEmployeeFromEmail(c appengine.Context, email string) (employeeType, error) {
 	q := datastore.NewQuery("employee").Filter("CPSEmail =", email).Limit(2)
 	var employees []employeeType
 	_, err := q.GetAll(c, &employees)
@@ -196,7 +192,7 @@ func employeesHandler(w http.ResponseWriter, r *http.Request) {
 	enabled := r.Form.Get("enabled")
 	typ := r.Form.Get("type")
 
-	employees, err := getEmployees(r, enabled != "no", typ)
+	employees, err := getEmployees(c, enabled != "no", typ)
 	if err != nil {
 		c.Errorf("Could not retrieve employees: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
@@ -247,7 +243,7 @@ func employeesDetailsHandler(w http.ResponseWriter, r *http.Request) {
 		emp.Nationality = "Bahrain"
 		emp.DateOfBirth = time.Date(1900, 1, 1, 0, 0, 0, 0, time.Local)
 	} else {
-		emp, err = getEmployee(r, id)
+		emp, err = getEmployee(c, id)
 		if err != nil {
 			c.Errorf("Could not retrieve employee details: %s", err)
 			renderError(w, r, http.StatusInternalServerError)
@@ -255,7 +251,7 @@ func employeesDetailsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	u, err := getUser(r)
+	u, err := getUser(c)
 	if err != nil {
 		c.Errorf("Could not get user: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
@@ -292,7 +288,7 @@ func employeesSaveHandler(w http.ResponseWriter, r *http.Request) {
 
 	f := r.PostForm
 
-	emp, err := getEmployee(r, f.Get("ID"))
+	emp, err := getEmployee(c, f.Get("ID"))
 	if err == datastore.ErrNoSuchEntity {
 		// new employee
 	} else if err != nil {
@@ -301,7 +297,7 @@ func employeesSaveHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u, err := getUser(r)
+	u, err := getUser(c)
 	if err != nil {
 		c.Errorf("Could not get user: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
@@ -348,14 +344,14 @@ func employeesSaveHandler(w http.ResponseWriter, r *http.Request) {
 	emp.HealthInfo = f.Get("HealthInfo")
 	emp.Comments = f.Get("Comments")
 
-	err = emp.validate(r)
+	err = emp.validate(c)
 	if err != nil {
 		c.Errorf("Could not store employee: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
 
-	err = emp.save(r)
+	err = emp.save(c)
 	if err != nil {
 		c.Errorf("Could not store employee: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
@@ -449,7 +445,7 @@ func employeesImportHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	u, err := getUser(r)
+	u, err := getUser(c)
 	if err != nil {
 		c.Errorf("Could not get user: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
@@ -494,7 +490,7 @@ func employeesImportHandler(w http.ResponseWriter, r *http.Request) {
 		if record[0] == "" {
 			intID = 0
 		} else {
-			emp, err = getEmployee(r, record[0])
+			emp, err = getEmployee(c, record[0])
 			if err != nil {
 				errors = append(errors, fmt.Errorf("Error in row %d: %s", i, err))
 				continue
@@ -540,13 +536,13 @@ func employeesImportHandler(w http.ResponseWriter, r *http.Request) {
 		emp.HealthInfo = record[20]
 		emp.Comments = record[21]
 
-		err = emp.validate(r)
+		err = emp.validate(c)
 		if err != nil {
 			errors = append(errors, fmt.Errorf("Error in row %d: %s", i, err))
 			continue
 		}
 
-		err = emp.save(r)
+		err = emp.save(c)
 		if err != nil {
 			errors = append(errors, fmt.Errorf("Error in row %d: %s", i, err))
 			continue
@@ -584,7 +580,7 @@ func employeesExportHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		filename = fmt.Sprintf("Employees-%s", time.Now().Format("2006-01-02"))
 		var err error
-		employees, err = getEmployees(r, r.Form.Get("enabled") != "no", r.Form.Get("type"))
+		employees, err = getEmployees(c, r.Form.Get("enabled") != "no", r.Form.Get("type"))
 		if err != nil {
 			c.Errorf("Could not retrieve employees: %s", err)
 			renderError(w, r, http.StatusInternalServerError)

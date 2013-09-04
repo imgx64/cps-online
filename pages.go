@@ -53,7 +53,7 @@ var access = map[string]roles{
 func accessHandler(f func(w http.ResponseWriter, r *http.Request)) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		c := appengine.NewContext(r)
-		user, err := getUser(r)
+		user, err := getUser(c)
 		if err != nil {
 			c.Errorf("Could not get user: %s", err)
 			renderError(w, r, http.StatusInternalServerError)

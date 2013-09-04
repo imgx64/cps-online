@@ -43,9 +43,8 @@ type studentType struct {
 	// TODO: payments
 }
 
-func getStudent(r *http.Request, id string) (studentType, error) {
-	c := appengine.NewContext(r)
-	akey, err := getStudentsAncestor(r)
+func getStudent(c appengine.Context, id string) (studentType, error) {
+	akey, err := getStudentsAncestor(c)
 	if err != nil {
 		return studentType{}, err
 	}
@@ -59,9 +58,8 @@ func getStudent(r *http.Request, id string) (studentType, error) {
 	return stu, err
 }
 
-func getStudents(r *http.Request, enabled bool, classSection string) ([]studentType, error) {
-	c := appengine.NewContext(r)
-	akey, err := getStudentsAncestor(r)
+func getStudents(c appengine.Context, enabled bool, classSection string) ([]studentType, error) {
+	akey, err := getStudentsAncestor(c)
 	if err != nil {
 		return nil, err
 	}
@@ -128,13 +126,12 @@ func (stu *studentType) validate() error {
 	return nil
 }
 
-func (stu *studentType) save(r *http.Request) error {
-	c := appengine.NewContext(r)
+func (stu *studentType) save(c appengine.Context) error {
 	if err := stu.validate(); err != nil {
 		return err
 	}
 
-	akey, err := getStudentsAncestor(r)
+	akey, err := getStudentsAncestor(c)
 	if err != nil {
 		return fmt.Errorf("Could not get Students Ancestor Key: %s", err)
 	}
@@ -183,8 +180,7 @@ func (stu *studentType) save(r *http.Request) error {
 	return nil
 }
 
-func getStudentsAncestor(r *http.Request) (*datastore.Key, error) {
-	c := appengine.NewContext(r)
+func getStudentsAncestor(c appengine.Context) (*datastore.Key, error) {
 	key := datastore.NewKey(c, "ancestor", "student", 0, nil)
 	err := datastore.Get(c, key, &struct{}{})
 
@@ -196,7 +192,7 @@ func getStudentsAncestor(r *http.Request) (*datastore.Key, error) {
 	return key, nil
 }
 
-func isStudentEmail(r *http.Request, email string) bool {
+func isStudentEmail(c appengine.Context, email string) bool {
 	parts := strings.Split(email, "@")
 	if len(parts) != 2 || parts[1] != schoolDomain {
 		// invalid email
@@ -207,7 +203,7 @@ func isStudentEmail(r *http.Request, email string) bool {
 		// not a student
 		return false
 	}
-	_, err := getStudent(r, user)
+	_, err := getStudent(c, user)
 	if err != nil {
 		// student does not exist
 		return false
@@ -235,7 +231,7 @@ func studentsHandler(w http.ResponseWriter, r *http.Request) {
 	enabled := r.Form.Get("enabled")
 	classSection := r.Form.Get("classsection")
 
-	students, err := getStudents(r, enabled != "no", classSection)
+	students, err := getStudents(c, enabled != "no", classSection)
 	if err != nil {
 		c.Errorf("Could not retrieve students: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
@@ -283,7 +279,7 @@ func studentsDetailsHandler(w http.ResponseWriter, r *http.Request) {
 		stu.Nationality = "Bahrain"
 		stu.DateOfBirth = time.Date(1900, 1, 1, 0, 0, 0, 0, time.Local)
 	} else {
-		stu, err = getStudent(r, id)
+		stu, err = getStudent(c, id)
 		if err != nil {
 			c.Errorf("Could not retrieve student details: %s", err)
 			renderError(w, r, http.StatusInternalServerError)
@@ -355,7 +351,7 @@ func studentsSaveHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = stu.save(r)
+	err = stu.save(c)
 	if err != nil {
 		// TODO: message to user
 		c.Errorf("Could not store student: %s", err)
@@ -496,7 +492,7 @@ func studentsImportHandler(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		err = stu.save(r)
+		err = stu.save(c)
 		if err != nil {
 			errors = append(errors, fmt.Errorf("Error in row %d: %s", i, err))
 			continue
@@ -538,7 +534,7 @@ func studentsExportHandler(w http.ResponseWriter, r *http.Request) {
 		enabled := r.Form.Get("enabled")
 		classSection := r.Form.Get("type")
 
-		students, err = getStudents(r, enabled != "no", classSection)
+		students, err = getStudents(c, enabled != "no", classSection)
 		if err != nil {
 			c.Errorf("Could not retrieve students: %s", err)
 			renderError(w, r, http.StatusInternalServerError)
