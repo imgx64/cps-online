@@ -10,9 +10,30 @@ indexes:
 # automatically uploaded to the admin console when you next deploy
 # your application using appcfg.py.
 
+- kind: employee
+  properties:
+  - name: Enabled
+  - name: Type
+
 - kind: student
   ancestor: yes
   properties:
+  - name: Class
+  - name: Enabled
+  - name: Section
+  - name: ID
+
+- kind: student
+  ancestor: yes
+  properties:
+  - name: Class
+  - name: Section
+  - name: ID
+
+- kind: student
+  ancestor: yes
+  properties:
+  - name: Enabled
   - name: Class
   - name: Section
   - name: ID

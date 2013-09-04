@@ -6,6 +6,22 @@ license that can be found in the LICENSE file.
 
 {{define "title"}}Employees{{end}}
 {{define "content"}}
+<form class="form-inline" action="/employees">
+	<select id="enabled" name="enabled" class="span2">
+		<option value="">Enabled</option>
+		<option value="no"
+		{{if equal .Enabled "no"}}selected="selected"{{end}}>Disabled</option>
+	</select>
+	<select id="type" name="type">
+		<option value="">All</option>
+		{{$type := .Type}}
+		{{range .T}}
+		<option {{if equal . $type}}selected="selected"{{end}}
+		value="{{.}}">{{.}}</option>
+		{{end}}
+	</select>
+	<button type="submit" class="btn">Filter</button>
+</form>
 <p>
 	<a class="btn btn-primary btn-large" href="/employees/details?id=new">Add Employee</a>
 </p>
@@ -20,7 +36,7 @@ license that can be found in the LICENSE file.
 			</tr>
 		</thead>
 		<tbody>
-			{{range .}}
+			{{range .E}}
 			<tr>
 				<td>{{.Name}}</td>
 				<td>{{.Type}}</td>
@@ -36,7 +52,7 @@ license that can be found in the LICENSE file.
 	</table>
 	<div>
 		<a class="btn" href="/employees/import">Import Employees</a>
-		<a class="btn" href="/employees/export">Export Employees</a>
+		<a class="btn" href="/employees/export?enabled={{.Enabled}}&type={{.Type}}">Export Employees</a>
 	</div>
 </div>
 {{end}}

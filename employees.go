@@ -67,10 +67,10 @@ func getEmployee(r *http.Request, id string) (employeeType, error) {
 	return emp, err
 }
 
-func getEmployees(r *http.Request, typ string) ([]employeeType, error) {
+func getEmployees(r *http.Request, enabled bool, typ string) ([]employeeType, error) {
 	c := appengine.NewContext(r)
-	q := datastore.NewQuery("employee")
-	if typ != "all" {
+	q := datastore.NewQuery("employee").Filter("Enabled =", enabled)
+	if typ != "" {
 		q = q.Filter("Type =", typ)
 	}
 	q = q.Order("Type")
@@ -175,12 +175,36 @@ func init() {
 
 func employeesHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
-	// TODO: filter: type, enabled, etc
-	data, err := getEmployees(r, "all")
+	if err := r.ParseForm(); err != nil {
+		c.Errorf("Could not parse form: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	enabled := r.Form.Get("enabled")
+	typ := r.Form.Get("type")
+
+	employees, err := getEmployees(r, enabled != "no", typ)
 	if err != nil {
 		c.Errorf("Could not retrieve employees: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
+	}
+
+	data := struct {
+		E []employeeType
+
+		T []string
+
+		Enabled string
+		Type    string
+	}{
+		employees,
+
+		employeeTypes,
+
+		enabled,
+		typ,
 	}
 
 	if err := render(w, r, "employees", data); err != nil {
@@ -449,7 +473,6 @@ func employeesImportHandler(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-
 		var emp employeeType
 
 		var intID int64
@@ -545,7 +568,7 @@ func employeesExportHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		filename = fmt.Sprintf("Employees-%s", time.Now().Format("2006-01-02"))
 		var err error
-		employees, err = getEmployees(r, "all")
+		employees, err = getEmployees(r, r.Form.Get("enabled") != "no", r.Form.Get("type"))
 		if err != nil {
 			c.Errorf("Could not retrieve employees: %s", err)
 			renderError(w, r, http.StatusInternalServerError)

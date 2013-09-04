@@ -58,22 +58,27 @@ func getStudent(r *http.Request, id string) (studentType, error) {
 	return stu, err
 }
 
-func getStudents(r *http.Request, classSection string) ([]studentType, error) {
+func getStudents(r *http.Request, enabled bool, classSection string) ([]studentType, error) {
 	c := appengine.NewContext(r)
 	akey, err := getStudentsAncestor(r)
 	if err != nil {
 		return nil, err
 	}
-	q := datastore.NewQuery("student").Ancestor(akey)
-	if classSection != "all" {
-		cs := strings.Split(classSection, "|")
-		if len(cs) != 2 {
-			return nil, fmt.Errorf("Invalid class and section: %s", classSection)
+	q := datastore.NewQuery("student").Ancestor(akey).Filter("Enabled =", enabled)
+	if classSection == "" {
+		classSection = "|"
+	}
+	cs := strings.Split(classSection, "|")
+	if len(cs) != 2 {
+		return nil, fmt.Errorf("Invalid class and section: %s", classSection)
+	}
+	class := cs[0]
+	section := cs[1]
+	if class != "" {
+		q = q.Filter("Class =", class)
+		if section != "" {
+			q = q.Filter("Section =", section)
 		}
-		class := cs[0]
-		section := cs[1]
-		q = q.Filter("Class =", class).
-			Filter("Section =", section)
 	}
 	q = q.Order("Class").Order("Section").Order("ID")
 	var students []studentType
@@ -205,12 +210,36 @@ func init() {
 
 func studentsHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
-	// TODO: filter: class, enabled, etc
-	data, err := getStudents(r, "all")
+	if err := r.ParseForm(); err != nil {
+		c.Errorf("Could not parse form: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	enabled := r.Form.Get("enabled")
+	classSection := r.Form.Get("classsection")
+
+	students, err := getStudents(r, enabled != "no", classSection)
 	if err != nil {
 		c.Errorf("Could not retrieve students: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
+	}
+
+	data := struct {
+		S []studentType
+
+		CG []classGroup
+
+		Enabled      string
+		ClassSection string
+	}{
+		students,
+
+		classGroups,
+
+		enabled,
+		classSection,
 	}
 
 	if err := render(w, r, "students", data); err != nil {
@@ -365,7 +394,7 @@ func studentsImportHandler(w http.ResponseWriter, r *http.Request) {
 	var errors []error
 
 	message := struct {
-		Msg   string
+		Msg string
 	}{}
 
 	err := r.ParseMultipartForm(1e6)
@@ -482,12 +511,16 @@ func studentsExportHandler(w http.ResponseWriter, r *http.Request) {
 	var filename string
 
 	r.ParseForm()
+
 	if r.Form.Get("template") == "true" {
 		filename = "Students-template"
 	} else {
 		filename = fmt.Sprintf("Students-%s", time.Now().Format("2006-01-02"))
 		var err error
-		students, err = getStudents(r, "all")
+		enabled := r.Form.Get("enabled")
+		classSection := r.Form.Get("type")
+
+		students, err = getStudents(r, enabled != "no", classSection)
 		if err != nil {
 			c.Errorf("Could not retrieve students: %s", err)
 			renderError(w, r, http.StatusInternalServerError)

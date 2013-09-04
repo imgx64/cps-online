@@ -6,6 +6,33 @@ license that can be found in the LICENSE file.
 
 {{define "title"}}Students{{end}}
 {{define "content"}}
+<form class="form-inline" action="/students">
+	<select id="enabled" name="enabled" class="span2">
+		<option value="">Enabled</option>
+		<option value="no"
+		{{if equal .Enabled "no"}}selected="selected"{{end}}>Disabled</option>
+	</select>
+	<select id="classSection" name="classsection" class="span2">
+		<option value="">All classes</option>
+		{{$cs := .ClassSection}}
+		{{range .CG}}
+		{{$class := .Class}}
+		<optgroup label="{{.Class}}">
+			{{if (not (equal (len .Sections) 1))}}
+			<option value="{{.Class}}|"
+			{{if equal $cs (printf "%s|%s" $class "")}} selected="selected"{{end}}
+			>{{$class}}</option>
+			{{end}}
+			{{range .Sections}}
+			<option value="{{$class}}|{{.}}"
+			{{if equal $cs (printf "%s|%s" $class .)}} selected="selected"{{end}}
+			>{{$class}}{{.}}</option>
+			{{end}}
+		</optgroup>
+		{{end}}
+	</select>
+	<button type="submit" class="btn">Filter</button>
+</form>
 <p>
 	<a class="btn btn-primary btn-large" href="/students/details?id=new">Add Student</a>
 </p>
@@ -20,7 +47,7 @@ license that can be found in the LICENSE file.
 			</tr>
 		</thead>
 		<tbody>
-			{{range .}}
+			{{range .S}}
 			<tr>
 				<td>{{.ID}}</td>
 				<td>{{.Name}}</td>
@@ -36,7 +63,7 @@ license that can be found in the LICENSE file.
 	</table>
 	<div>
 		<a class="btn" href="/students/import">Import Students</a>
-		<a class="btn" href="/students/export">Export Students</a>
+		<a class="btn" href="/students/export?enabled={{.Enabled}}&classsection={{.ClassSection}}">Export Students</a>
 	</div>
 </div>
 {{end}}

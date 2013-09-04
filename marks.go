@@ -98,7 +98,7 @@ func marksSelectHandler(w http.ResponseWriter, r *http.Request) {
 	if classHasSubject(class, subject) {
 		gs := gradingSystems[class][subject]
 		cols = gs.description(term)
-		students, err := getStudents(r, classSection)
+		students, err := getStudents(r, true, classSection)
 		if err != nil {
 			c.Errorf("Could not store marks: %s", err)
 			renderError(w, r, http.StatusInternalServerError)
@@ -196,7 +196,7 @@ func marksSaveHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	students, err := getStudents(r, classSection)
+	students, err := getStudents(r, true, classSection)
 	if err != nil {
 		c.Errorf("Could not store marks: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
