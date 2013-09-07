@@ -1,0 +1,46 @@
+{{/*
+Copyright 2013 Ibrahim Ghazal. All rights reserved.
+Use of this source code is governed by a BSD-style
+license that can be found in the LICENSE file.
+*/}}
+
+{{define "title"}}Daily Log{{end}}
+{{define "content"}}
+<p><strong>Student Name:</strong> {{.S.Name}}</p>
+<p><strong>Class:</strong> {{.S.Class}}{{.S.Section}}</p>
+<form class="form-inline" action="/dailylog/edit">
+	<input type="hidden" name="id" value="{{.S.ID}}">
+	<input type="date" name="date" value="{{formatDate .Today}}">
+	<button type="submit" class="btn">Add daily log</button>
+</form>
+<div>
+	<table class="table table-bordered table-condensed">
+		<thead>
+			<tr>
+				<th scope="col">Date</th>
+				<th scope="col">Behavior</th>
+				<th scope="col">Attendance</th>
+				<th scope="col">Details/Excuse</th>
+				<th scope="col">Options</th>
+			</tr>
+		</thead>
+		<tbody>
+			{{range .Dailylogs}}
+			<tr>
+				<td>{{formatDate .Date}}</td>
+				<td>{{cut .Behavior}}</td>
+				<td>{{.Attendance}}</td>
+				<td>{{cut .Details}}</td>
+				<td><a class="btn btn-small"
+						href="/dailylog/edit?id={{.StudentID}}&date={{formatDate .Date}}">Daily Log</a></td>
+			</tr>
+			{{else}}
+			<tr class="info">
+				<td colspan="5"><p class="text-center">No daily logs found</p></td>
+			</tr>
+			{{end}}
+		</tbody>
+	</table>
+</div>
+{{end}}
+

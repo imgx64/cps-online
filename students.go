@@ -55,7 +55,7 @@ func getStudent(c appengine.Context, id string) (studentType, error) {
 		return studentType{}, err
 	}
 
-	return stu, err
+	return stu, nil
 }
 
 func getStudents(c appengine.Context, enabled bool, classSection string) ([]studentType, error) {

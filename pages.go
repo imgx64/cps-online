@@ -38,14 +38,18 @@ var access = map[string]roles{
 
 	"/classes": hrRole,
 
-	"/marks":      teacherRole,
-	"/marks/save": teacherRole,
-	"/upload":     teacherRole,
-	"/dailylog":   teacherRole,
+	"/marks":            teacherRole,
+	"/marks/save":       teacherRole,
+	"/upload":           teacherRole,
+	"/dailylog":         teacherRole,
+	"/dailylog/student": teacherRole,
+	"/dailylog/edit":    teacherRole,
+	"/dailylog/save":    teacherRole,
 
-	"/reportcard":   studentRole,
-	"/documents":    studentRole,
-	"/viewdailylog": studentRole,
+	"/reportcard":       studentRole,
+	"/documents":        studentRole,
+	"/viewdailylog":     studentRole,
+	"/viewdailylog/day": studentRole,
 }
 
 func accessHandler(f func(w http.ResponseWriter, r *http.Request)) func(w http.ResponseWriter, r *http.Request) {

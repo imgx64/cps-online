@@ -94,6 +94,12 @@ var funcMap = htmltemplate.FuncMap{
 		}
 		return fmt.Sprintf("%.2f", mark)
 	},
+	"cut": func(s string) string {
+		if len(s) < 20 {
+			return s
+		}
+		return s[:20] + "..."
+	},
 }
 
 var countries = []string{

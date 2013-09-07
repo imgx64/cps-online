@@ -52,11 +52,11 @@ license that can be found in the LICENSE file.
 	<h2>Behavior</h2>
 	<table class="table table-bordered table-condensed">
 		<tbody>
-		{{$behavior := .Behavior}}
-		{{range $i, $desc := .BehaviorDesc}}
+		{{$descriptions := .BehaviorDesc}}
+		{{range $i, $beh := .Behavior}}
 			<tr>
-				<td>{{$desc.Name}}</td>
-				<td>{{mark (index $behavior $i)}}</td>
+				<td>{{(index $descriptions $i).Name}}</td>
+				<td>{{mark $beh}}</td>
 			</tr>
 		{{end}}
 		</tbody>

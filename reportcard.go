@@ -50,6 +50,9 @@ func reportcardHandler(w http.ResponseWriter, r *http.Request) {
 	stu := *user.Student
 
 	publish := published(c, term)
+	if term == (Term{}) {
+		publish = false
+	}
 
 	var reportcardRows []reportcardRow
 	var average float64

@@ -1,0 +1,53 @@
+{{/*
+Copyright 2013 Ibrahim Ghazal. All rights reserved.
+Use of this source code is governed by a BSD-style
+license that can be found in the LICENSE file.
+*/}}
+
+{{define "title"}}Daily Log{{end}}
+{{define "content"}}
+{{with .Dailylog}}
+<form class="form-horizontal" action="/dailylog/save" method="POST">
+	<fieldset>
+		<legend>Daily Log for {{formatDate .Date}}</legend>
+		<input type="hidden" name="ID" value={{.StudentID}}>
+		<input type="hidden" name="Date" value={{formatDate .Date}}>
+		<div class="control-group">
+			<label class="control-label" for="Behavior">Behavior</label>
+			<div class="controls">
+				<textarea id="Behavior" name="Behavior" rows="5">{{.Behavior}}</textarea>
+				<span class="help-inline"></span>
+			</div>
+		</div>
+		<div class="control-group">
+			<label class="control-label" for="Attendance">Attendance</label>
+			<div class="controls">
+				<select id="Attendance" name="Attendance">
+					<option value="">Full attendance</option>
+					<option {{if equal .Attendance "Absent"}}selected="selected"{{end}}>
+						Absent
+					</option>
+					<option {{if equal .Attendance "Tardy"}}selected="selected"{{end}}>
+						Tardy
+					</option>
+					<option {{if equal .Attendance "Early leave"}}selected="selected"{{end}}>
+						Early leave
+					</option>
+				</select>
+			</div>
+		</div>
+		<div class="control-group">
+			<label class="control-label" for="Details">Details/Excuse</label>
+			<div class="controls">
+				<textarea id="Details" name="Details" rows="5">{{.Details}}</textarea>
+				<span class="help-inline"></span>
+			</div>
+		</div>
+		<div class="form-actions">
+			<button type="submit" class="btn btn-primary">Save</button>
+			<button type="button" class="btn cps-go-back">Cancel</button>
+		</div>
+	</fieldset>
+</form>
+{{end}}
+{{end}}

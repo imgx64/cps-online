@@ -1,0 +1,50 @@
+{{/*
+Copyright 2013 Ibrahim Ghazal. All rights reserved.
+Use of this source code is governed by a BSD-style
+license that can be found in the LICENSE file.
+*/}}
+
+{{define "title"}}Daily Log{{end}}
+{{define "content"}}
+<form class="form-inline" action="/dailylog">
+	<select id="classSection" name="classsection" class="span3">
+		<option value="">Select Class</option>
+		{{$cs := .ClassSection}}
+		{{range .CG}}
+		{{$class := .Class}}
+		<optgroup label="{{.Class}}">
+			{{range .Sections}}
+			<option value="{{$class}}|{{.}}"
+			{{if equal $cs (printf "%s|%s" $class .)}} selected="selected"{{end}}
+			>{{$class}}{{.}}</option>
+			{{end}}
+		</optgroup>
+		{{end}}
+	</select>
+	<button type="submit" class="btn">Select</button>
+</form>
+<div>
+	<table class="table table-bordered table-condensed">
+		<thead>
+			<tr>
+				<th scope="col">Student Name</th>
+				<th scope="col">Class</th>
+				<th scope="col">Options</th>
+			</tr>
+		</thead>
+		<tbody>
+			{{range .S}}
+			<tr>
+				<td>{{.Name}}</td>
+				<td>{{.Class}}{{.Section}}</td>
+				<td><a class="btn btn-small" href="/dailylog/student?id={{.ID}}">Daily Log</a></td>
+			</tr>
+			{{else}}
+			<tr class="info">
+				<td colspan="3"><p class="text-center">No students found.</p></td>
+			</tr>
+			{{end}}
+		</tbody>
+	</table>
+</div>
+{{end}}
