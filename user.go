@@ -13,6 +13,8 @@ type user struct {
 	Email string
 	Name  string
 	Roles roles
+
+	Student *studentType // nil if not student
 }
 
 type roles struct {
@@ -36,6 +38,7 @@ func getUser(c appengine.Context) (user, error) {
 
 	name := u.String()
 
+	var stup *studentType
 	var userRoles roles
 	if u.Admin {
 		userRoles = roles{
@@ -45,7 +48,8 @@ func getUser(c appengine.Context) (user, error) {
 			Teacher: true,
 		}
 	} else {
-		if isStudentEmail(c, u.Email) {
+		if stu, err := getStudentFromEmail(c, u.Email); err == nil {
+			stup = &stu
 			userRoles = roles{
 				Student: true,
 			}
@@ -65,6 +69,8 @@ func getUser(c appengine.Context) (user, error) {
 		Email: u.Email,
 		Name:  name,
 		Roles: userRoles,
+
+		Student: stup,
 	}
 
 	return user, nil

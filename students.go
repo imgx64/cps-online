@@ -19,7 +19,7 @@ import (
 	"time"
 )
 
-const studentPrefix = "S"
+const studentPrefix = "cps"
 
 const schoolDomain = "cps-bh.com"
 
@@ -90,6 +90,7 @@ func getStudents(c appengine.Context, enabled bool, classSection string) ([]stud
 }
 
 func (stu *studentType) validate() error {
+	stu.ID = strings.ToLower(stu.ID)
 	if stu.ID != "" && !strings.HasPrefix(stu.ID, studentPrefix) {
 		return fmt.Errorf("Invalid student ID: %s", stu.ID)
 	}
@@ -192,24 +193,22 @@ func getStudentsAncestor(c appengine.Context) (*datastore.Key, error) {
 	return key, nil
 }
 
-func isStudentEmail(c appengine.Context, email string) bool {
+func getStudentFromEmail(c appengine.Context, email string) (studentType, error) {
+	email = strings.ToLower(email)
 	parts := strings.Split(email, "@")
 	if len(parts) != 2 || parts[1] != schoolDomain {
-		// invalid email
-		return false
+		return studentType{}, fmt.Errorf("Invalid email: %s", email)
 	}
 	user := parts[0]
 	if !strings.HasPrefix(user, studentPrefix) {
-		// not a student
-		return false
+		return studentType{}, fmt.Errorf("Not a student")
 	}
-	_, err := getStudent(c, user)
+	stu, err := getStudent(c, user)
 	if err != nil {
-		// student does not exist
-		return false
+		return studentType{}, err
 	}
 
-	return true
+	return stu, nil
 }
 
 func init() {
@@ -501,17 +500,17 @@ func studentsImportHandler(w http.ResponseWriter, r *http.Request) {
 
 	if len(errors) == 0 {
 		// no errors
-		http.Redirect(w, r, "/employees", http.StatusFound)
+		http.Redirect(w, r, "/students", http.StatusFound)
 		return
 	}
 
-	msg := bytes.NewBuffer([]byte("The following errors were found: "))
+	msg := bytes.NewBufferString("The following errors were found: ")
 	for _, err := range errors {
 		fmt.Fprintf(msg, "%s,", err)
 	}
 	message.Msg = msg.String()
-	if err := render(w, r, "employeesimport", message); err != nil {
-		c.Errorf("Could not render template employeesimport: %s", err)
+	if err := render(w, r, "studentsimport", message); err != nil {
+		c.Errorf("Could not render template studentsimport: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}

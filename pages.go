@@ -41,13 +41,11 @@ var access = map[string]roles{
 	"/marks":      teacherRole,
 	"/marks/save": teacherRole,
 	"/upload":     teacherRole,
-	"/attendance": teacherRole,
-	"/behavior":   teacherRole,
+	"/dailylog":   teacherRole,
 
-	"/reportcard":     studentRole,
-	"/documents":      studentRole,
-	"/viewattendance": studentRole,
-	"/viewbehavior":   studentRole,
+	"/reportcard":   studentRole,
+	"/documents":    studentRole,
+	"/viewdailylog": studentRole,
 }
 
 func accessHandler(f func(w http.ResponseWriter, r *http.Request)) func(w http.ResponseWriter, r *http.Request) {
@@ -80,13 +78,11 @@ var pages = []link{
 
 	{Name: "Enter Marks", URL: "/marks"},
 	//{Name: "Upload documents", URL: "/upload"},
-	//{Name: "Attendance", URL: "/attendance"},
-	//{Name: "Behavior", URL: "/behavior"},
+	{Name: "Daily Log", URL: "/dailylog"},
 
-	//{Name: "Reportcard", URL: "/reportcard"},
+	{Name: "Reportcard", URL: "/reportcard"},
 	//{Name: "Download Documents", URL: "/documents"},
-	//{Name: "Attendance", URL: "/viewattendance"},
-	//{Name: "Behavior", URL: "/viewbehavior"},
+	{Name: "Daily Log", URL: "/viewdailylog"},
 }
 
 func canAccess(userRoles roles, url string) bool {

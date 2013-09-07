@@ -5,6 +5,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"math"
 	"strconv"
@@ -36,7 +37,7 @@ var terms = []Term{
 type termType uint
 
 const (
-	Quarter termType = iota
+	Quarter termType = iota + 1
 	Semester
 	EndOfYear
 )
@@ -144,12 +145,36 @@ type colDescription struct {
 
 type studentMarks map[Term][]float64
 
-// bestQuizzes returns the sum of all values except the smallest value
-func bestQuizzes(marks []float64) float64 {
+// sumMarks sums all values, and if one of them is negZero, returns negZero
+func sumMarks(marks ...float64) float64 {
+	var total float64
+	for _, v := range marks {
+		if math.Signbit(v) {
+			return negZero
+		}
+		total += v
+	}
+	return total
+}
+
+// sumQuizzes returns the sum of all values except the smallest value
+// returns negZero if more than one value is negZero
+func sumQuizzes(marks ...float64) float64 {
 	var min, total float64
-	for _, f := range marks {
-		min = math.Min(min, f)
-		total += f
+	nNegZero := 0
+	for i, v := range marks {
+		if i == 0 {
+			min = v
+		} else {
+			min = math.Min(min, v)
+		}
+		total += v
+		if math.Signbit(v) {
+			nNegZero++
+		}
+	}
+	if nNegZero > 1 {
+		return negZero
 	}
 	return total - min
 }
@@ -157,6 +182,8 @@ func bestQuizzes(marks []float64) float64 {
 type gradingSystem interface {
 	description(term Term) []colDescription
 	evaluate(term Term, marks studentMarks) error
+	get100(term Term, marks studentMarks) float64
+	ready(term Term, marks studentMarks) bool
 }
 
 // class -> subject -> gradingSystem
@@ -215,6 +242,10 @@ func init() {
 		gsMap["Behavior"] = behaviorGradingSystem{}
 		gradingSystems[class] = gsMap
 	}
+}
+
+func getGradingSystem(class, subject string) gradingSystem {
+	return gradingSystems[class][subject]
 }
 
 // genericGradingSystem is used for most subjects:
@@ -294,10 +325,10 @@ func (ggs genericGradingSystem) evaluate(term Term, marks studentMarks) (err err
 
 	if term.Typ == Quarter {
 		// Best 5 Quizzes
-		m[9] = bestQuizzes(m[3:9])
+		m[9] = sumQuizzes(m[3:9]...)
 
 		// Quarter mark
-		m[11] = m[0] + m[1] + m[2] + m[9] + m[10]
+		m[11] = sumMarks(m[0], m[1], m[2], m[9], m[10])
 
 		// Quarter %
 		m[12] = m[11] * ggs.quarterWeight / 100.0
@@ -313,20 +344,37 @@ func (ggs genericGradingSystem) evaluate(term Term, marks studentMarks) (err err
 		q1Mark := marks[Term{Quarter, q1}][12]
 		q2Mark := marks[Term{Quarter, q2}][12]
 
-		m[2] = m[1] + q1Mark + q2Mark
+		m[2] = sumMarks(m[1], q1Mark, q2Mark)
 	} else if term.Typ == EndOfYear {
 		ggs.evaluate(Term{Semester, 1}, marks)
 		ggs.evaluate(Term{Semester, 2}, marks)
 		m[0] = marks[Term{Semester, 1}][2] / 2.0
 		m[1] = marks[Term{Semester, 2}][2] / 2.0
 
-		m[2] = m[0] + m[1]
+		m[2] = sumMarks(m[0], m[1])
 	} else {
 		panic(fmt.Sprintf("Invalid term type: %d", term.Typ))
 	}
 
 	marks[term] = m
 	return
+}
+
+func (ggs genericGradingSystem) get100(term Term, marks studentMarks) float64 {
+	m := marks[term]
+	if term.Typ == Quarter {
+		return m[len(m)-2]
+	} else if term.Typ == Semester {
+		return m[2]
+	} else if term.Typ == EndOfYear {
+		return m[2]
+	}
+	panic(fmt.Sprintf("Invalid term type: %d", term.Typ))
+}
+
+func (ggs genericGradingSystem) ready(term Term, marks studentMarks) bool {
+	m := marks[term]
+	return math.Signbit(m[len(m)-1])
 }
 
 // peGradingSystem is used for P.E.
@@ -392,20 +440,37 @@ func (pgs peGradingSystem) evaluate(term Term, marks studentMarks) (err error) {
 		q1Mark := marks[Term{Quarter, q1}][0] / 2.0
 		q2Mark := marks[Term{Quarter, q2}][0] / 2.0
 
-		m[0] = q1Mark + q2Mark
+		m[0] = sumMarks(q1Mark, q2Mark)
 	} else if term.Typ == EndOfYear {
 		pgs.evaluate(Term{Semester, 1}, marks)
 		pgs.evaluate(Term{Semester, 2}, marks)
 		m[0] = marks[Term{Semester, 1}][0] / 2.0
 		m[1] = marks[Term{Semester, 2}][0] / 2.0
 
-		m[2] = m[0] + m[1]
+		m[2] = sumMarks(m[0], m[1])
 	} else {
 		panic(fmt.Sprintf("Invalid term type: %d", term.Typ))
 	}
 
 	marks[term] = m
 	return
+}
+
+func (pgs peGradingSystem) get100(term Term, marks studentMarks) float64 {
+	m := marks[term]
+	if term.Typ == Quarter {
+		return m[0]
+	} else if term.Typ == Semester {
+		return m[0]
+	} else if term.Typ == EndOfYear {
+		return m[2]
+	}
+	panic(fmt.Sprintf("Invalid term type: %d", term.Typ))
+}
+
+func (pgs peGradingSystem) ready(term Term, marks studentMarks) bool {
+	m := marks[term]
+	return math.Signbit(m[len(m)-1])
 }
 
 // simpleGradingSystem contains a number of columns that are simply added
@@ -510,10 +575,7 @@ func (sgs simpleGradingSystem) evaluate(term Term, marks studentMarks) (err erro
 
 	l := len(desc)
 	if term.Typ == Quarter {
-		var sum float64
-		for i := 0; i < l-2; i++ {
-			sum += m[i]
-		}
+		sum := sumMarks(m[0 : l-2]...)
 		m[l-2] = sum
 		m[l-1] = sum * sgs.quarterWeight / 100.0
 	} else if term.Typ == Semester {
@@ -528,14 +590,14 @@ func (sgs simpleGradingSystem) evaluate(term Term, marks studentMarks) (err erro
 		q1Mark := marks[Term{Quarter, q1}][l-2]
 		q2Mark := marks[Term{Quarter, q2}][l-2]
 
-		m[2] = m[1] + q1Mark + q2Mark
+		m[2] = sumMarks(m[1], q1Mark, q2Mark)
 	} else if term.Typ == EndOfYear {
 		sgs.evaluate(Term{Semester, 1}, marks)
 		sgs.evaluate(Term{Semester, 2}, marks)
 		m[0] = marks[Term{Semester, 1}][0] / 2.0
 		m[1] = marks[Term{Semester, 2}][0] / 2.0
 
-		m[2] = m[0] + m[2]
+		m[2] = sumMarks(m[0], m[1])
 	} else {
 		panic(fmt.Sprintf("Invalid term type: %d", term.Typ))
 	}
@@ -544,30 +606,48 @@ func (sgs simpleGradingSystem) evaluate(term Term, marks studentMarks) (err erro
 	return
 }
 
-// behaviorGradingSystem contains a number of columns that are simply added
-// varies from subject to subject
+func (sgs simpleGradingSystem) get100(term Term, marks studentMarks) float64 {
+	m := marks[term]
+	if term.Typ == Quarter {
+		return m[len(m)-2]
+	} else if term.Typ == Semester {
+		return m[2]
+	} else if term.Typ == EndOfYear {
+		return m[2]
+	}
+	panic(fmt.Sprintf("Invalid term type: %d", term.Typ))
+}
+
+func (sgs simpleGradingSystem) ready(term Term, marks studentMarks) bool {
+	m := marks[term]
+	return math.Signbit(m[len(m)-1])
+}
+
+// behaviorGradingSystem contains behavrior. There are no calculations to make
 type behaviorGradingSystem struct {
+}
+
+var behaviorDesc = []colDescription{
+	{"Follows school guidelines for safe and appropriate behaviour", 4, true},
+	{"Demonstrates courtesy and respect", 4, true},
+	{"Listens and responds", 4, true},
+	{"Strives for quality work", 4, true},
+	{"Shows initiative / is a self - starter", 4, true},
+	{"Participates enthusiastically in activities", 4, true},
+	{"Uses time efficiently and appropriately", 4, true},
+	{"Completes class work on time ", 4, true},
+	{"Contributes to discussion and group tasks", 4, true},
+	{"Works cooperatively with others", 4, true},
+	{"Works well independently", 4, true},
+	{"Returns complete homework", 4, true},
+	{"Organizes shelf, materials and belongings ", 4, true},
+	{"Asks questions to clarify content", 4, true},
+	{"Clearly communicates to teachers ", 4, true},
 }
 
 func (behaviorGradingSystem) description(term Term) []colDescription {
 	if term.Typ == Quarter {
-		return []colDescription{
-			{"Follows school guidelines for safe and appropriate behaviour", 4, true},
-			{"Demonstrates courtesy and respect", 4, true},
-			{"Listens and responds", 4, true},
-			{"Strives for quality work", 4, true},
-			{"Shows initiative / is a self - starter", 4, true},
-			{"Participates enthusiastically in activities", 4, true},
-			{"Uses time efficiently and appropriately", 4, true},
-			{"Completes class work on time ", 4, true},
-			{"Contributes to discussion and group tasks", 4, true},
-			{"Works cooperatively with others", 4, true},
-			{"Works well independently", 4, true},
-			{"Returns complete homework", 4, true},
-			{"Organizes shelf, materials and belongings ", 4, true},
-			{"Asks questions to clarify content", 4, true},
-			{"Clearly communicates to teachers ", 4, true},
-		}
+		return behaviorDesc
 	} else if term.Typ == Semester || term.Typ == EndOfYear {
 		return nil
 	}
@@ -606,4 +686,105 @@ func (bgs behaviorGradingSystem) evaluate(term Term, marks studentMarks) (err er
 
 	marks[term] = m
 	return
+}
+
+func (bgs behaviorGradingSystem) get100(term Term, marks studentMarks) float64 {
+	if bgs.ready(term, marks) {
+		return 100.0
+	}
+	return negZero
+}
+
+func (bgs behaviorGradingSystem) ready(term Term, marks studentMarks) bool {
+	m := marks[term]
+	for _, v := range m {
+		if math.Signbit(v) {
+			// mark not entered
+			return false
+		}
+	}
+
+	return true
+}
+
+type letterType struct {
+	letter      string
+	description string
+	minMark     float64
+}
+
+type letterSystem []letterType
+
+var ABCDF = letterSystem{
+	{"A", "Excellent", 90.0},
+	{"B", "Good", 80.0},
+	{"C", "Satisfactory", 70.0},
+	{"D", "Needs Improvement", 60.0},
+	{"F", "Fail Insufficient", 0.0},
+}
+
+var OVSLU = letterSystem{
+	{"O", "Outstanding", 90.0},
+	{"V", "Very Good", 80.0},
+	{"S", "Satisfactory", 70.0},
+	{"L", "Limited Progress", 60.0},
+	{"U", "Unsatisfactory", 0.0},
+}
+
+func getLetterSystem(class string) letterSystem {
+	intClass, err := strconv.Atoi(class)
+	if err != nil {
+		// class is KG1, KG2, or SN
+		return OVSLU
+	} else {
+		if intClass <= 2 {
+			return OVSLU
+		} else {
+			// 3-12
+			return ABCDF
+		}
+	}
+
+}
+
+// String returns a description of the letter system
+func (ls letterSystem) String() string {
+	buf := new(bytes.Buffer)
+	previousMin := 100.0
+	for i, l := range ls {
+		if i > 0 {
+			fmt.Fprint(buf, " - ")
+		}
+		fmt.Fprintf(buf, "%s: %s (%.0f-%.0f)",
+			l.letter, l.description, l.minMark, previousMin)
+		previousMin = l.minMark
+	}
+	return buf.String()
+}
+
+func (ls letterSystem) getLetter(mark float64) string {
+	if math.Signbit(mark) {
+		return "N/A"
+	}
+
+	for _, l := range ls {
+		if mark > l.minMark {
+			return l.letter
+		}
+	}
+	// something wrong with the letterSystem
+	return "Error"
+}
+
+// subjectInAverage returns true if subject should be calculated in average
+func subjectInAverage(subject, class string) bool {
+	subjectsInAverage := map[string]bool{
+		"Arabic":         true,
+		"English":        true,
+		"Math":           true,
+		"Science":        true,
+		"Social Studies": true,
+		"Religion":       true,
+	}
+	return subjectsInAverage[subject]
 }

@@ -555,7 +555,7 @@ func employeesImportHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	msg := bytes.NewBuffer([]byte("The following errors were found: "))
+	msg := bytes.NewBufferString("The following errors were found: ")
 	for _, err := range errors {
 		fmt.Fprintf(msg, "%s,", err)
 	}

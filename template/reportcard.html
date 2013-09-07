@@ -1,0 +1,72 @@
+{{/*
+Copyright 2013 Ibrahim Ghazal. All rights reserved.
+Use of this source code is governed by a BSD-style
+license that can be found in the LICENSE file.
+*/}}
+
+{{define "title"}}View Reportcard{{end}}
+{{define "content"}}
+<form class="form-inline" action="/reportcard">
+	<select id="Term" name="Term" required="required" class="span3">
+		{{$term := .Term.Value}}
+		{{range .Terms}}
+		<option {{if equal .Value $term}}selected="selected"{{end}}
+		value="{{.Value}}">{{.}}</option>
+		{{end}}
+	</select>
+	<button type="submit" class="btn">Go</button>
+</form>
+{{if .Published}}
+<h1>{{.Term}} Reportcard</h1>
+<p><strong>Student Name:</strong> {{.Name}}</p>
+<p><strong>Class:</strong> {{.Class}}{{.Section}}</p>
+
+<div>
+	<h2>Academic Achievement</h2>
+	<table class="table table-bordered table-condensed">
+		<thead>
+			<tr>
+				<th scope="col">Subject</th>
+				<th scope="col">Mark (100%)</th>
+				<th scope="col">Grade</th>
+			</tr>
+		</thead>
+		<tbody>
+		{{range .SubjectRows}}
+			<tr>
+				<th scope="row">{{.Subject}}</th>
+				<td>{{if .InAverage}}{{mark .Mark}}{{else}}-{{end}}</td>
+				<td>{{.Letter}}</td>
+			</tr>
+		{{end}}
+			<tr>
+				<th scope="row">Average mark</th>
+				<td>{{mark .Average}}</td>
+				<td></td>
+			</tr>
+		</tbody>
+	</table>
+	<p>{{.LetterDesc}}</p>
+</div>
+<div>
+	<h2>Behavior</h2>
+	<table class="table table-bordered table-condensed">
+		<tbody>
+		{{$behavior := .Behavior}}
+		{{range $i, $desc := .BehaviorDesc}}
+			<tr>
+				<td>{{$desc.Name}}</td>
+				<td>{{mark (index $behavior $i)}}</td>
+			</tr>
+		{{end}}
+		</tbody>
+	</table>
+</div>
+<div>
+	<h2>Remarks</h2>
+	<p>{{.Remark}}</p>
+</div>
+{{else}}
+	{{/* TODO: message if not published */}}
+{{end}}
+{{end}}

@@ -131,7 +131,7 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 	var studentRows []studentRow
 
 	if classHasSubject(class, subject) {
-		gs := gradingSystems[class][subject]
+		gs := getGradingSystem(class, subject)
 		cols = gs.description(term)
 		students, err := getStudents(c, true, classSection)
 		if err != nil {
@@ -229,9 +229,11 @@ func marksSaveHandler(w http.ResponseWriter, r *http.Request) {
 		"Subject":      []string{subject},
 	}
 	redirectURL := fmt.Sprintf("/marks?%s", urlValues.Encode())
+	// TODO: remove this line once memcache is used
+	redirectURL = "/marks"
 
 	if classHasSubject(class, subject) {
-		gs := gradingSystems[class][subject]
+		gs := getGradingSystem(class, subject)
 		cols := gs.description(term)
 		hasEditable := false
 		for _, col := range cols {
