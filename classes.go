@@ -32,8 +32,8 @@ var classes = []string{
 var sections = map[string][]string{
 	"KG1": {"A", "B", "C", "D"},
 	"KG2": {"A", "B", "C", "D"},
-	"1":   {"A", "B", "C"},
-	"2":   {"A", "B", "C"},
+	"1":   {"A", "B", "C", "D"},
+	"2":   {"A", "B", "C", "D"},
 	"3":   {"A", "B"},
 	"4":   {"A", "B", "C"},
 	"5":   {"A", "B", "C"},

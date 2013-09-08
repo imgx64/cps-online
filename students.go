@@ -110,8 +110,14 @@ func (stu *studentType) validate() error {
 		}
 	}
 
-	if stu.Class == "" || stu.Section == "" {
-		return fmt.Errorf("Invalid class: %s %s", stu.Class, stu.Section)
+	if stu.Class == "" {
+		return fmt.Errorf("Invalid class: %s", stu.Class)
+	}
+
+	if stu.Section == "" {
+		if len(sections[stu.Class]) != 1 || sections[stu.Class][0] != "" {
+		return fmt.Errorf("Invalid class and section: %s %s", stu.Class, stu.Section)
+		}
 	}
 
 	if stu.DateOfBirth == (time.Time{}) {

@@ -314,15 +314,13 @@ func employeesSaveHandler(w http.ResponseWriter, r *http.Request) {
 
 	dateOfHiring, err := time.Parse("2006-01-02", f.Get("DateOfHiring"))
 	if err != nil {
-		c.Errorf("Invalid Date of Hiring: %s", err)
-		renderError(w, r, http.StatusInternalServerError)
-		return
+		// TODO: do something about error
+		dateOfHiring = time.Date(1900, 1, 1, 0, 0, 0, 0, time.Local)
 	}
 	dateOfBirth, err := time.Parse("2006-01-02", f.Get("DateOfBirth"))
 	if err != nil {
-		c.Errorf("Invalid Date of Birth: %s", err)
-		renderError(w, r, http.StatusInternalServerError)
-		return
+		// TODO: do something about error
+		dateOfBirth = time.Date(1900, 1, 1, 0, 0, 0, 0, time.Local)
 	}
 
 	// TODO: more checks
@@ -365,7 +363,7 @@ func employeesSaveHandler(w http.ResponseWriter, r *http.Request) {
 
 // used for CSV
 var employeeFields = []string{
-	"ID",
+	"EmployeeID",
 	"CPSEmail",
 	"Roles.Admin",
 	"Roles.HR",
@@ -499,14 +497,14 @@ func employeesImportHandler(w http.ResponseWriter, r *http.Request) {
 
 		doh, err := time.Parse("2006-01-02", record[11])
 		if err != nil {
-			errors = append(errors, fmt.Errorf("Error in row %d: %s", i, err))
-			continue
+			// TODO: do something about error
+			doh = time.Date(1900, 1, 1, 0, 0, 0, 0, time.Local)
 		}
 
 		dob, err := time.Parse("2006-01-02", record[16])
 		if err != nil {
-			errors = append(errors, fmt.Errorf("Error in row %d: %s", i, err))
-			continue
+			// TODO: do something about error
+			dob = time.Date(1900, 1, 1, 0, 0, 0, 0, time.Local)
 		}
 
 		emp.ID = intID
@@ -523,7 +521,7 @@ func employeesImportHandler(w http.ResponseWriter, r *http.Request) {
 		emp.ArabicName = record[7]
 		emp.Gender = record[8]
 		emp.Type = record[9]
-		emp.JobDescription = record[9]
+		emp.JobDescription = record[10]
 		emp.DateOfHiring = doh
 		emp.Qualifications = record[12]
 		emp.Nationality = record[13]
