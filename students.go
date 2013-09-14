@@ -7,8 +7,8 @@ package main
 import (
 	"appengine"
 	"appengine/datastore"
-	"bytes"
 
+	"bytes"
 	"encoding/csv"
 	"fmt"
 	"io"
@@ -16,6 +16,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -65,6 +66,9 @@ func getStudents(c appengine.Context, enabled bool, classSection string) ([]stud
 	}
 	q := datastore.NewQuery("student").Ancestor(akey).Filter("Enabled =", enabled)
 	if classSection == "" {
+		return nil, nil
+	}
+	if classSection == "all" {
 		classSection = "|"
 	}
 	cs := strings.Split(classSection, "|")
@@ -187,7 +191,17 @@ func (stu *studentType) save(c appengine.Context) error {
 	return nil
 }
 
+var studentsAncestorLock sync.Mutex
+var studentsAncestor *datastore.Key
+
 func getStudentsAncestor(c appengine.Context) (*datastore.Key, error) {
+	studentsAncestorLock.Lock()
+	defer studentsAncestorLock.Unlock()
+
+	if studentsAncestor != nil {
+		return studentsAncestor, nil
+	}
+
 	key := datastore.NewKey(c, "ancestor", "student", 0, nil)
 	err := datastore.Get(c, key, &struct{}{})
 
@@ -196,6 +210,7 @@ func getStudentsAncestor(c appengine.Context) (*datastore.Key, error) {
 	} else if err != nil {
 		return nil, err
 	}
+	studentsAncestor = key
 	return key, nil
 }
 
@@ -537,7 +552,7 @@ func studentsExportHandler(w http.ResponseWriter, r *http.Request) {
 		filename = fmt.Sprintf("Students-%s", time.Now().Format("2006-01-02"))
 		var err error
 		enabled := r.Form.Get("enabled")
-		classSection := r.Form.Get("type")
+		classSection := r.Form.Get("classsection")
 
 		students, err = getStudents(c, enabled != "no", classSection)
 		if err != nil {

@@ -69,7 +69,7 @@ func getEmployee(c appengine.Context, id string) (employeeType, error) {
 
 func getEmployees(c appengine.Context, enabled bool, typ string) ([]employeeType, error) {
 	q := datastore.NewQuery("employee").Filter("Enabled =", enabled)
-	if typ != "" {
+	if typ != "all" {
 		q = q.Filter("Type =", typ)
 	}
 	q = q.Order("Type")
