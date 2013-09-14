@@ -116,7 +116,7 @@ func (stu *studentType) validate() error {
 
 	if stu.Section == "" {
 		if len(sections[stu.Class]) != 1 || sections[stu.Class][0] != "" {
-		return fmt.Errorf("Invalid class and section: %s %s", stu.Class, stu.Section)
+			return fmt.Errorf("Invalid class and section: %s %s", stu.Class, stu.Section)
 		}
 	}
 

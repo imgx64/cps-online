@@ -1,0 +1,64 @@
+{{/*
+Copyright 2013 Ibrahim Ghazal. All rights reserved.
+Use of this source code is governed by a BSD-style
+license that can be found in the LICENSE file.
+*/}}
+
+{{define "title"}}Download Documents{{end}}
+{{define "content"}}
+<div>
+	<h2>Documents for grade {{.Class}}</h2>
+	<table class="table table-bordered table-condensed">
+		<thead>
+			<tr>
+				<th scope="col">Upload Date</th>
+				<th scope="col">Class</th>
+				<th scope="col">Title</th>
+				<th scope="col">Options</th>
+			</tr>
+		</thead>
+		<tbody>
+			{{range .ClassDocuments}}
+			<tr>
+				<td>{{formatDate .UploadDate}}</td>
+				<td>{{if .Class}}{{.Class}}{{else}}All{{end}}</td>
+				<td>{{.Title}}</td>
+				<td><a class="btn btn-small" href="/download?file={{.BlobKey}}">Download</a></td>
+			</tr>
+			{{else}}
+			<tr class="info">
+				<td colspan="4"><p class="text-center">No documents found.</p></td>
+			</tr>
+			{{end}}
+		</tbody>
+	</table>
+</div>
+<div>
+	<h2>Documents for all students</h2>
+	<table class="table table-bordered table-condensed">
+		<thead>
+			<tr>
+				<th scope="col">Upload Date</th>
+				<th scope="col">Class</th>
+				<th scope="col">Title</th>
+				<th scope="col">Options</th>
+			</tr>
+		</thead>
+		<tbody>
+			{{range .AllDocuments}}
+			<tr>
+				<td>{{formatDate .UploadDate}}</td>
+				<td>{{if .Class}}{{.Class}}{{else}}All{{end}}</td>
+				<td>{{.Title}}</td>
+				<td><a class="btn btn-small" href="/download?file={{.BlobKey}}">Download</a></td>
+			</tr>
+			{{else}}
+			<tr class="info">
+				<td colspan="4"><p class="text-center">No documents found.</p></td>
+			</tr>
+			{{end}}
+		</tbody>
+	</table>
+</div>
+{{end}}
+
