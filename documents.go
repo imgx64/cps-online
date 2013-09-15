@@ -11,6 +11,8 @@ import (
 
 	"net/http"
 	"net/url"
+	"path"
+	"strings"
 	"time"
 )
 
@@ -20,7 +22,9 @@ func init() {
 
 	http.HandleFunc("/documents", accessHandler(documentsHandler))
 
-	http.HandleFunc("/download", downloadHandler) // no accessHandler
+	// no accessHander
+	// has trailing slash so that files are downloaded by name
+	http.HandleFunc("/download/", downloadHandler)
 }
 
 type documentType struct {
@@ -28,7 +32,8 @@ type documentType struct {
 	Class      string
 	UploadDate time.Time
 
-	BlobKey appengine.BlobKey
+	Filename string
+	BlobKey  appengine.BlobKey
 }
 
 func getDocuments(c appengine.Context, class string) ([]documentType, error) {
@@ -107,9 +112,11 @@ func uploadDoHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	filename := file[0].Filename
+
 	title := formData.Get("title")
 	if title == "" {
-		title = file[0].Filename
+		title = strings.TrimSuffix(filename, path.Ext(filename))
 	}
 	class := formData.Get("class")
 	uploadDate := time.Now()
@@ -119,6 +126,7 @@ func uploadDoHandler(w http.ResponseWriter, r *http.Request) {
 		Title:      title,
 		Class:      class,
 		UploadDate: uploadDate,
+		Filename:   filename,
 		BlobKey:    blobKey,
 	}
 
@@ -182,5 +190,5 @@ func documentsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func downloadHandler(w http.ResponseWriter, r *http.Request) {
-	blobstore.Send(w, appengine.BlobKey(r.FormValue("file")))
+	blobstore.Send(w, appengine.BlobKey(r.FormValue("blobKey")))
 }
