@@ -10,60 +10,70 @@ license that can be found in the LICENSE file.
 	<fieldset>
 		<legend>Employee Details</legend>
 		<input type="hidden" name="ID" value="{{.E.ID}}">
-		<div class="control-group">
-			<label class="control-label" for="CPSEmail">CPS Email</label>
-			<div class="controls">
+		<div class="form-group">
+			<label class="col-md-2 control-label" for="CPSEmail">CPS Email</label>
+			<div class="col-md-5">
 				<input type="text" id="CPSEmail" name="CPSEmail"
-				value="{{.E.CPSEmail}}" {{if not .Admin}}disabled="disabled"{{end}}>
-				<span class="help-inline">Set by the administrator.</span>
-			</div>
-		</div>
-		<div class="control-group">
-			<label class="control-label">Roles</label>
-			<div class="controls form-inline">
-				<input type="checkbox" id="AdminRole" name="AdminRole"
-				{{if .E.Roles.Admin}}checked="checked"{{end}}
-				{{if not .Admin}}disabled="disabled"{{end}}>
-				<label for="AdminRole">Admin</label>
-
-				<input type="checkbox" id="HRRole" name="HRRole"
-				{{if .E.Roles.HR}}checked="checked"{{end}}
-				{{if not .Admin}}disabled="disabled"{{end}}>
-				<label for="HRRole">HR</label>
-
-				<input type="checkbox" id="TeacherRole" name="TeacherRole"
-				{{if .E.Roles.Teacher}}checked="checked"{{end}}
-				{{if not .Admin}}disabled="disabled"{{end}}>
-				<label for="TeacherRole">Teacher</label>
+				value="{{.E.CPSEmail}}" {{if not .Admin}}disabled="disabled"{{end}} class="form-control">
 				<span class="help-block">Set by the administrator.</span>
 			</div>
 		</div>
-		<div class="control-group">
-			<label class="control-label" for="Enabled">Enabled</label>
-			<div class="controls">
-				<input type="checkbox" id="Enabled" name="Enabled"
-					{{if .E.Enabled}}checked="checked"{{end}}>
-				<span class="help-inline"></span>
+		<div class="form-group">
+			<label class="col-md-2 control-label">Roles</label>
+			<div class="col-md-5">
+				<label class="checkbox-inline">
+					<input type="checkbox" id="AdminRole" name="AdminRole"
+					{{if .E.Roles.Admin}}checked="checked"{{end}}
+					{{if not .Admin}}disabled="disabled"{{end}}>
+					Admin
+				</label>
+
+				<label class="checkbox-inline">
+					<input type="checkbox" id="HRRole" name="HRRole"
+					{{if .E.Roles.HR}}checked="checked"{{end}}
+					{{if not .Admin}}disabled="disabled"{{end}}>
+					HR
+				</label>
+
+				<label class="checkbox-inline">
+					<input type="checkbox" id="TeacherRole" name="TeacherRole"
+					{{if .E.Roles.Teacher}}checked="checked"{{end}}
+					{{if not .Admin}}disabled="disabled"{{end}}>
+					Teacher
+				</label>
+
+				<span class="help-block">Set by the administrator.</span>
 			</div>
 		</div>
-		<div class="control-group">
-			<label class="control-label" for="Name">Name*</label>
-			<div class="controls">
-				<input type="text" id="Name" name="Name" value="{{.E.Name}}" required="required">
-				<span class="help-inline"></span>
+		<div class="form-group">
+			<label class="col-md-2 control-label" for="Enabled">Enabled</label>
+			<div class="col-md-5">
+				<label class="checkbox-inline">
+					<input type="checkbox" id="Enabled" name="Enabled"
+						{{if .E.Enabled}}checked="checked"{{end}}>
+					Enabled
+				</label>
+				<span class="help-block"></span>
 			</div>
 		</div>
-		<div class="control-group">
-			<label class="control-label" for="ArabicName">Arabic Name</label>
-			<div class="controls">
-				<input type="text" id="ArabicName" name="ArabicName" value="{{.E.ArabicName}}">
-				<span class="help-inline"></span>
+		<div class="form-group">
+			<label class="col-md-2 control-label" for="Name">Name*</label>
+			<div class="col-md-5">
+				<input type="text" id="Name" name="Name" value="{{.E.Name}}" required="required" class="form-control">
+				<span class="help-block"></span>
 			</div>
 		</div>
-		<div class="control-group">
-			<label class="control-label" for="Gender">Gender</label>
-			<div class="controls">
-				<select id="Gender" name="Gender">
+		<div class="form-group">
+			<label class="col-md-2 control-label" for="ArabicName">Arabic Name</label>
+			<div class="col-md-5">
+				<input type="text" id="ArabicName" name="ArabicName" value="{{.E.ArabicName}}" class="form-control">
+				<span class="help-block"></span>
+			</div>
+		</div>
+		<div class="form-group">
+			<label class="col-md-2 control-label" for="Gender">Gender</label>
+			<div class="col-md-5">
+				<select id="Gender" name="Gender" class="form-control">
 					<option></option>
 					<option value="M"
 					{{if equal .E.Gender "M"}}selected="selected"{{end}}
@@ -72,13 +82,13 @@ license that can be found in the LICENSE file.
 					{{if equal .E.Gender "F"}}selected="selected"{{end}}
 					>Female</option>
 				</select>
-				<span class="help-inline"></span>
+				<span class="help-block"></span>
 			</div>
 		</div>
-		<div class="control-group">
-			<label class="control-label" for="Type">Type*</label>
-			<div class="controls">
-				<select id="Type" name="Type" required="required">
+		<div class="form-group">
+			<label class="col-md-2 control-label" for="Type">Type*</label>
+			<div class="col-md-5">
+				<select id="Type" name="Type" required="required" class="form-control">
 					<option></option>
 					{{$type := .E.Type}}
 					{{range .T}}
@@ -86,34 +96,34 @@ license that can be found in the LICENSE file.
 					value="{{.}}">{{.}}</option>
 					{{end}}
 				</select>
-				<span class="help-inline"></span>
+				<span class="help-block"></span>
 			</div>
 		</div>
-		<div class="control-group">
-			<label class="control-label" for="JobDescription">Job Description</label>
-			<div class="controls">
-				<input type="text" id="JobDescription" name="JobDescription" value="{{.E.JobDescription}}">
-				<span class="help-inline"></span>
+		<div class="form-group">
+			<label class="col-md-2 control-label" for="JobDescription">Job Description</label>
+			<div class="col-md-5">
+				<input type="text" id="JobDescription" name="JobDescription" value="{{.E.JobDescription}}" class="form-control">
+				<span class="help-block"></span>
 			</div>
 		</div>
-		<div class="control-group">
-			<label class="control-label" for="dateOfHiring">Date of Hiring*</label>
-			<div class="controls">
+		<div class="form-group">
+			<label class="col-md-2 control-label" for="dateOfHiring">Date of Hiring*</label>
+			<div class="col-md-5">
 				<input type="date" id="dateOfHiring" name="DateOfHiring" value="{{.E.DateOfHiring | formatDate}}"
-					required="required">
-				<span class="help-inline"></span>
+					required="required" class="form-control">
+				<span class="help-block"></span>
 			</div>
 		</div>
-		<div class="control-group">
-			<label class="control-label" for="Qualifications">Qualifications</label>
-			<div class="controls">
-				<textarea id="Qualifications" name="Qualifications" rows="5">{{.E.Qualifications}}</textarea>
-				<span class="help-inline"></span>
+		<div class="form-group">
+			<label class="col-md-2 control-label" for="Qualifications">Qualifications</label>
+			<div class="col-md-5">
+				<textarea id="Qualifications" name="Qualifications" rows="5" class="form-control">{{.E.Qualifications}}</textarea>
+				<span class="help-block"></span>
 			</div>
 		</div>
-		<div class="control-group">
-			<label class="control-label" for="Nationality">Nationality*</label>
-			<div class="controls">
+		<div class="form-group">
+			<label class="col-md-2 control-label" for="Nationality">Nationality*</label>
+			<div class="col-md-5">
 				<select id="Nationality" name="Nationality" required="required">
 					<option></option>
 					{{$country := .E.Nationality}}
@@ -122,70 +132,70 @@ license that can be found in the LICENSE file.
 					value="{{.}}">{{.}}</option>
 					{{end}}
 				</select>
-				<span class="help-inline"></span>
+				<span class="help-block"></span>
 			</div>
 		</div>
-		<div class="control-group">
-			<label class="control-label" for="CPR">CPR Number*</label>
-			<div class="controls">
+		<div class="form-group">
+			<label class="col-md-2 control-label" for="CPR">CPR Number*</label>
+			<div class="col-md-5">
 				<input type="text" id="CPR" name="CPR" required="required"
-					pattern="^[0-9]{9}$" value="{{.E.CPR}}">
-				<span class="help-inline"></span>
+					pattern="^[0-9]{9}$" value="{{.E.CPR}}" class="form-control">
+				<span class="help-block"></span>
 			</div>
 		</div>
-		<div class="control-group">
-			<label class="control-label" for="Passport">Passport</label>
-			<div class="controls">
-				<input type="text" id="Passport" name="Passport" value="{{.E.Passport}}">
-				<span class="help-inline"></span>
+		<div class="form-group">
+			<label class="col-md-2 control-label" for="Passport">Passport</label>
+			<div class="col-md-5">
+				<input type="text" id="Passport" name="Passport" value="{{.E.Passport}}" class="form-control">
+				<span class="help-block"></span>
 			</div>
 		</div>
-		<div class="control-group">
-			<label class="control-label" for="dateOfBirth">Date of Birth*</label>
-			<div class="controls">
+		<div class="form-group">
+			<label class="col-md-2 control-label" for="dateOfBirth">Date of Birth*</label>
+			<div class="col-md-5">
 				<input type="date" id="dateOfBirth" name="DateOfBirth" value="{{.E.DateOfBirth | formatDate}}"
-					required="required">
-				<span class="help-inline"></span>
+					required="required" class="form-control">
+				<span class="help-block"></span>
 			</div>
 		</div>
-		<div class="control-group">
-			<label class="control-label" for="MobilePhone">Mobile Phone</label>
-			<div class="controls">
-				<input type="text" id="MobilePhone" name="MobilePhone" value="{{.E.MobilePhone}}">
-				<span class="help-inline"></span>
+		<div class="form-group">
+			<label class="col-md-2 control-label" for="MobilePhone">Mobile Phone</label>
+			<div class="col-md-5">
+				<input type="text" id="MobilePhone" name="MobilePhone" value="{{.E.MobilePhone}}" class="form-control">
+				<span class="help-block"></span>
 			</div>
 		</div>
-		<div class="control-group">
-			<label class="control-label" for="Address">Address</label>
-			<div class="controls">
-				<textarea id="Address" name="Address" rows="5">{{.E.Address}}</textarea>
-				<span class="help-inline"></span>
+		<div class="form-group">
+			<label class="col-md-2 control-label" for="Address">Address</label>
+			<div class="col-md-5">
+				<textarea id="Address" name="Address" rows="5" class="form-control">{{.E.Address}}</textarea>
+				<span class="help-block"></span>
 			</div>
 		</div>
-		<div class="control-group">
-			<label class="control-label" for="EmergencyPhone">Emergency Phone</label>
-			<div class="controls">
-				<input type="text" id="EmergencyPhone" name="EmergencyPhone" value="{{.E.EmergencyPhone}}">
-				<span class="help-inline"></span>
+		<div class="form-group">
+			<label class="col-md-2 control-label" for="EmergencyPhone">Emergency Phone</label>
+			<div class="col-md-5">
+				<input type="text" id="EmergencyPhone" name="EmergencyPhone" value="{{.E.EmergencyPhone}}" class="form-control">
+				<span class="help-block"></span>
 			</div>
 		</div>
-		<div class="control-group">
-			<label class="control-label" for="HealthInfo">Health Information</label>
-			<div class="controls">
-				<textarea id="HealthInfo" name="HealthInfo" rows="5">{{.E.HealthInfo}}</textarea>
-				<span class="help-inline"></span>
+		<div class="form-group">
+			<label class="col-md-2 control-label" for="HealthInfo">Health Information</label>
+			<div class="col-md-5">
+				<textarea id="HealthInfo" name="HealthInfo" rows="5" class="form-control">{{.E.HealthInfo}}</textarea>
+				<span class="help-block"></span>
 			</div>
 		</div>
-		<div class="control-group">
-			<label class="control-label" for="Comments">Comments</label>
-			<div class="controls">
-				<textarea id="Comments" name="Comments" rows="5">{{.E.Comments}}</textarea>
-				<span class="help-inline"></span>
+		<div class="form-group">
+			<label class="col-md-2 control-label" for="Comments">Comments</label>
+			<div class="col-md-5">
+				<textarea id="Comments" name="Comments" rows="5" class="form-control">{{.E.Comments}}</textarea>
+				<span class="help-block"></span>
 			</div>
 		</div>
 		<div class="form-actions">
-			<button type="submit" class="btn btn-primary">Save</button>
-			<button type="button" class="btn cps-go-back">Cancel</button>
+			<button type="submit" class="btn btn-default btn-primary">Save</button>
+			<button type="button" class="btn btn-default cps-go-back">Cancel</button>
 		</div>
 	</fieldset>
 </form>

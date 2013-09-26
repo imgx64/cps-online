@@ -7,34 +7,40 @@ license that can be found in the LICENSE file.
 {{define "title"}}Students{{end}}
 {{define "content"}}
 <form class="form-inline" action="/students">
-	<select id="enabled" name="enabled" class="span2">
-		<option value="">Enabled</option>
-		<option value="no"
-		{{if equal .Enabled "no"}}selected="selected"{{end}}>Disabled</option>
-	</select>
-	<select id="classSection" name="classsection" class="span2">
-		<option value="all">All classes</option>
-		{{$cs := .ClassSection}}
-		{{range .CG}}
-		{{$class := .Class}}
-		<optgroup label="{{.Class}}">
-			{{if (not (equal (len .Sections) 1))}}
-			<option value="{{.Class}}|"
-			{{if equal $cs (printf "%s|%s" $class "")}} selected="selected"{{end}}
-			>{{$class}}</option>
+	<div class="form-group">
+		<select id="enabled" name="enabled" class="form-control col-md-2">
+			<option value="">Enabled</option>
+			<option value="no"
+			{{if equal .Enabled "no"}}selected="selected"{{end}}>Disabled</option>
+		</select>
+	</div>
+	<div class="form-group">
+		<select id="classSection" name="classsection" class="form-control col-md-2">
+			<option value="all">All classes</option>
+			{{$cs := .ClassSection}}
+			{{range .CG}}
+			{{$class := .Class}}
+			<optgroup label="{{.Class}}">
+				{{if (not (equal (len .Sections) 1))}}
+				<option value="{{.Class}}|"
+				{{if equal $cs (printf "%s|%s" $class "")}} selected="selected"{{end}}
+				>{{$class}}</option>
+				{{end}}
+				{{range .Sections}}
+				<option value="{{$class}}|{{.}}"
+				{{if equal $cs (printf "%s|%s" $class .)}} selected="selected"{{end}}
+				>{{$class}}{{.}}</option>
+				{{end}}
+			</optgroup>
 			{{end}}
-			{{range .Sections}}
-			<option value="{{$class}}|{{.}}"
-			{{if equal $cs (printf "%s|%s" $class .)}} selected="selected"{{end}}
-			>{{$class}}{{.}}</option>
-			{{end}}
-		</optgroup>
-		{{end}}
-	</select>
-	<button type="submit" class="btn">Filter</button>
+		</select>
+	</div>
+	<div class="form-group">
+		<button type="submit" class="btn btn-default">Filter</button>
+	</div>
 </form>
-<p>
-	<a class="btn btn-primary btn-large" href="/students/details?id=new">Add Student</a>
+<p class="spacer">
+	<a class="btn btn-default btn-primary btn-lg" href="/students/details?id=new">Add Student</a>
 </p>
 <div>
 	<table class="table table-bordered table-condensed">
@@ -52,7 +58,7 @@ license that can be found in the LICENSE file.
 				<td>{{.ID}}</td>
 				<td>{{.Name}}</td>
 				<td>{{.Class}}{{.Section}}</td>
-				<td><a class="btn btn-small" href="/students/details?id={{.ID}}">Edit</a></td>
+				<td><a class="btn btn-default btn-sm" href="/students/details?id={{.ID}}">Edit</a></td>
 			</tr>
 			{{else}}
 			<tr class="info">
@@ -62,8 +68,8 @@ license that can be found in the LICENSE file.
 		</tbody>
 	</table>
 	<div>
-		<a class="btn" href="/students/import">Import Students</a>
-		<a class="btn" href="/students/export?enabled={{.Enabled}}&classsection={{.ClassSection}}">Export Students</a>
+		<a class="btn btn-default" href="/students/import">Import Students</a>
+		<a class="btn btn-default" href="/students/export?enabled={{.Enabled}}&classsection={{.ClassSection}}">Export Students</a>
 	</div>
 </div>
 {{end}}

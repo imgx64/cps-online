@@ -339,8 +339,8 @@ func viewDailylogDayHandler(w http.ResponseWriter, r *http.Request) {
 		dailylog,
 	}
 
-	if err := render(w, r, "viewdailyloday", data); err != nil {
-		c.Errorf("Could not render template viewdailyloday: %s", err)
+	if err := render(w, r, "viewdailylogday", data); err != nil {
+		c.Errorf("Could not render template viewdailylogday: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}

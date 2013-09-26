@@ -12,17 +12,17 @@ license that can be found in the LICENSE file.
 		<legend>Daily Log for {{formatDate .Date}}</legend>
 		<input type="hidden" name="ID" value={{.StudentID}}>
 		<input type="hidden" name="Date" value={{formatDate .Date}}>
-		<div class="control-group">
-			<label class="control-label" for="Behavior">Behavior</label>
-			<div class="controls">
-				<textarea id="Behavior" name="Behavior" rows="5">{{.Behavior}}</textarea>
-				<span class="help-inline"></span>
+		<div class="form-group">
+			<label class="col-md-2 control-label" for="Behavior">Behavior</label>
+			<div class="col-md-5">
+				<textarea id="Behavior" name="Behavior" rows="5" class="form-control">{{.Behavior}}</textarea>
+				<span class="help-block"></span>
 			</div>
 		</div>
-		<div class="control-group">
-			<label class="control-label" for="Attendance">Attendance</label>
-			<div class="controls">
-				<select id="Attendance" name="Attendance">
+		<div class="form-group">
+			<label class="col-md-2 control-label" for="Attendance">Attendance</label>
+			<div class="col-md-5">
+				<select id="Attendance" name="Attendance" class="form-control">
 					<option value="">Full attendance</option>
 					<option {{if equal .Attendance "Absent"}}selected="selected"{{end}}>
 						Absent
@@ -36,16 +36,16 @@ license that can be found in the LICENSE file.
 				</select>
 			</div>
 		</div>
-		<div class="control-group">
-			<label class="control-label" for="Details">Details/Excuse</label>
-			<div class="controls">
-				<textarea id="Details" name="Details" rows="5">{{.Details}}</textarea>
-				<span class="help-inline"></span>
+		<div class="form-group">
+			<label class="col-md-2 control-label" for="Details">Details/Excuse</label>
+			<div class="col-md-5">
+				<textarea id="Details" name="Details" rows="5" class="form-control">{{.Details}}</textarea>
+				<span class="help-block"></span>
 			</div>
 		</div>
 		<div class="form-actions">
-			<button type="submit" class="btn btn-primary">Save</button>
-			<button type="button" class="btn cps-go-back">Cancel</button>
+			<button type="submit" class="btn btn-default btn-primary">Save</button>
+			<button type="button" class="btn btn-default cps-go-back">Cancel</button>
 		</div>
 	</fieldset>
 </form>

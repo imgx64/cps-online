@@ -7,14 +7,18 @@ license that can be found in the LICENSE file.
 {{define "title"}}View Reportcard{{end}}
 {{define "content"}}
 <form class="form-inline" action="/reportcard">
-	<select id="Term" name="Term" required="required" class="span3">
-		{{$term := .Term.Value}}
-		{{range .Terms}}
-		<option {{if equal .Value $term}}selected="selected"{{end}}
-		value="{{.Value}}">{{.}}</option>
-		{{end}}
-	</select>
-	<button type="submit" class="btn">Go</button>
+	<div class="form-group">
+		<select id="Term" name="Term" required="required" class="form-control col-md-3">
+			{{$term := .Term.Value}}
+			{{range .Terms}}
+			<option {{if equal .Value $term}}selected="selected"{{end}}
+			value="{{.Value}}">{{.}}</option>
+			{{end}}
+		</select>
+	</div>
+	<div class="form-group">
+		<button type="submit" class="btn btn-default">Go</button>
+	</div>
 </form>
 {{if .Published}}
 <h1>{{.Term}} Reportcard</h1>

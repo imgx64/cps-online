@@ -9,39 +9,42 @@ license that can be found in the LICENSE file.
 <form class="form-horizontal" action="/students/save" method="POST">
 	<fieldset>
 		<legend>Student Details</legend>
-		<div class="control-group">
-			<label class="control-label" for="studentID">Student ID</label>
-			<div class="controls">
-				<input readonly="readonly" type="text" id="studentID" name="ID" value="{{.S.ID}}">
-				<span class="help-inline">Created automatically.</span>
+		<div class="form-group">
+			<label class="col-md-2 control-label" for="studentID">Student ID</label>
+			<div class="col-md-5">
+				<input readonly="readonly" type="text" id="studentID" name="ID" value="{{.S.ID}}" class="form-control">
+				<span class="help-block">Created automatically.</span>
 			</div>
 		</div>
-		<div class="control-group">
-			<label class="control-label" for="Enabled">Enabled</label>
-			<div class="controls">
-				<input type="checkbox" id="Enabled" name="Enabled"
-					{{if .S.Enabled}}checked="checked"{{end}}>
-				<span class="help-inline"></span>
+		<div class="form-group">
+			<label class="col-md-2 control-label" for="Enabled">Enabled</label>
+			<div class="col-md-5">
+				<label class="checkbox-inline">
+					<input type="checkbox" id="Enabled" name="Enabled"
+						{{if .S.Enabled}}checked="checked"{{end}}>
+					Enabled
+				</label>
+				<span class="help-block"></span>
 			</div>
 		</div>
-		<div class="control-group">
-			<label class="control-label" for="studentName">Student Name*</label>
-			<div class="controls">
-				<input type="text" id="studentName" name="Name" value="{{.S.Name}}" required="required">
-				<span class="help-inline"></span>
+		<div class="form-group">
+			<label class="col-md-2 control-label" for="studentName">Student Name*</label>
+			<div class="col-md-5">
+				<input type="text" id="studentName" name="Name" value="{{.S.Name}}" required="required" class="form-control">
+				<span class="help-block"></span>
 			</div>
 		</div>
-		<div class="control-group">
-			<label class="control-label" for="arabicName">Student Name in Arabic</label>
-			<div class="controls">
-				<input type="text" id="arabicName" name="ArabicName" value="{{.S.ArabicName}}">
-				<span class="help-inline"></span>
+		<div class="form-group">
+			<label class="col-md-2 control-label" for="arabicName">Student Name in Arabic</label>
+			<div class="col-md-5">
+				<input type="text" id="arabicName" name="ArabicName" value="{{.S.ArabicName}}" class="form-control">
+				<span class="help-block"></span>
 			</div>
 		</div>
-		<div class="control-group">
-			<label class="control-label" for="Gender">Gender</label>
-			<div class="controls">
-				<select id="Gender" name="Gender">
+		<div class="form-group">
+			<label class="col-md-2 control-label" for="Gender">Gender</label>
+			<div class="col-md-5">
+				<select id="Gender" name="Gender" class="form-control">
 					<option></option>
 					<option value="M"
 					{{if equal .S.Gender "M"}}selected="selected"{{end}}
@@ -50,13 +53,13 @@ license that can be found in the LICENSE file.
 					{{if equal .S.Gender "F"}}selected="selected"{{end}}
 					>Female</option>
 				</select>
-				<span class="help-inline"></span>
+				<span class="help-block"></span>
 			</div>
 		</div>
-		<div class="control-group">
-			<label class="control-label" for="classSection">Class*</label>
-			<div class="controls">
-				<select id="classSection" name="ClassSection" required="required" pattern="^.+$">
+		<div class="form-group">
+			<label class="col-md-2 control-label" for="classSection">Class*</label>
+			<div class="col-md-5">
+				<select id="classSection" name="ClassSection" required="required" pattern="^.+$" class="form-control">
 					<option></option>
 					{{$sclass := .S.Class}}
 					{{$ssection := .S.Section}}
@@ -71,21 +74,21 @@ license that can be found in the LICENSE file.
 					</optgroup>
 					{{end}}
 				</select>
-				<span class="help-inline"></span>
+				<span class="help-block"></span>
 			</div>
 		</div>
-		<div class="control-group">
-			<label class="control-label" for="dateOfBirth">Date of Birth*</label>
-			<div class="controls">
+		<div class="form-group">
+			<label class="col-md-2 control-label" for="dateOfBirth">Date of Birth*</label>
+			<div class="col-md-5">
 				<input type="date" id="dateOfBirth" name="DateOfBirth" value="{{.S.DateOfBirth | formatDate}}"
-					required="required">
-				<span class="help-inline"></span>
+					required="required" class="form-control">
+				<span class="help-block"></span>
 			</div>
 		</div>
-		<div class="control-group">
-			<label class="control-label" for="Nationality">Nationality*</label>
-			<div class="controls">
-				<select id="Nationality" name="Nationality">
+		<div class="form-group">
+			<label class="col-md-2 control-label" for="Nationality">Nationality*</label>
+			<div class="col-md-5">
+				<select id="Nationality" name="Nationality" class="form-control">
 					<option></option>
 					{{$country := .S.Nationality}}
 					{{range .C}}
@@ -93,55 +96,55 @@ license that can be found in the LICENSE file.
 					value="{{.}}">{{.}}</option>
 					{{end}}
 				</select>
-				<span class="help-inline"></span>
+				<span class="help-block"></span>
 			</div>
 		</div>
-		<div class="control-group">
-			<label class="control-label" for="CPR">CPR Number*</label>
-			<div class="controls">
+		<div class="form-group">
+			<label class="col-md-2 control-label" for="CPR">CPR Number*</label>
+			<div class="col-md-5">
 				<input type="text" id="CPR" name="CPR" required="required"
-					pattern="^[0-9]{9}$" value="{{.S.CPR}}">
-				<span class="help-inline"></span>
+					pattern="^[0-9]{9}$" value="{{.S.CPR}}" class="form-control">
+				<span class="help-block"></span>
 			</div>
 		</div>
-		<div class="control-group">
-			<label class="control-label" for="Passport">Passport Number</label>
-			<div class="controls">
-				<input type="text" id="Passport" name="Passport" value="{{.S.Passport}}">
-				<span class="help-inline"></span>
+		<div class="form-group">
+			<label class="col-md-2 control-label" for="Passport">Passport Number</label>
+			<div class="col-md-5">
+				<input type="text" id="Passport" name="Passport" value="{{.S.Passport}}" class="form-control">
+				<span class="help-block"></span>
 			</div>
 		</div>
-		<div class="control-group">
-			<label class="control-label" for="ParentInfo">Parent Information</label>
-			<div class="controls">
-				<textarea id="ParentInfo" name="ParentInfo" rows="5">{{.S.ParentInfo}}</textarea>
-				<span class="help-inline"></span>
+		<div class="form-group">
+			<label class="col-md-2 control-label" for="ParentInfo">Parent Information</label>
+			<div class="col-md-5">
+				<textarea id="ParentInfo" name="ParentInfo" rows="5" class="form-control">{{.S.ParentInfo}}</textarea>
+				<span class="help-block"></span>
 			</div>
 		</div>
-		<div class="control-group">
-			<label class="control-label" for="EmergencyPhone">Emergency Phone Number</label>
-			<div class="controls">
-				<input type="tel" id="EmergencyPhone" name="EmergencyPhone" value="{{.S.EmergencyPhone}}">
-				<span class="help-inline"></span>
+		<div class="form-group">
+			<label class="col-md-2 control-label" for="EmergencyPhone">Emergency Phone Number</label>
+			<div class="col-md-5">
+				<input type="tel" id="EmergencyPhone" name="EmergencyPhone" value="{{.S.EmergencyPhone}}" class="form-control">
+				<span class="help-block"></span>
 			</div>
 		</div>
-		<div class="control-group">
-			<label class="control-label" for="HealthInfo">Health Information</label>
-			<div class="controls">
-				<textarea id="HealthInfo" name="HealthInfo" rows="5">{{.S.HealthInfo}}</textarea>
-				<span class="help-inline"></span>
+		<div class="form-group">
+			<label class="col-md-2 control-label" for="HealthInfo">Health Information</label>
+			<div class="col-md-5">
+				<textarea id="HealthInfo" name="HealthInfo" rows="5" class="form-control">{{.S.HealthInfo}}</textarea>
+				<span class="help-block"></span>
 			</div>
 		</div>
-		<div class="control-group">
-			<label class="control-label" for="Comments">Comments</label>
-			<div class="controls">
-				<textarea id="Comments" name="Comments" rows="5">{{.S.Comments}}</textarea>
-				<span class="help-inline"></span>
+		<div class="form-group">
+			<label class="col-md-2 control-label" for="Comments">Comments</label>
+			<div class="col-md-5">
+				<textarea id="Comments" name="Comments" rows="5" class="form-control">{{.S.Comments}}</textarea>
+				<span class="help-block"></span>
 			</div>
 		</div>
 		<div class="form-actions">
-			<button type="submit" class="btn btn-primary">Save</button>
-			<button type="button" class="btn cps-go-back">Cancel</button>
+			<button type="submit" class="btn btn-default btn-primary">Save</button>
+			<button type="button" class="btn btn-default cps-go-back">Cancel</button>
 		</div>
 	</fieldset>
 </form>
