@@ -74,9 +74,11 @@ license that can be found in the LICENSE file.
 			<tr>
 				<th scope="row">{{.Name}}</td>
 				{{if equal $subject "Remarks"}}
-					<td>
-						<input type="text" name="{{$id}}|0" value="{{.Remark}}"
-						class="col-md-7" class="form-control">
+					<td class="cps-remarks">
+						<div>
+							<input type="text" name="{{$id}}|0" value="{{.Remark}}"
+							class="form-control">
+						</div>
 					</td>
 				{{else}}
 					{{range $i, $m := .Marks}}
