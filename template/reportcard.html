@@ -27,7 +27,7 @@ license that can be found in the LICENSE file.
 
 <div>
 	<h2>Academic Achievement</h2>
-	<table class="table table-bordered table-condensed">
+	<table class="table table-bordered table-hover">
 		<thead>
 			<tr>
 				<th scope="col">Subject</th>
@@ -37,10 +37,40 @@ license that can be found in the LICENSE file.
 		</thead>
 		<tbody>
 		{{range .SubjectRows}}
-			<tr>
+			<tr class="active cps-subject-row" data-subject="{{hyphens .Subject}}">
 				<th scope="row">{{.Subject}}</th>
 				<td>{{if .InAverage}}{{mark .Mark}}{{else}}-{{end}}</td>
 				<td>{{.Letter}}</td>
+			</tr>
+			<tr class="cps-subject-details" id="{{hyphens .Subject}}-details">
+				<td colspan="3" >
+	<table class="table table-bordered table-condensed">
+		<thead>
+			<tr>
+				{{range .DetailsCols}}
+				<th scope="col">{{.Name}}</th>
+				{{end}}
+			</tr>
+			<tr>
+				{{range .DetailsCols}}
+				<th scope="col">{{.Max}}</th>
+				{{end}}
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				{{$cols := .DetailsCols}}
+				{{range $i, $m := .DetailsMarks}}
+				{{$c := index $cols $i}}
+				<td>
+					<span class="{{if not $c.Editable}}label label-info{{end}}">
+						{{mark $m}}
+					<span>
+				</td>
+				{{end}}
+			</tr>
+		</table>
+				</td>
 			</tr>
 		{{end}}
 			<tr>

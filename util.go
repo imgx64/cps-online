@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"time"
 )
 
@@ -99,6 +100,11 @@ var funcMap = htmltemplate.FuncMap{
 			return s
 		}
 		return s[:20] + "..."
+	},
+	"hyphens": func(s string) string {
+		s = strings.Replace(s, " ", "-", -1)
+		s = strings.Replace(s, ".", "-", -1)
+		return s
 	},
 }
 

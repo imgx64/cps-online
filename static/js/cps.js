@@ -9,6 +9,14 @@
 		$(".cps-go-back").click(function() {
 			history.go(-1);
 		});
+
+		$(".cps-subject-row").removeClass("active");
+		$(".cps-subject-details").hide();
+
+		$(".cps-subject-row").click(function() {
+			$(this).toggleClass("active");
+			$("#" + $(this).data("subject") + "-details").toggle();
+		});
 	});
 
 })(window.jQuery);

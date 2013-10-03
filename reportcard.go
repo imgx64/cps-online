@@ -16,6 +16,9 @@ type reportcardRow struct {
 	Mark      float64
 	Letter    string
 	InAverage bool
+
+	DetailsCols  []colDescription
+	DetailsMarks []float64
 }
 
 func init() {
@@ -92,7 +95,7 @@ func reportcardHandler(w http.ResponseWriter, r *http.Request) {
 				inAverage = true
 			}
 			reportcardRows = append(reportcardRows, reportcardRow{
-				subject, mark, letter, inAverage})
+				subject, mark, letter, inAverage, gs.description(term), marks[term]})
 		}
 		average = total / float64(numInAverage)
 
