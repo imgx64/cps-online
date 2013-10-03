@@ -18,7 +18,8 @@ import (
 
 func init() {
 	http.HandleFunc("/upload", accessHandler(uploadHandler))
-	http.HandleFunc("/upload/do", accessHandler(uploadDoHandler))
+	http.HandleFunc("/upload/file", accessHandler(uploadFileHandler))
+	http.HandleFunc("/upload/link", accessHandler(uploadLinkHandler))
 
 	http.HandleFunc("/documents", accessHandler(documentsHandler))
 
@@ -34,6 +35,8 @@ type documentType struct {
 
 	Filename string
 	BlobKey  appengine.BlobKey
+
+	URL string
 }
 
 func getDocuments(c appengine.Context, class string) ([]documentType, error) {
@@ -64,7 +67,7 @@ func (dt documentType) save(c appengine.Context) error {
 func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 
-	uploadURL, err := blobstore.UploadURL(c, "/upload/do", nil)
+	uploadURL, err := blobstore.UploadURL(c, "/upload/file", nil)
 	if err != nil {
 		c.Errorf("Could not get upload URL", err)
 		renderError(w, r, http.StatusInternalServerError)
@@ -97,7 +100,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func uploadDoHandler(w http.ResponseWriter, r *http.Request) {
+func uploadFileHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 	blobs, formData, err := blobstore.ParseUpload(r)
 	if err != nil {
@@ -133,6 +136,49 @@ func uploadDoHandler(w http.ResponseWriter, r *http.Request) {
 	if err := document.save(c); err != nil {
 		c.Errorf("Could not save document: %s", err)
 		blobstore.Delete(c, blobKey)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	// TODO: message of success
+	http.Redirect(w, r, "/upload", http.StatusFound)
+}
+
+func uploadLinkHandler(w http.ResponseWriter, r *http.Request) {
+	c := appengine.NewContext(r)
+	if err := r.ParseForm(); err != nil {
+		c.Errorf("Could not parse form: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	title := r.Form.Get("title")
+	if title == "" {
+		c.Errorf("No title submitted")
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+	class := r.Form.Get("class")
+	uploadDate := time.Now()
+
+	fileURL := r.Form.Get("url")
+	_, err := url.Parse(fileURL)
+	if err != nil {
+		c.Errorf("Invalid URL: %s", fileURL)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	document := documentType{
+		Title:      title,
+		Class:      class,
+		UploadDate: uploadDate,
+
+		URL: fileURL,
+	}
+
+	if err := document.save(c); err != nil {
+		c.Errorf("Could not save document: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}

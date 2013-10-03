@@ -21,10 +21,34 @@ license that can be found in the LICENSE file.
 			<input type="text" id="title" name="title" class="form-control" placeholder="Title">
 		</div>
 		<div class="form-group">
-			<input type="file" name="file" class="form-control">
+			<input type="file" name="file" class="form-control" required="required">
 		</div>
 		<div class="form-group">
 			<button type="submit" class="btn btn-default">Upload document</button>
+		</div>
+	</fieldset>
+</form>
+<div class="spacer">
+</div>
+<form class="form-inline" action="/upload/link" method="POST">
+	<fieldset>
+		<legend>Submit a link to a document</legend>
+		<div class="form-group">
+			<select id="class" name="class" class="form-control col-md-2">
+				<option value="">All classes</option>
+				{{range .Classes}}
+				<option>{{.}}</option>
+				{{end}}
+			</select>
+		</div>
+		<div class="form-group">
+			<input type="text" id="title" name="title" class="form-control" placeholder="Title" required="required">
+		</div>
+		<div class="form-group">
+			<input type="url" name="url" class="form-control" required="required">
+		</div>
+		<div class="form-group">
+			<button type="submit" class="btn btn-default">Submit link</button>
 		</div>
 	</fieldset>
 </form>
@@ -44,7 +68,15 @@ license that can be found in the LICENSE file.
 				<td>{{formatDate .UploadDate}}</td>
 				<td>{{if .Class}}{{.Class}}{{else}}All{{end}}</td>
 				<td>{{.Title}}</td>
-				<td><a class="btn btn-default btn-sm" href="/download/{{.Filename}}?blobKey={{.BlobKey}}">Download</a></td>
+				<td>
+					<a class="btn btn-default btn-sm"
+					{{if equal .URL ""}}
+						href="/download/{{.Filename}}?blobKey={{.BlobKey}}"
+					{{else}}
+						href="{{.URL}}"
+					{{end}}
+						>Download</a>
+				</td>
 			</tr>
 			{{else}}
 			<tr class="info">
