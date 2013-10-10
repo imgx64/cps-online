@@ -1,0 +1,122 @@
+{{/*
+Copyright 2013 Ibrahim Ghazal. All rights reserved.
+Use of this source code is governed by a BSD-style
+license that can be found in the LICENSE file.
+*/}}
+
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<title>Print Reportcards | Creativity Private School</title>
+
+		<!-- Styles -->
+		<link href="/static/css/html5-doctor-reset-stylesheet.min.css" rel="stylesheet">
+		<link href="/static/css/reportcards.css" rel="stylesheet">
+	</head>
+
+	<body>
+	{{range .}}
+		<div class="cps-reportcard">
+			<div class="cps-reportcard-main cps-reportcard-{{if .Term.IsQuarter}}left{{else}}one{{end}}">
+				<div class="cps-reportcard-header">
+					<img src="/static/img/cps-logo-100.png" alt="CPS Logo" height="60">
+					<p class="cps-reportcard-kob">Kingdom of Bahrain</p>
+					<p class="cps-reportcard-cps">Creativity Private School</p>
+					<p class="cps-reportcard-ltlt">"Learners Today, Leaders Tomorrow"</p>
+					<p class="cps-reportcard-sy">School Year {{.SY}}</p>
+					<p class="cps-reportcard-qsf">{{.Term}} Report</p>
+				</div>
+				<div class="cps-reportcard-name-class">
+					<div class="cps-reportcard-name"><strong>Name:</strong> {{.Name}}</div>
+					<div class="cps-reportcard-class"><strong>Class:</strong> {{.Class}}</div>
+				</div>
+				<table class="cps-reportcard-marks">
+					<thead>
+						<tr>
+							<th scope="col">Academic Achievement</th>
+							{{range .Cols}}
+								<th scope="col">{{.}}</th>
+							{{end}}
+							<th scope="col">Grade</th>
+						</tr>
+					</thead>
+					<tbody>
+					{{range .Academics}}
+						<tr {{if .Total}}class="cps-reportcard-total"{{end}}>
+							<td>{{.Name}}</td>
+							{{range .Marks}}
+								<td>{{mark .}}</td>
+							{{end}}
+							<td>{{.Letter}}</td>
+						</tr>
+					{{end}}
+						<tr>
+							<th scope="col">Other</th>
+							<th scope="col">Grade</th>
+							<td colspan="{{len .Cols}}" rowspan="{{len .Other | increment}}"
+								class="cps-reportcard-remarks">
+								<strong>Remarks:</strong> {{.Remark}}
+							</td>
+						</tr>
+					{{range .Other}}
+						<tr>
+							<td>{{.Name}}</td>
+							<td>{{.Letter}}</td>
+						</tr>
+					{{end}}
+					</tbody>
+				</table>
+			</div>
+			{{if .Term.IsQuarter}}
+			<div class="cps-reportcard-behavior">
+				<div class="cps-reportcard-behavior-header">
+					<div class="cps-reportcard-coq">
+						<span class="cps-reportcard-coq-c">Creativity</span>
+						..
+						<span class="cps-reportcard-coq-o">Outstanding</span>
+						..
+						<span class="cps-reportcard-coq-q">Quality</span>
+					</div>
+					<div class="cps-reportcard-behavior-title">Behavioral Report</div>
+					<p class="cps-reportcard-behavior-desc">
+						This report is to inform the parents of their child's behavior in school. It is very important as it promotes learning. Your child's behavior report levels for the previous quarter are as follows:
+					</p>
+					<ul>
+						<li>4 = Exceeds Expectations / Above Standards</li>
+						<li>3 = Developing as Expected / Meets Standards</li>
+						<li>2 = Requires Frequent Guidance</li>
+						<li>1 = Requires Considerable Redirection / Below Standards</li>
+						<li>0 = Not Yet Assessed</li>
+					</ul>
+				</div>
+				<table>
+					<tbody>
+					{{$descriptions := .BehaviorDesc}}
+					{{range $i, $beh := .Behavior}}
+						<tr>
+							<td>{{(index $descriptions $i).Name}}</td>
+							<td>{{mark $beh}}</td>
+						</tr>
+					{{end}}
+					</tbody>
+				</table>
+			</div>
+			{{end}}
+			<div class="cps-reportcard-footer">
+				<div class="cps-reportcard-signature">Class Teacher : ....................</div>
+				<div class="cps-reportcard-signature">Principal : ....................</div>
+				<div class="cps-reportcard-signature">Parent's Signature : ....................</div>
+				<div class="cps-reportcard-grading-system">{{.LetterDesc}}</div>
+			</div>
+		</div>
+		{{end}}
+
+		<!-- JavaScript -->
+		<!-- Placed at the end of the document so the pages load faster -->
+		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+		<script src="/static/js/cps.js"></script>
+
+	</body>
+</html>

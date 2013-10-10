@@ -98,6 +98,11 @@ func (t Term) Value() string {
 	return fmt.Sprintf("%d|%d", t.Typ, t.N)
 }
 
+// Used in reportcards template
+func (t Term) IsQuarter() bool {
+	return t.Typ == Quarter
+}
+
 func (t Term) String() string {
 	s, ok := termStrings[t.Typ]
 	if !ok {
@@ -183,7 +188,11 @@ type gradingSystem interface {
 	description(term Term) []colDescription
 	evaluate(term Term, marks studentMarks) error
 	get100(term Term, marks studentMarks) float64
+	getExam(term Term, marks studentMarks) float64
 	ready(term Term, marks studentMarks) bool
+
+	quarterWeight() float64
+	semesterWeight() float64
 }
 
 // class -> subject -> gradingSystem
@@ -252,8 +261,8 @@ func getGradingSystem(class, subject string) gradingSystem {
 // [5:Homework] [5:Participation] [20:Daily Work]
 // [50:best 5 quizzes out of 6] [20:Quarter Exam]
 type genericGradingSystem struct {
-	quarterWeight  float64
-	semesterWeight float64
+	qWeight float64
+	sWeight float64
 }
 
 func newGGS(class string) gradingSystem {
@@ -276,13 +285,13 @@ func (ggs genericGradingSystem) description(term Term) []colDescription {
 			{"Best 5 Quizzes", 50, false},
 			{"Quarter Exam", 20, true},
 			{"Quarter Mark", 100, false},
-			{"Quarter %", ggs.quarterWeight, false},
+			{"Quarter %", ggs.qWeight, false},
 		}
 	} else if term.Typ == Semester {
 		return []colDescription{
 			// TODO: per-subject exam marks
 			{"Semester Exam", 100, true},
-			{"Semester Exam %", ggs.semesterWeight, false},
+			{"Semester Exam %", ggs.sWeight, false},
 			{"Semester Mark", 100, false},
 		}
 	} else if term.Typ == EndOfYear {
@@ -331,10 +340,10 @@ func (ggs genericGradingSystem) evaluate(term Term, marks studentMarks) (err err
 		m[11] = sumMarks(m[0], m[1], m[2], m[9], m[10])
 
 		// Quarter %
-		m[12] = m[11] * ggs.quarterWeight / 100.0
+		m[12] = m[11] * ggs.qWeight / 100.0
 	} else if term.Typ == Semester {
 		// Semester Exam %
-		m[1] = m[0] * ggs.semesterWeight / 100.0
+		m[1] = m[0] * ggs.sWeight / 100.0
 
 		// Semester Mark
 		q2 := uint(term.N * 2)
@@ -372,9 +381,29 @@ func (ggs genericGradingSystem) get100(term Term, marks studentMarks) float64 {
 	panic(fmt.Sprintf("Invalid term type: %d", term.Typ))
 }
 
+func (ggs genericGradingSystem) getExam(term Term, marks studentMarks) float64 {
+	m := marks[term]
+	if term.Typ == Quarter {
+		return m[len(m)-3]
+	} else if term.Typ == Semester {
+		return m[1]
+	} else if term.Typ == EndOfYear {
+		return negZero
+	}
+	panic(fmt.Sprintf("Invalid term type: %d", term.Typ))
+}
+
 func (ggs genericGradingSystem) ready(term Term, marks studentMarks) bool {
 	m := marks[term]
 	return math.Signbit(m[len(m)-1])
+}
+
+func (ggs genericGradingSystem) quarterWeight() float64 {
+	return ggs.qWeight
+}
+
+func (ggs genericGradingSystem) semesterWeight() float64 {
+	return ggs.sWeight
 }
 
 // peGradingSystem is used for P.E.
@@ -468,17 +497,37 @@ func (pgs peGradingSystem) get100(term Term, marks studentMarks) float64 {
 	panic(fmt.Sprintf("Invalid term type: %d", term.Typ))
 }
 
+func (pgs peGradingSystem) getExam(term Term, marks studentMarks) float64 {
+	m := marks[term]
+	if term.Typ == Quarter {
+		return m[0]
+	} else if term.Typ == Semester {
+		return negZero
+	} else if term.Typ == EndOfYear {
+		return negZero
+	}
+	panic(fmt.Sprintf("Invalid term type: %d", term.Typ))
+}
+
 func (pgs peGradingSystem) ready(term Term, marks studentMarks) bool {
 	m := marks[term]
 	return math.Signbit(m[len(m)-1])
 }
 
+func (pgs peGradingSystem) quarterWeight() float64 {
+	return 50.0
+}
+
+func (pgs peGradingSystem) semesterWeight() float64 {
+	return negZero
+}
+
 // simpleGradingSystem contains a number of columns that are simply added
 // varies from subject to subject
 type simpleGradingSystem struct {
-	columns        []colDescription
-	quarterWeight  float64
-	semesterWeight float64
+	columns []colDescription
+	qWeight float64
+	sWeight float64
 }
 
 func newSingleGS(column, class string) gradingSystem {
@@ -524,7 +573,7 @@ func (sgs simpleGradingSystem) description(term Term) []colDescription {
 		desc = append(desc, sgs.columns...)
 		quarterCols := []colDescription{
 			{"Quarter Mark", 100, false},
-			{"Quarter %", sgs.quarterWeight, false},
+			{"Quarter %", sgs.qWeight, false},
 		}
 		desc = append(desc, quarterCols...)
 		return desc
@@ -532,7 +581,7 @@ func (sgs simpleGradingSystem) description(term Term) []colDescription {
 		return []colDescription{
 			// TODO: per-subject exam marks
 			{"Semester Exam", 100, true},
-			{"Semester Exam %", sgs.semesterWeight, false},
+			{"Semester Exam %", sgs.sWeight, false},
 			{"Semester Mark", 100, false},
 		}
 	} else if term.Typ == EndOfYear {
@@ -577,10 +626,10 @@ func (sgs simpleGradingSystem) evaluate(term Term, marks studentMarks) (err erro
 	if term.Typ == Quarter {
 		sum := sumMarks(m[0 : l-2]...)
 		m[l-2] = sum
-		m[l-1] = sum * sgs.quarterWeight / 100.0
+		m[l-1] = sum * sgs.qWeight / 100.0
 	} else if term.Typ == Semester {
 		// Semester Exam %
-		m[1] = m[0] * sgs.semesterWeight / 100.0
+		m[1] = m[0] * sgs.sWeight / 100.0
 
 		// Semester Mark
 		q2 := uint(term.N * 2)
@@ -618,9 +667,29 @@ func (sgs simpleGradingSystem) get100(term Term, marks studentMarks) float64 {
 	panic(fmt.Sprintf("Invalid term type: %d", term.Typ))
 }
 
+func (sgs simpleGradingSystem) getExam(term Term, marks studentMarks) float64 {
+	m := marks[term]
+	if term.Typ == Quarter {
+		return m[len(m)-3]
+	} else if term.Typ == Semester {
+		return m[1]
+	} else if term.Typ == EndOfYear {
+		return negZero
+	}
+	panic(fmt.Sprintf("Invalid term type: %d", term.Typ))
+}
+
 func (sgs simpleGradingSystem) ready(term Term, marks studentMarks) bool {
 	m := marks[term]
 	return math.Signbit(m[len(m)-1])
+}
+
+func (sgs simpleGradingSystem) quarterWeight() float64 {
+	return sgs.qWeight
+}
+
+func (sgs simpleGradingSystem) semesterWeight() float64 {
+	return sgs.sWeight
 }
 
 // behaviorGradingSystem contains behavrior. There are no calculations to make
@@ -695,6 +764,10 @@ func (bgs behaviorGradingSystem) get100(term Term, marks studentMarks) float64 {
 	return negZero
 }
 
+func (bgs behaviorGradingSystem) getExam(term Term, marks studentMarks) float64 {
+	return negZero
+}
+
 func (bgs behaviorGradingSystem) ready(term Term, marks studentMarks) bool {
 	m := marks[term]
 	for _, v := range m {
@@ -705,6 +778,14 @@ func (bgs behaviorGradingSystem) ready(term Term, marks studentMarks) bool {
 	}
 
 	return true
+}
+
+func (bgs behaviorGradingSystem) quarterWeight() float64 {
+	return negZero
+}
+
+func (bgs behaviorGradingSystem) semesterWeight() float64 {
+	return negZero
 }
 
 type letterType struct {

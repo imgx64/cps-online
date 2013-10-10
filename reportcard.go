@@ -62,7 +62,7 @@ func reportcardHandler(w http.ResponseWriter, r *http.Request) {
 	var behavior []float64
 	var remark, letterDesc string
 	if publish {
-		total := 0.0
+		total := negZero
 		numInAverage := 0
 		ls := getLetterSystem(stu.Class)
 		letterDesc = ls.String()

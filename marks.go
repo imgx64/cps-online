@@ -248,7 +248,7 @@ func marksSaveHandler(w http.ResponseWriter, r *http.Request) {
 
 		students, err := getStudents(c, true, classSection)
 		if err != nil {
-			c.Errorf("Could not store marks: %s", err)
+			c.Errorf("Could not retrieve students: %s", err)
 			renderError(w, r, http.StatusInternalServerError)
 			return
 		}

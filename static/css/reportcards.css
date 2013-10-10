@@ -1,0 +1,215 @@
+@page {
+	size: A4 landscape;
+	margin-top: 1cm;
+	margin-bottom: 1cm;
+	margin-left: 1cm;
+	margin-right: 1cm;
+}
+
+.cps-reportcard:first-child {
+	page-break-before: auto;
+}
+
+.cps-reportcard {
+	background-image: url("/static/img/cps-logo-10.png") !important;
+	background-repeat: no-repeat !important;
+	background-position: 50% 50% !important;
+	background-size: contain !important;
+
+	page-break-before: always;
+	clear: both;
+
+	width: 100%;
+	@media print {height: 17cm;}
+}
+
+.cps-reportcard-main {
+	display: inline-block;
+	vertical-align: top;
+	margin: 2mm;
+}
+
+.cps-reportcard-left {
+	width: 60%;
+}
+
+.cps-reportcard-one {
+	width: 98%;
+}
+
+.cps-reportcard-behavior {
+	width: 35%;
+	display: inline-block;
+	vertical-align: top;
+	margin: 2mm;
+}
+
+.cps-reportcard-header {
+	text-align: center;
+}
+
+.cps-reportcard-header p {
+	margin-top: 2mm;
+	margin-bottom: 2mm;
+}
+
+p.cps-reportcard-kob {
+	color: red;
+	font-family: sans-serif;
+	font-size: large;
+	font-weight: bold;
+	font-variant: small-caps;
+}
+
+p.cps-reportcard-cps {
+	color: blue;
+	font-family: sans-serif;
+	font-size: x-large;
+	font-weight: bold;
+	font-variant: small-caps;
+}
+
+p.cps-reportcard-ltlt {
+	color: red;
+	font-family: serif;
+	font-size: large;
+	font-style: italic;
+}
+
+p.cps-reportcard-sy {
+	color: blue;
+	font-family: serif;
+	font-size: large;
+}
+
+p.cps-reportcard-qsf {
+	color: red;
+	font-family: serif;
+	font-size: large;
+}
+
+.cps-reportcard-name-class {
+	overflow: hidden;
+}
+
+.cps-reportcard-name {
+	width: 70%;
+	display: inline-block;
+}
+
+.cps-reportcard-class {
+	width: 25%;
+	display: inline-block;
+}
+
+.cps-reportcard-marks {
+	width: 100%;
+	table-layout: fixed;
+	border-width: medium;
+	border-style: solid;
+	border-color: black;
+	border-collapse: collapse;
+}
+
+.cps-reportcard-marks th {
+	font-size: small;
+	border-style: solid;
+	border-width: thin;
+	border-bottom-width: medium;
+	background-color: #DDDDDD;
+	text-align: center;
+	vertical-align: middle;
+	padding: 1mm;
+}
+
+.cps-reportcard-marks td {
+	border-width: thin;
+	border-style: solid;
+	text-align: center;
+	vertical-align: middle;
+	padding: 2mm;
+}
+
+.cps-reportcard-total td {
+	font-weight: bold;
+	border-bottom-width: medium;
+}
+
+td.cps-reportcard-remarks {
+	text-align: left;
+	vertical-align: top;
+	border-width: medium;
+}
+
+.cps-reportcard-behavior-header {
+}
+
+.cps-reportcard-coq {
+	text-align: center;
+	padding: 1mm;
+}
+
+.cps-reportcard-coq-c {
+	color: red;
+}
+
+.cps-reportcard-coq-o {
+	color: blue;
+}
+
+.cps-reportcard-coq-q {
+	color: red;
+}
+
+.cps-reportcard-behavior-title {
+	text-align: center;
+	background-color: crimson;
+	color: white;
+	padding: 1mm;
+}
+
+.cps-reportcard-behavior-desc {
+	color: blue;
+	padding: 1mm;
+}
+
+.cps-reportcard-behavior-header ul {
+	list-style-type: none;
+	color: red;
+	font-size: small;
+	padding: 3mm;
+}
+
+.cps-reportcard-behavior table {
+	width: 100%;
+	border-width: medium;
+	border-style: solid;
+	border-color: black;
+	border-collapse: collapse;
+}
+
+.cps-reportcard-behavior td {
+	border-width: thin;
+	border-style: solid;
+	text-align: center;
+	vertical-align: middle;
+	padding: 1mm;
+}
+
+.cps-reportcard-footer {
+	clear: both;
+}
+
+.cps-reportcard-signature {
+	text-align: center;
+	display: inline-block;
+	width: 30%;
+	padding: 1mm;
+}
+
+.cps-reportcard-grading-system {
+	text-align: center;
+	font-size: small;
+	font-weight: bold;
+	background-color: #DDDDDD;
+}
