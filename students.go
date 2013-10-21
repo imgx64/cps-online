@@ -93,6 +93,39 @@ func getStudents(c appengine.Context, enabled bool, classSection string) ([]stud
 	return students, nil
 }
 
+func getStudentsCount(c appengine.Context, enabled bool, classSection string) (int, error) {
+	akey, err := getStudentsAncestor(c)
+	if err != nil {
+		return -1, err
+	}
+	q := datastore.NewQuery("student").Ancestor(akey).Filter("Enabled =", enabled)
+	if classSection == "" {
+		return 0, nil
+	}
+	if classSection == "all" {
+		classSection = "|"
+	}
+	cs := strings.Split(classSection, "|")
+	if len(cs) != 2 {
+		return -1, fmt.Errorf("Invalid class and section: %s", classSection)
+	}
+	class := cs[0]
+	section := cs[1]
+	if class != "" {
+		q = q.Filter("Class =", class)
+		if section != "" {
+			q = q.Filter("Section =", section)
+		}
+	}
+
+	n, err := q.Count(c)
+	if err != nil {
+		return -1, err
+	}
+
+	return n, nil
+}
+
 func (stu *studentType) validate() error {
 	stu.ID = strings.ToLower(stu.ID)
 	if stu.ID != "" && !strings.HasPrefix(stu.ID, studentPrefix) {

@@ -1,0 +1,54 @@
+{{/*
+Copyright 2013 Ibrahim Ghazal. All rights reserved.
+Use of this source code is governed by a BSD-style
+license that can be found in the LICENSE file.
+*/}}
+
+{{define "title"}}Completion of Marks{{end}}
+{{define "content"}}
+<form class="form-inline" action="/completion">
+	<div class="form-group">
+		<select id="Term" name="Term" required="required" class="form-control col-md-3">
+			{{$term := .Term.Value}}
+			{{range .Terms}}
+			<option {{if equal .Value $term}}selected="selected"{{end}}
+			value="{{.Value}}">{{.}}</option>
+			{{end}}
+		</select>
+	</div>
+	<div class="form-group">
+		<button type="submit" class="btn btn-default">Go</button>
+	</div>
+</form>
+{{if (not (equal (len .CompletionRows) 0))}}
+<h2>Completion of Marks</h2>
+<table class="table table-condensed table-bordered">
+	<thead>
+		<tr>
+			<th scope="col">Class</th>
+			{{range .Subjects}}
+			<th scope="col">{{.}}</th>
+			{{end}}
+		</tr>
+	</thead>
+	<tbody>
+		{{$subjects := .Subjects}}
+		{{range .CompletionRows}}
+		<tr>
+			<th scope="row">{{.ClassSection}}</th>
+			{{$n := .NumStudents}}
+			{{$comp := .Completion}}
+			{{range $subjects}}
+				{{$sn := index $comp .}}
+				{{if equal $sn -1}}
+				<td></td>
+				{{else}}
+				<td {{if equal $sn $n}}class="success"{{end}}>{{$sn}}/{{$n}}</td>
+				{{end}}
+			{{end}}
+		</tr>
+		{{end}}
+	</tbody>
+</table>
+{{end}}
+{{end}}

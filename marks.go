@@ -232,6 +232,7 @@ func marksSaveHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO: remove this line once memcache is used
 	redirectURL = "/marks"
 
+	nComplete := 0
 	if classHasSubject(class, subject) {
 		gs := getGradingSystem(class, subject)
 		cols := gs.description(term)
@@ -283,6 +284,9 @@ func marksSaveHandler(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 			}
+			if gs.ready(term, m) {
+				nComplete++
+			}
 		}
 	} else if subject == "Remarks" {
 		students, err := getStudents(c, true, classSection)
@@ -294,11 +298,11 @@ func marksSaveHandler(w http.ResponseWriter, r *http.Request) {
 
 		for _, s := range students {
 			remarksName := fmt.Sprintf("%s|0", s.ID)
-			if f[remarksName] == nil {
+			remark := f.Get(remarksName)
+			if remark == "" {
 				// no remark to update
 				continue
 			}
-			remark := f.Get(remarksName)
 
 			err := storeRemark(c, s.ID, term, remark)
 			if err != nil {
@@ -306,7 +310,13 @@ func marksSaveHandler(w http.ResponseWriter, r *http.Request) {
 				renderError(w, r, http.StatusInternalServerError)
 				return
 			}
+			nComplete++
 		}
+	}
+
+	err := storeCompletion(c, classSection, term, subject, nComplete)
+	if err != nil {
+		c.Errorf("Could not store completion: %s", err)
 	}
 
 	// TODO: message of success/fail

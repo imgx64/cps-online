@@ -395,7 +395,7 @@ func (ggs genericGradingSystem) getExam(term Term, marks studentMarks) float64 {
 
 func (ggs genericGradingSystem) ready(term Term, marks studentMarks) bool {
 	m := marks[term]
-	return math.Signbit(m[len(m)-1])
+	return !math.Signbit(m[len(m)-1])
 }
 
 func (ggs genericGradingSystem) quarterWeight() float64 {
@@ -511,7 +511,7 @@ func (pgs peGradingSystem) getExam(term Term, marks studentMarks) float64 {
 
 func (pgs peGradingSystem) ready(term Term, marks studentMarks) bool {
 	m := marks[term]
-	return math.Signbit(m[len(m)-1])
+	return !math.Signbit(m[len(m)-1])
 }
 
 func (pgs peGradingSystem) quarterWeight() float64 {
@@ -681,7 +681,7 @@ func (sgs simpleGradingSystem) getExam(term Term, marks studentMarks) float64 {
 
 func (sgs simpleGradingSystem) ready(term Term, marks studentMarks) bool {
 	m := marks[term]
-	return math.Signbit(m[len(m)-1])
+	return !math.Signbit(m[len(m)-1])
 }
 
 func (sgs simpleGradingSystem) quarterWeight() float64 {

@@ -38,6 +38,8 @@ var access = map[string]roles{
 
 	"/classes": hrRole,
 
+	"/completion": hrRole,
+
 	"/marks":             teacherRole,
 	"/marks/save":        teacherRole,
 	"/upload":            teacherRole,
@@ -83,6 +85,7 @@ var pages = []link{
 	{Name: "Employees", URL: "/employees"},
 	//{Name: "Classes", URL: "/classes"},
 	//{Name: "Publish Reportcards", URL: "/publish"},
+	{Name: "Check Completion", URL: "/completion"},
 
 	{Name: "Enter Marks", URL: "/marks"},
 	{Name: "Upload documents", URL: "/upload"},

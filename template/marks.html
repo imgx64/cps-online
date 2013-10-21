@@ -85,7 +85,7 @@ license that can be found in the LICENSE file.
 					{{$c := index $cols $i}}
 					<td>
 						<input type="number" name="{{$id}}|{{$i}}" class="form-control input-sm cps-mark"
-						min="0" max="{{$c.Max}}" value="{{mark $m}}"
+						min="0" max="{{$c.Max}}" step="any" value="{{mark $m}}"
 						{{if not $c.Editable}}disabled="disabled"{{end}}>
 					</td>
 					{{end}}
