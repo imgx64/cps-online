@@ -8,7 +8,7 @@ license that can be found in the LICENSE file.
 {{define "content"}}
 <form class="form-inline" action="/employees">
 	<div class="form-group">
-		<select id="enabled" name="enabled" class="form-control col-sm-2">
+		<select id="enabled" name="enabled" class="form-control">
 			<option value="">Enabled</option>
 			<option value="no"
 			{{if equal .Enabled "no"}}selected="selected"{{end}}>Disabled</option>
