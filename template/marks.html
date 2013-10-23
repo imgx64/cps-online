@@ -77,14 +77,14 @@ license that can be found in the LICENSE file.
 					<td class="cps-remarks">
 						<div>
 							<input type="text" name="{{$id}}|0" value="{{.Remark}}"
-							class="form-control">
+							class="form-control cps-grid">
 						</div>
 					</td>
 				{{else}}
 					{{range $i, $m := .Marks}}
 					{{$c := index $cols $i}}
 					<td>
-						<input type="number" name="{{$id}}|{{$i}}" class="form-control input-sm cps-mark"
+						<input type="number" name="{{$id}}|{{$i}}" class="form-control input-sm cps-mark cps-grid"
 						min="0" max="{{$c.Max}}" step="any" value="{{mark $m}}"
 						{{if not $c.Editable}}disabled="disabled"{{end}}>
 					</td>
