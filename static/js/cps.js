@@ -34,6 +34,7 @@
 				$(this).closest("td").nextAll().find(".cps-grid").not("[disabled]").first().focus()
 				break;
 
+			case 13: // Enter
 			case 40: // down
 				$(this).closest("tr").next().children().eq(col).find(".cps-grid").focus()
 				break;
