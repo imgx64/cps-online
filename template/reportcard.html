@@ -8,7 +8,7 @@ license that can be found in the LICENSE file.
 {{define "content"}}
 <form class="form-inline" action="/reportcard">
 	<div class="form-group">
-		<select id="Term" name="Term" required="required" class="form-control col-md-3">
+		<select id="Term" name="Term" required="required" class="form-control col-sm-3">
 			{{$term := .Term.Value}}
 			{{range .Terms}}
 			<option {{if equal .Value $term}}selected="selected"{{end}}

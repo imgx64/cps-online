@@ -8,7 +8,7 @@ license that can be found in the LICENSE file.
 {{define "content"}}
 <form class="form-inline" action="/marks">
 	<div class="form-group">
-		<select id="Term" name="Term" class="form-control col-md-3">
+		<select id="Term" name="Term" class="form-control col-sm-3">
 			{{$term := .Term.Value}}
 			{{range .Terms}}
 			<option {{if equal .Value $term}}selected="selected"{{end}}
@@ -17,7 +17,7 @@ license that can be found in the LICENSE file.
 		</select>
 	</div>
 	<div class="form-group">
-		<select id="classSection" name="ClassSection" class="form-control col-md-2">
+		<select id="classSection" name="ClassSection" class="form-control col-sm-2">
 			{{$sclass := .Class}}
 			{{$ssection := .Section}}
 			{{range .CG}}
@@ -33,7 +33,7 @@ license that can be found in the LICENSE file.
 		</select>
 	</div>
 	<div class="form-group">
-		<select id="Subject" name="Subject" class="form-control col-md-3">
+		<select id="Subject" name="Subject" class="form-control col-sm-3">
 			{{$subject := .Subject}}
 			{{range .Subjects}}
 			<option {{if equal . $subject}}selected="selected"{{end}}

@@ -8,14 +8,14 @@ license that can be found in the LICENSE file.
 {{define "content"}}
 <form class="form-inline" action="/reportcards/print">
 	<div class="form-group">
-		<select id="Term" name="Term" required="required" class="form-control col-md-3">
+		<select id="Term" name="Term" required="required" class="form-control col-sm-3">
 			{{range .Terms}}
 			<option value="{{.Value}}">{{.}}</option>
 			{{end}}
 		</select>
 	</div>
 	<div class="form-group">
-		<select id="classSection" name="ClassSection" required="required" class="form-control col-md-2">
+		<select id="classSection" name="ClassSection" required="required" class="form-control col-sm-2">
 			{{range .CG}}
 			{{$class := .Class}}
 			<optgroup label="{{.Class}}">

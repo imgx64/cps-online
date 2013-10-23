@@ -41,7 +41,7 @@ license that can be found in the LICENSE file.
 
 		<div class="container">
 			<div class="row">
-				<div class="well well-sm col-md-3"> 
+				<div class="well well-sm col-sm-3 hidden-print">
 					<ul class="nav nav-pills nav-stacked">
 						{{range .Links}}
 						<li {{if .Active}}class="active"{{end}}>
@@ -51,7 +51,7 @@ license that can be found in the LICENSE file.
 					</ul>
 				</div>
 
-				<div class="col-md-9"> 
+				<div class="col-sm-9">
 					{{template "content" .Data}}
 				</div>
 			</div>

@@ -11,21 +11,21 @@ license that can be found in the LICENSE file.
 	<fieldset>
 		<legend>Daily Log for {{formatDate .Date}}</legend>
 		<div class="form-group">
-			<label class="col-md-2 control-label" for="Behavior">Behavior</label>
-			<div class="col-md-5">
+			<label class="col-sm-2 control-label" for="Behavior">Behavior</label>
+			<div class="col-sm-5">
 				<textarea readonly="readonly" id="Behavior" rows="5" class="form-control">{{.Behavior}}</textarea>
 				<span class="help-block"></span>
 			</div>
 		</div>
 		<div class="form-group">
-			<label class="col-md-2 control-label" for="Attendance">Attendance</label>
-			<div class="col-md-5">
+			<label class="col-sm-2 control-label" for="Attendance">Attendance</label>
+			<div class="col-sm-5">
 				<input type="text" readonly="readonly" id="Attendance" value="{{.Attendance}}" class="form-control">
 			</div>
 		</div>
 		<div class="form-group">
-			<label class="col-md-2 control-label" for="Details">Details/Excuse</label>
-			<div class="col-md-5">
+			<label class="col-sm-2 control-label" for="Details">Details/Excuse</label>
+			<div class="col-sm-5">
 				<textarea id="Details" readonly="readonly" rows="5" class="form-control">{{.Details}}</textarea>
 				<span class="help-block"></span>
 			</div>

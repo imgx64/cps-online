@@ -10,15 +10,15 @@ license that can be found in the LICENSE file.
 	<fieldset>
 		<legend>Student Details</legend>
 		<div class="form-group">
-			<label class="col-md-2 control-label" for="studentID">Student ID</label>
-			<div class="col-md-5">
+			<label class="col-sm-2 control-label" for="studentID">Student ID</label>
+			<div class="col-sm-5">
 				<input readonly="readonly" type="text" id="studentID" name="ID" value="{{.S.ID}}" class="form-control">
 				<span class="help-block">Created automatically.</span>
 			</div>
 		</div>
 		<div class="form-group">
-			<label class="col-md-2 control-label" for="Enabled">Enabled</label>
-			<div class="col-md-5">
+			<label class="col-sm-2 control-label" for="Enabled">Enabled</label>
+			<div class="col-sm-5">
 				<label class="checkbox-inline">
 					<input type="checkbox" id="Enabled" name="Enabled"
 						{{if .S.Enabled}}checked="checked"{{end}}>
@@ -28,22 +28,22 @@ license that can be found in the LICENSE file.
 			</div>
 		</div>
 		<div class="form-group">
-			<label class="col-md-2 control-label" for="studentName">Student Name*</label>
-			<div class="col-md-5">
+			<label class="col-sm-2 control-label" for="studentName">Student Name*</label>
+			<div class="col-sm-5">
 				<input type="text" id="studentName" name="Name" value="{{.S.Name}}" required="required" class="form-control">
 				<span class="help-block"></span>
 			</div>
 		</div>
 		<div class="form-group">
-			<label class="col-md-2 control-label" for="arabicName">Student Name in Arabic</label>
-			<div class="col-md-5">
+			<label class="col-sm-2 control-label" for="arabicName">Student Name in Arabic</label>
+			<div class="col-sm-5">
 				<input type="text" id="arabicName" name="ArabicName" value="{{.S.ArabicName}}" class="form-control">
 				<span class="help-block"></span>
 			</div>
 		</div>
 		<div class="form-group">
-			<label class="col-md-2 control-label" for="Gender">Gender</label>
-			<div class="col-md-5">
+			<label class="col-sm-2 control-label" for="Gender">Gender</label>
+			<div class="col-sm-5">
 				<select id="Gender" name="Gender" class="form-control">
 					<option></option>
 					<option value="M"
@@ -57,8 +57,8 @@ license that can be found in the LICENSE file.
 			</div>
 		</div>
 		<div class="form-group">
-			<label class="col-md-2 control-label" for="classSection">Class*</label>
-			<div class="col-md-5">
+			<label class="col-sm-2 control-label" for="classSection">Class*</label>
+			<div class="col-sm-5">
 				<select id="classSection" name="ClassSection" required="required" pattern="^.+$" class="form-control">
 					<option></option>
 					{{$sclass := .S.Class}}
@@ -78,16 +78,16 @@ license that can be found in the LICENSE file.
 			</div>
 		</div>
 		<div class="form-group">
-			<label class="col-md-2 control-label" for="dateOfBirth">Date of Birth*</label>
-			<div class="col-md-5">
+			<label class="col-sm-2 control-label" for="dateOfBirth">Date of Birth*</label>
+			<div class="col-sm-5">
 				<input type="date" id="dateOfBirth" name="DateOfBirth" value="{{.S.DateOfBirth | formatDate}}"
 					required="required" class="form-control">
 				<span class="help-block"></span>
 			</div>
 		</div>
 		<div class="form-group">
-			<label class="col-md-2 control-label" for="Nationality">Nationality*</label>
-			<div class="col-md-5">
+			<label class="col-sm-2 control-label" for="Nationality">Nationality*</label>
+			<div class="col-sm-5">
 				<select id="Nationality" name="Nationality" class="form-control">
 					<option></option>
 					{{$country := .S.Nationality}}
@@ -100,44 +100,44 @@ license that can be found in the LICENSE file.
 			</div>
 		</div>
 		<div class="form-group">
-			<label class="col-md-2 control-label" for="CPR">CPR Number*</label>
-			<div class="col-md-5">
+			<label class="col-sm-2 control-label" for="CPR">CPR Number*</label>
+			<div class="col-sm-5">
 				<input type="text" id="CPR" name="CPR" required="required"
 					pattern="^[0-9]{9}$" value="{{.S.CPR}}" class="form-control">
 				<span class="help-block"></span>
 			</div>
 		</div>
 		<div class="form-group">
-			<label class="col-md-2 control-label" for="Passport">Passport Number</label>
-			<div class="col-md-5">
+			<label class="col-sm-2 control-label" for="Passport">Passport Number</label>
+			<div class="col-sm-5">
 				<input type="text" id="Passport" name="Passport" value="{{.S.Passport}}" class="form-control">
 				<span class="help-block"></span>
 			</div>
 		</div>
 		<div class="form-group">
-			<label class="col-md-2 control-label" for="ParentInfo">Parent Information</label>
-			<div class="col-md-5">
+			<label class="col-sm-2 control-label" for="ParentInfo">Parent Information</label>
+			<div class="col-sm-5">
 				<textarea id="ParentInfo" name="ParentInfo" rows="5" class="form-control">{{.S.ParentInfo}}</textarea>
 				<span class="help-block"></span>
 			</div>
 		</div>
 		<div class="form-group">
-			<label class="col-md-2 control-label" for="EmergencyPhone">Emergency Phone Number</label>
-			<div class="col-md-5">
+			<label class="col-sm-2 control-label" for="EmergencyPhone">Emergency Phone Number</label>
+			<div class="col-sm-5">
 				<input type="tel" id="EmergencyPhone" name="EmergencyPhone" value="{{.S.EmergencyPhone}}" class="form-control">
 				<span class="help-block"></span>
 			</div>
 		</div>
 		<div class="form-group">
-			<label class="col-md-2 control-label" for="HealthInfo">Health Information</label>
-			<div class="col-md-5">
+			<label class="col-sm-2 control-label" for="HealthInfo">Health Information</label>
+			<div class="col-sm-5">
 				<textarea id="HealthInfo" name="HealthInfo" rows="5" class="form-control">{{.S.HealthInfo}}</textarea>
 				<span class="help-block"></span>
 			</div>
 		</div>
 		<div class="form-group">
-			<label class="col-md-2 control-label" for="Comments">Comments</label>
-			<div class="col-md-5">
+			<label class="col-sm-2 control-label" for="Comments">Comments</label>
+			<div class="col-sm-5">
 				<textarea id="Comments" name="Comments" rows="5" class="form-control">{{.S.Comments}}</textarea>
 				<span class="help-block"></span>
 			</div>

@@ -11,16 +11,16 @@ license that can be found in the LICENSE file.
 		<legend>Employee Details</legend>
 		<input type="hidden" name="ID" value="{{.E.ID}}">
 		<div class="form-group">
-			<label class="col-md-2 control-label" for="CPSEmail">CPS Email</label>
-			<div class="col-md-5">
+			<label class="col-sm-2 control-label" for="CPSEmail">CPS Email</label>
+			<div class="col-sm-5">
 				<input type="text" id="CPSEmail" name="CPSEmail"
 				value="{{.E.CPSEmail}}" {{if not .Admin}}disabled="disabled"{{end}} class="form-control">
 				<span class="help-block">Set by the administrator.</span>
 			</div>
 		</div>
 		<div class="form-group">
-			<label class="col-md-2 control-label">Roles</label>
-			<div class="col-md-5">
+			<label class="col-sm-2 control-label">Roles</label>
+			<div class="col-sm-5">
 				<label class="checkbox-inline">
 					<input type="checkbox" id="AdminRole" name="AdminRole"
 					{{if .E.Roles.Admin}}checked="checked"{{end}}
@@ -46,8 +46,8 @@ license that can be found in the LICENSE file.
 			</div>
 		</div>
 		<div class="form-group">
-			<label class="col-md-2 control-label" for="Enabled">Enabled</label>
-			<div class="col-md-5">
+			<label class="col-sm-2 control-label" for="Enabled">Enabled</label>
+			<div class="col-sm-5">
 				<label class="checkbox-inline">
 					<input type="checkbox" id="Enabled" name="Enabled"
 						{{if .E.Enabled}}checked="checked"{{end}}>
@@ -57,22 +57,22 @@ license that can be found in the LICENSE file.
 			</div>
 		</div>
 		<div class="form-group">
-			<label class="col-md-2 control-label" for="Name">Name*</label>
-			<div class="col-md-5">
+			<label class="col-sm-2 control-label" for="Name">Name*</label>
+			<div class="col-sm-5">
 				<input type="text" id="Name" name="Name" value="{{.E.Name}}" required="required" class="form-control">
 				<span class="help-block"></span>
 			</div>
 		</div>
 		<div class="form-group">
-			<label class="col-md-2 control-label" for="ArabicName">Arabic Name</label>
-			<div class="col-md-5">
+			<label class="col-sm-2 control-label" for="ArabicName">Arabic Name</label>
+			<div class="col-sm-5">
 				<input type="text" id="ArabicName" name="ArabicName" value="{{.E.ArabicName}}" class="form-control">
 				<span class="help-block"></span>
 			</div>
 		</div>
 		<div class="form-group">
-			<label class="col-md-2 control-label" for="Gender">Gender</label>
-			<div class="col-md-5">
+			<label class="col-sm-2 control-label" for="Gender">Gender</label>
+			<div class="col-sm-5">
 				<select id="Gender" name="Gender" class="form-control">
 					<option></option>
 					<option value="M"
@@ -86,8 +86,8 @@ license that can be found in the LICENSE file.
 			</div>
 		</div>
 		<div class="form-group">
-			<label class="col-md-2 control-label" for="Type">Type*</label>
-			<div class="col-md-5">
+			<label class="col-sm-2 control-label" for="Type">Type*</label>
+			<div class="col-sm-5">
 				<select id="Type" name="Type" required="required" class="form-control">
 					<option></option>
 					{{$type := .E.Type}}
@@ -100,30 +100,30 @@ license that can be found in the LICENSE file.
 			</div>
 		</div>
 		<div class="form-group">
-			<label class="col-md-2 control-label" for="JobDescription">Job Description</label>
-			<div class="col-md-5">
+			<label class="col-sm-2 control-label" for="JobDescription">Job Description</label>
+			<div class="col-sm-5">
 				<input type="text" id="JobDescription" name="JobDescription" value="{{.E.JobDescription}}" class="form-control">
 				<span class="help-block"></span>
 			</div>
 		</div>
 		<div class="form-group">
-			<label class="col-md-2 control-label" for="dateOfHiring">Date of Hiring*</label>
-			<div class="col-md-5">
+			<label class="col-sm-2 control-label" for="dateOfHiring">Date of Hiring*</label>
+			<div class="col-sm-5">
 				<input type="date" id="dateOfHiring" name="DateOfHiring" value="{{.E.DateOfHiring | formatDate}}"
 					required="required" class="form-control">
 				<span class="help-block"></span>
 			</div>
 		</div>
 		<div class="form-group">
-			<label class="col-md-2 control-label" for="Qualifications">Qualifications</label>
-			<div class="col-md-5">
+			<label class="col-sm-2 control-label" for="Qualifications">Qualifications</label>
+			<div class="col-sm-5">
 				<textarea id="Qualifications" name="Qualifications" rows="5" class="form-control">{{.E.Qualifications}}</textarea>
 				<span class="help-block"></span>
 			</div>
 		</div>
 		<div class="form-group">
-			<label class="col-md-2 control-label" for="Nationality">Nationality*</label>
-			<div class="col-md-5">
+			<label class="col-sm-2 control-label" for="Nationality">Nationality*</label>
+			<div class="col-sm-5">
 				<select id="Nationality" name="Nationality" required="required">
 					<option></option>
 					{{$country := .E.Nationality}}
@@ -136,59 +136,59 @@ license that can be found in the LICENSE file.
 			</div>
 		</div>
 		<div class="form-group">
-			<label class="col-md-2 control-label" for="CPR">CPR Number*</label>
-			<div class="col-md-5">
+			<label class="col-sm-2 control-label" for="CPR">CPR Number*</label>
+			<div class="col-sm-5">
 				<input type="text" id="CPR" name="CPR" required="required"
 					pattern="^[0-9]{9}$" value="{{.E.CPR}}" class="form-control">
 				<span class="help-block"></span>
 			</div>
 		</div>
 		<div class="form-group">
-			<label class="col-md-2 control-label" for="Passport">Passport</label>
-			<div class="col-md-5">
+			<label class="col-sm-2 control-label" for="Passport">Passport</label>
+			<div class="col-sm-5">
 				<input type="text" id="Passport" name="Passport" value="{{.E.Passport}}" class="form-control">
 				<span class="help-block"></span>
 			</div>
 		</div>
 		<div class="form-group">
-			<label class="col-md-2 control-label" for="dateOfBirth">Date of Birth*</label>
-			<div class="col-md-5">
+			<label class="col-sm-2 control-label" for="dateOfBirth">Date of Birth*</label>
+			<div class="col-sm-5">
 				<input type="date" id="dateOfBirth" name="DateOfBirth" value="{{.E.DateOfBirth | formatDate}}"
 					required="required" class="form-control">
 				<span class="help-block"></span>
 			</div>
 		</div>
 		<div class="form-group">
-			<label class="col-md-2 control-label" for="MobilePhone">Mobile Phone</label>
-			<div class="col-md-5">
+			<label class="col-sm-2 control-label" for="MobilePhone">Mobile Phone</label>
+			<div class="col-sm-5">
 				<input type="text" id="MobilePhone" name="MobilePhone" value="{{.E.MobilePhone}}" class="form-control">
 				<span class="help-block"></span>
 			</div>
 		</div>
 		<div class="form-group">
-			<label class="col-md-2 control-label" for="Address">Address</label>
-			<div class="col-md-5">
+			<label class="col-sm-2 control-label" for="Address">Address</label>
+			<div class="col-sm-5">
 				<textarea id="Address" name="Address" rows="5" class="form-control">{{.E.Address}}</textarea>
 				<span class="help-block"></span>
 			</div>
 		</div>
 		<div class="form-group">
-			<label class="col-md-2 control-label" for="EmergencyPhone">Emergency Phone</label>
-			<div class="col-md-5">
+			<label class="col-sm-2 control-label" for="EmergencyPhone">Emergency Phone</label>
+			<div class="col-sm-5">
 				<input type="text" id="EmergencyPhone" name="EmergencyPhone" value="{{.E.EmergencyPhone}}" class="form-control">
 				<span class="help-block"></span>
 			</div>
 		</div>
 		<div class="form-group">
-			<label class="col-md-2 control-label" for="HealthInfo">Health Information</label>
-			<div class="col-md-5">
+			<label class="col-sm-2 control-label" for="HealthInfo">Health Information</label>
+			<div class="col-sm-5">
 				<textarea id="HealthInfo" name="HealthInfo" rows="5" class="form-control">{{.E.HealthInfo}}</textarea>
 				<span class="help-block"></span>
 			</div>
 		</div>
 		<div class="form-group">
-			<label class="col-md-2 control-label" for="Comments">Comments</label>
-			<div class="col-md-5">
+			<label class="col-sm-2 control-label" for="Comments">Comments</label>
+			<div class="col-sm-5">
 				<textarea id="Comments" name="Comments" rows="5" class="form-control">{{.E.Comments}}</textarea>
 				<span class="help-block"></span>
 			</div>

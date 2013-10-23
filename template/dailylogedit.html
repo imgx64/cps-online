@@ -13,15 +13,15 @@ license that can be found in the LICENSE file.
 		<input type="hidden" name="ID" value={{.StudentID}}>
 		<input type="hidden" name="Date" value={{formatDate .Date}}>
 		<div class="form-group">
-			<label class="col-md-2 control-label" for="Behavior">Behavior</label>
-			<div class="col-md-5">
+			<label class="col-sm-2 control-label" for="Behavior">Behavior</label>
+			<div class="col-sm-5">
 				<textarea id="Behavior" name="Behavior" rows="5" class="form-control">{{.Behavior}}</textarea>
 				<span class="help-block"></span>
 			</div>
 		</div>
 		<div class="form-group">
-			<label class="col-md-2 control-label" for="Attendance">Attendance</label>
-			<div class="col-md-5">
+			<label class="col-sm-2 control-label" for="Attendance">Attendance</label>
+			<div class="col-sm-5">
 				<select id="Attendance" name="Attendance" class="form-control">
 					<option value="">Full attendance</option>
 					<option {{if equal .Attendance "Absent"}}selected="selected"{{end}}>
@@ -37,8 +37,8 @@ license that can be found in the LICENSE file.
 			</div>
 		</div>
 		<div class="form-group">
-			<label class="col-md-2 control-label" for="Details">Details/Excuse</label>
-			<div class="col-md-5">
+			<label class="col-sm-2 control-label" for="Details">Details/Excuse</label>
+			<div class="col-sm-5">
 				<textarea id="Details" name="Details" rows="5" class="form-control">{{.Details}}</textarea>
 				<span class="help-block"></span>
 			</div>
