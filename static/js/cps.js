@@ -23,20 +23,20 @@
 
 			switch(e.which) {
 			case 37: // left
-				$(this).closest("td").prevAll().find(".cps-grid").not("[disabled]").last().focus()
+				$(this).closest("td").prevAll().find(".cps-grid").not("[disabled]").last().select()
 				break;
 
 			case 38: // up
-				$(this).closest("tr").prev().children().eq(col).find(".cps-grid").focus()
+				$(this).closest("tr").prev().children().eq(col).find(".cps-grid").select()
 				break;
 
 			case 39: // right
-				$(this).closest("td").nextAll().find(".cps-grid").not("[disabled]").first().focus()
+				$(this).closest("td").nextAll().find(".cps-grid").not("[disabled]").first().select()
 				break;
 
 			case 13: // Enter
 			case 40: // down
-				$(this).closest("tr").next().children().eq(col).find(".cps-grid").focus()
+				$(this).closest("tr").next().children().eq(col).find(".cps-grid").select()
 				break;
 
 			default: return; // exit this handler for other keys

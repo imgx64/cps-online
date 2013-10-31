@@ -119,6 +119,9 @@ var subjects = []string{
 	"English",
 	"Math",
 	"Science",
+	"Biology",
+	"Chemistry",
+	"Physics",
 	"Social Studies",
 	"Religion",
 	"Islamic Studies",
@@ -230,11 +233,17 @@ func init() {
 				"Arabic":         newGGS(class),
 				"English":        newGGS(class),
 				"Math":           newGGS(class),
-				"Science":        newGGS(class),
 				"Social Studies": newGGS(class),
 				"Citizenship":    newCitizenshipGS(class),
 			}
-			if intClass <= 6 {
+			if intClass <= 8 {
+				gsMap["Science"] = newGGS(class)
+			} else {
+				gsMap["Biology"] = newGGS(class)
+				gsMap["Chemistry"] = newGGS(class)
+				gsMap["Physics"] = newGGS(class)
+			}
+			if intClass <= 5 {
 				gsMap["Religion"] = newGGS(class)
 			} else {
 				gsMap["Religion"] = newReligion7GS(class)
