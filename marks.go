@@ -230,8 +230,6 @@ func marksSaveHandler(w http.ResponseWriter, r *http.Request) {
 		"Subject":      []string{subject},
 	}
 	redirectURL := fmt.Sprintf("/marks?%s", urlValues.Encode())
-	// TODO: remove this line once memcache is used
-	redirectURL = "/marks"
 
 	nComplete := 0
 	if classHasSubject(class, subject) {

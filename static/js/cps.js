@@ -3,7 +3,7 @@
 // license that can be found in the LICENSE file.
 
 (function($) {
-	'use strict';
+	"use strict";
 
 	$(function() {
 		$(".cps-go-back").click(function() {
@@ -43,6 +43,21 @@
 			}
 			e.preventDefault(); // prevent the default action (scroll / move caret)
 		});
+
+		// Prevent accidental navigation away
+		function setConfirmUnload(on) {
+			window.onbeforeunload = on ? unloadMessage : null;
+		}
+
+		function unloadMessage() {
+			return("You have entered new data on this page. " +
+					"If you navigate away from this page without " +
+					"first saving your data, the changes will be lost.");
+		}
+		$(".cps-grid").bind("change", function() { setConfirmUnload(true); });
+		$(":input[type=submit]").click(function() { setConfirmUnload(false); });
+
+
 	});
 
 })(window.jQuery);
