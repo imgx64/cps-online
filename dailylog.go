@@ -66,6 +66,17 @@ func (dl dailylogType) save(c appengine.Context) error {
 	return nil
 }
 
+func (dl dailylogType) delete(c appengine.Context) error {
+	keyStr := fmt.Sprintf("%s|%s", dl.StudentID, dl.Date.Format("2006-01-02"))
+	key := datastore.NewKey(c, "dailylog", keyStr, 0, nil)
+	err := datastore.Delete(c, key)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func dailylogHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 	err := r.ParseForm()
@@ -225,7 +236,11 @@ func dailylogSaveHandler(w http.ResponseWriter, r *http.Request) {
 		Details:    details,
 	}
 
-	err = dailylog.save(c)
+	if f.Get("submit") == "Delete" {
+		err = dailylog.delete(c)
+	} else {
+		err = dailylog.save(c)
+	}
 	if err != nil {
 		// TODO: message to user
 		c.Errorf("Could not store dailylog: %s", err)

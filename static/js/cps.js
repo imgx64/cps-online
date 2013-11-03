@@ -57,7 +57,11 @@
 		$(".cps-grid").bind("change", function() { setConfirmUnload(true); });
 		$(":input[type=submit]").click(function() { setConfirmUnload(false); });
 
-
+		$(".are-you-sure").click(function(e) {
+			if(!window.confirm("Are you sure?")) {
+				e.preventDefault();
+			}
+		});
 	});
 
 })(window.jQuery);
