@@ -9,6 +9,7 @@ import (
 	"appengine/datastore"
 
 	"fmt"
+	"math"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -269,7 +270,7 @@ func marksSaveHandler(w http.ResponseWriter, r *http.Request) {
 					// invalid or empty marks
 					v = negZero
 				}
-				if m[term][i] != v {
+				if m[term][i] != v || math.Signbit(m[term][i]) != math.Signbit(v) {
 					marksChanged = true
 					m[term][i] = v
 				}
