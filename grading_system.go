@@ -230,13 +230,13 @@ func init() {
 		} else {
 			// class is numeric
 			gsMap = map[string]gradingSystem{
-				"Arabic":         newGGS(class),
-				"English":        newGGS(class),
-				"Math":           newGGS(class),
-				"Social Studies": newGGS(class),
-				"Citizenship":    newCitizenshipGS(class),
+				"Arabic":      newGGS(class),
+				"English":     newGGS(class),
+				"Math":        newGGS(class),
+				"Citizenship": newCitizenshipGS(class),
 			}
 			if intClass <= 8 {
+				gsMap["Social Studies"] = newGGS(class)
 				gsMap["Science"] = newGGS(class)
 			} else {
 				gsMap["Biology"] = newGGS(class)
@@ -251,7 +251,7 @@ func init() {
 			if intClass > 1 {
 				gsMap["Computer"] = newSingleGS("Evaluation", class)
 			}
-			if intClass <= 6 {
+			if intClass <= 5 {
 				gsMap["Islamic Studies"] = newSingleGS("Evaluation", class)
 			}
 		}
@@ -873,6 +873,9 @@ func subjectInAverage(subject, class string) bool {
 		"English":        true,
 		"Math":           true,
 		"Science":        true,
+		"Biology":        true,
+		"Chemistry":      true,
+		"Physics":        true,
 		"Social Studies": true,
 		"Religion":       true,
 	}
