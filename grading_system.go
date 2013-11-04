@@ -552,7 +552,7 @@ func newCitizenshipGS(class string) gradingSystem {
 	q, s := classWeights(class)
 	return simpleGradingSystem{
 		[]colDescription{
-			{"DW", 15, true},
+			{"DW", 20, true},
 			{"Oral", 50, true},
 			{"Project", 10, true},
 			{"Exam", 20, true},
