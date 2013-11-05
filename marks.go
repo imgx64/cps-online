@@ -136,7 +136,7 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 		cols = gs.description(term)
 		students, err := getStudents(c, true, classSection)
 		if err != nil {
-			c.Errorf("Could not store marks: %s", err)
+			c.Errorf("Could not get students: %s", err)
 			renderError(w, r, http.StatusInternalServerError)
 			return
 		}
@@ -154,7 +154,7 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 		cols = []colDescription{{Name: "Remarks"}}
 		students, err := getStudents(c, true, classSection)
 		if err != nil {
-			c.Errorf("Could not store marks: %s", err)
+			c.Errorf("Could not get students: %s", err)
 			renderError(w, r, http.StatusInternalServerError)
 			return
 		}

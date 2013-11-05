@@ -1,0 +1,74 @@
+{{/*
+Copyright 2013 Ibrahim Ghazal. All rights reserved.
+Use of this source code is governed by a BSD-style
+license that can be found in the LICENSE file.
+*/}}
+
+{{define "title"}}Enter Marks{{end}}
+{{define "content"}}
+<form class="form-inline" action="/printallmarks">
+	<div class="form-group">
+		<select id="Term" name="Term" class="form-control">
+			{{$term := .Term.Value}}
+			{{range .Terms}}
+			<option {{if equal .Value $term}}selected="selected"{{end}}
+			value="{{.Value}}">{{.}}</option>
+			{{end}}
+		</select>
+	</div>
+	<div class="form-group">
+		<select id="Subject" name="Subject" class="form-control">
+			{{$subject := .Subject}}
+			{{range .Subjects}}
+				{{if not (equal . "Remarks")}}
+				<option {{if equal . $subject}}selected="selected"{{end}}
+				value="{{.}}">{{.}}</option>
+				{{end}}
+			{{end}}
+		</select>
+	</div>
+	<div class="form-group">
+		<button type="submit" class="btn btn-default hidden-print">Go</button>
+	</div>
+</form>
+{{if .Subject}}
+{{$subject := .Subject}}
+<p class="spacer"></p>
+<table class="table table-bordered table-condensed">
+	<thead>
+		<tr>
+			<th scope="col">Class</th>
+			<th scope="col">Student Name</th>
+			{{range .Cols}}
+			<th scope="col">{{.Name}}</th>
+			{{end}}
+		</tr>
+		<tr>
+			<th scope="col"></th>
+			<th scope="col"></th>
+			{{range .Cols}}
+			<th scope="col">{{.Max}}</th>
+			{{end}}
+		</tr>
+	</thead>
+	<tbody>
+	{{$cols := .Cols}}
+	{{range .Students}}
+		<tr>
+			<td>{{.ClassSection}}</td>
+			<th scope="row">
+				<input type="text" class="cps-student-name" value="{{.Name}}" readonly="readonly">
+			</th>
+			{{range $i, $m := .Marks}}
+			{{$c := index $cols $i}}
+			<td>
+				{{mark $m}}
+			</td>
+			{{end}}
+		</tr>
+	{{end}}
+	</tbody>
+</table>
+{{end}}
+{{end}}
+
