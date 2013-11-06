@@ -87,7 +87,7 @@ var pages = []link{
 	//{Name: "Classes", URL: "/classes"},
 	//{Name: "Publish Reportcards", URL: "/publish"},
 	{Name: "Check Completion", URL: "/completion"},
-	{Name: "Print all marks", URL: "/printallmarks"},
+	{Name: "Print All Marks", URL: "/printallmarks"},
 
 	{Name: "Enter Marks", URL: "/marks"},
 	{Name: "Upload documents", URL: "/upload"},
