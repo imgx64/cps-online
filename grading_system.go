@@ -840,13 +840,13 @@ func getLetterSystem(class string) letterSystem {
 // String returns a description of the letter system
 func (ls letterSystem) String() string {
 	buf := new(bytes.Buffer)
-	previousMin := 100.0
+	previousMin := 101.0
 	for i, l := range ls {
 		if i > 0 {
 			fmt.Fprint(buf, " - ")
 		}
 		fmt.Fprintf(buf, "%s: %s (%.0f-%.0f)",
-			l.letter, l.description, l.minMark, previousMin)
+			l.letter, l.description, l.minMark, previousMin-1)
 		previousMin = l.minMark
 	}
 	return buf.String()
