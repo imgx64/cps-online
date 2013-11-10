@@ -868,6 +868,9 @@ func (ls letterSystem) getLetter(mark float64) string {
 
 // subjectInAverage returns true if subject should be calculated in average
 func subjectInAverage(subject, class string) bool {
+	if (class == "KG1" || class == "KG2") && subject == "Religion" {
+		return false
+	}
 	subjectsInAverage := map[string]bool{
 		"Arabic":         true,
 		"English":        true,
