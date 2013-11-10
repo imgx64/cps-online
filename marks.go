@@ -8,16 +8,21 @@ import (
 	"appengine"
 	"appengine/datastore"
 
+	"encoding/csv"
 	"fmt"
+	"io"
 	"math"
 	"net/http"
 	"net/url"
+	"reflect"
 	"strconv"
 )
 
 func init() {
 	http.HandleFunc("/marks", accessHandler(marksHandler))
 	http.HandleFunc("/marks/save", accessHandler(marksSaveHandler))
+	http.HandleFunc("/marks/export", accessHandler(marksExportHandler))
+	http.HandleFunc("/marks/import", accessHandler(marksImportHandler))
 }
 
 // marksRow will be stored in the datastore
@@ -214,7 +219,8 @@ func marksSaveHandler(w http.ResponseWriter, r *http.Request) {
 	f := r.PostForm
 	term, err1 := parseTerm(f.Get("Term"))
 	subject := f.Get("Subject")
-	class, section, err2 := parseClassSection(f.Get("ClassSection"))
+	classSection := f.Get("ClassSection")
+	class, _, err2 := parseClassSection(classSection)
 	if err1 != nil || subject == "" || err2 != nil {
 		c.Errorf("Could not save marks: Term err: %s, subject: %q, classSection err: %s",
 			err1, subject, err2)
@@ -222,7 +228,6 @@ func marksSaveHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	classSection := fmt.Sprintf("%s|%s", class, section)
 	// used for redirecting
 	urlValues := url.Values{
 		"Term":         []string{term.Value()},
@@ -314,6 +319,326 @@ func marksSaveHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err := storeCompletion(c, classSection, term, subject, nComplete)
+	if err != nil {
+		c.Errorf("Could not store completion: %s", err)
+	}
+
+	// TODO: message of success/fail
+	http.Redirect(w, r, redirectURL, http.StatusFound)
+}
+
+func marksExportHandler(w http.ResponseWriter, r *http.Request) {
+	c := appengine.NewContext(r)
+
+	if err := r.ParseForm(); err != nil {
+		c.Errorf("Could not parse form: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	term, err := parseTerm(r.Form.Get("Term"))
+	if err != nil {
+		term = Term{}
+	}
+
+	classSection := r.Form.Get("ClassSection")
+	class, _, err := parseClassSection(classSection)
+	if err != nil {
+		class = ""
+	}
+
+	subject := r.Form.Get("Subject")
+
+	var cols []colDescription
+	var studentRows []studentRow
+
+	if classHasSubject(class, subject) {
+		gs := getGradingSystem(class, subject)
+		cols = gs.description(term)
+		students, err := getStudents(c, true, classSection)
+		if err != nil {
+			c.Errorf("Could not get students: %s", err)
+			renderError(w, r, http.StatusInternalServerError)
+			return
+		}
+
+		for _, s := range students {
+			m, err := getStudentMarks(c, s.ID, subject)
+			if err != nil {
+				// TODO: report error
+				continue
+			}
+			gs.evaluate(term, m) // TODO: check error
+			studentRows = append(studentRows, studentRow{s.ID, s.Name, m[term], ""})
+		}
+	} else if subject == "Remarks" {
+		cols = []colDescription{{Name: "Remarks"}}
+		students, err := getStudents(c, true, classSection)
+		if err != nil {
+			c.Errorf("Could not get students: %s", err)
+			renderError(w, r, http.StatusInternalServerError)
+			return
+		}
+
+		for _, s := range students {
+			rem, err := getStudentRemark(c, s.ID, term)
+			if err != nil {
+				// TODO: report error
+				continue
+			}
+			studentRows = append(studentRows, studentRow{s.ID, s.Name, nil, rem})
+		}
+	}
+
+	filename := fmt.Sprintf("%s-%s-%s", term, classSection, subject)
+
+	w.Header().Set("Content-Type", "text/csv")
+	// Force save as with filename
+	w.Header().Set("Content-Disposition",
+		fmt.Sprintf("attachment;filename=Marks-%s.csv", filename))
+
+	var errors []error
+	csvw := csv.NewWriter(w)
+	csvw.UseCRLF = true
+
+	fieldNames := []string{filename, "Student Name"}
+	fieldMax := []string{"Do not modify this column", ""}
+	for _, col := range cols {
+		fieldNames = append(fieldNames, col.Name)
+		fieldMax = append(fieldMax, formatMark(col.Max))
+	}
+	errors = append(errors, csvw.Write(fieldNames))
+	errors = append(errors, csvw.Write(fieldMax))
+
+	for _, sr := range studentRows {
+		var row []string
+		row = append(row, sr.ID)
+		row = append(row, sr.Name)
+		if len(sr.Marks) > 0 {
+			for _, mark := range sr.Marks {
+				row = append(row, formatMark(mark))
+			}
+		} else {
+			row = append(row, sr.Remark)
+		}
+
+		errors = append(errors, csvw.Write(row))
+	}
+
+	csvw.Flush()
+
+	for _, err := range errors {
+		if err != nil {
+			c.Errorf("Error writing csv: %s", err)
+		}
+	}
+
+}
+
+func marksImportHandler(w http.ResponseWriter, r *http.Request) {
+	c := appengine.NewContext(r)
+
+	err := r.ParseMultipartForm(1e6)
+	if err != nil {
+		c.Errorf("Could not parse multipart form: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	} else if r.MultipartForm == nil || len(r.MultipartForm.File["csvfile"]) != 1 {
+		c.Errorf("No file uploaded: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	f := url.Values(r.MultipartForm.Value)
+	term, err1 := parseTerm(f.Get("Term"))
+	subject := f.Get("Subject")
+	classSection := f.Get("ClassSection")
+	class, _, err2 := parseClassSection(classSection)
+	if err1 != nil || subject == "" || err2 != nil {
+		c.Errorf("Could not import marks: Term err: %s, subject: %q, classSection err: %s",
+			err1, subject, err2)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	// used for redirecting
+	urlValues := url.Values{
+		"Term":         []string{term.Value()},
+		"ClassSection": []string{classSection},
+		"Subject":      []string{subject},
+	}
+	redirectURL := fmt.Sprintf("/marks?%s", urlValues.Encode())
+
+	file, err := r.MultipartForm.File["csvfile"][0].Open()
+	if err != nil {
+		c.Errorf("Could not open uploaded file: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+	defer file.Close()
+
+	// used for validating the first two rows
+	filename := fmt.Sprintf("%s-%s-%s", term, classSection, subject)
+	fieldNames := []string{filename, "Student Name"}
+	fieldMax := []string{"Do not modify this column", ""}
+	var cols []colDescription
+	if classHasSubject(class, subject) {
+		gs := getGradingSystem(class, subject)
+		cols = gs.description(term)
+		for _, col := range cols {
+			fieldNames = append(fieldNames, col.Name)
+			fieldMax = append(fieldMax, formatMark(col.Max))
+		}
+	} else if subject == "Remarks" {
+		fieldNames = append(fieldNames, "Remarks")
+		fieldMax = append(fieldMax, formatMark(0))
+	}
+
+	csvr := csv.NewReader(file)
+	csvr.LazyQuotes = true
+	csvr.TrailingComma = true
+	csvMarks := make(map[string][]string)
+	var errors []error
+	i := 0
+	for {
+		i++
+		record, err := csvr.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			errors = append(errors, fmt.Errorf("Error in row %d: %s", i, err))
+			continue
+		}
+		if i == 1 {
+			// header
+			if !reflect.DeepEqual(record, fieldNames) {
+				c.Errorf("Invalid file header: %q", record)
+				renderError(w, r, http.StatusInternalServerError)
+				return
+			}
+			continue
+		}
+		if i == 2 {
+			if !reflect.DeepEqual(record, fieldMax) {
+				c.Errorf("Invalid file header: %q", record)
+				renderError(w, r, http.StatusInternalServerError)
+				return
+			}
+			continue
+		}
+		csvMarks[record[0]] = record[1:]
+	}
+
+	nComplete := 0
+	if classHasSubject(class, subject) {
+		gs := getGradingSystem(class, subject)
+		cols := gs.description(term)
+		hasEditable := false
+		for _, col := range cols {
+			if col.Editable {
+				hasEditable = true
+			}
+		}
+		if !hasEditable {
+			http.Redirect(w, r, redirectURL, http.StatusFound)
+			return
+		}
+
+		students, err := getStudents(c, true, classSection)
+		if err != nil {
+			c.Errorf("Could not retrieve students: %s", err)
+			renderError(w, r, http.StatusInternalServerError)
+			return
+		}
+
+		for _, s := range students {
+			marksRecord, ok := csvMarks[s.ID]
+			if !ok {
+				c.Errorf("Student not found in class: %s", s.ID)
+				renderError(w, r, http.StatusInternalServerError)
+				return
+			}
+			delete(csvMarks, s.ID)
+			if marksRecord[0] != s.Name {
+				c.Errorf("Student ID does not match name in csv: %s, %s", s.ID, marksRecord[0])
+				renderError(w, r, http.StatusInternalServerError)
+				return
+			}
+			marksRecord = marksRecord[1:]
+			m, err := getStudentMarks(c, s.ID, subject)
+			if err != nil {
+				c.Errorf("Could not get student marks: %s", err)
+				renderError(w, r, http.StatusInternalServerError)
+				return
+			}
+			gs.evaluate(term, m) // TODO: check error
+
+			marksChanged := false
+			for i, col := range cols {
+				v, err := strconv.ParseFloat(marksRecord[i], 64)
+				if err != nil || v > col.Max {
+					// invalid or empty marks
+					v = negZero
+				}
+				if m[term][i] != v {
+					marksChanged = true
+					m[term][i] = v
+				}
+
+			}
+			gs.evaluate(term, m) // TODO: check error
+			if marksChanged {
+				err := storeMarksRow(c, s.ID, term, subject, m[term])
+				if err != nil {
+					c.Errorf("Could not store marks: %s", err)
+					renderError(w, r, http.StatusInternalServerError)
+					return
+				}
+			}
+			if gs.ready(term, m) {
+				nComplete++
+			}
+		}
+	} else if subject == "Remarks" {
+		students, err := getStudents(c, true, classSection)
+		if err != nil {
+			c.Errorf("Could not get students: %s", err)
+			renderError(w, r, http.StatusInternalServerError)
+			return
+		}
+
+		for _, s := range students {
+			marksRecord, ok := csvMarks[s.ID]
+			if !ok {
+				c.Errorf("Student not found in class: %s", s.ID)
+				renderError(w, r, http.StatusInternalServerError)
+				return
+			}
+			delete(csvMarks, s.ID)
+			if marksRecord[0] != s.Name {
+				c.Errorf("Student ID does not match name in csv: %s, %s", s.ID, marksRecord[0])
+				renderError(w, r, http.StatusInternalServerError)
+				return
+			}
+			marksRecord = marksRecord[1:]
+			remark := marksRecord[0]
+			if remark == "" {
+				// no remark to update
+				continue
+			}
+
+			err = storeRemark(c, s.ID, term, remark)
+			if err != nil {
+				c.Errorf("Could not store remark: %s", err)
+				renderError(w, r, http.StatusInternalServerError)
+				return
+			}
+			nComplete++
+		}
+	}
+
+	err = storeCompletion(c, classSection, term, subject, nComplete)
 	if err != nil {
 		c.Errorf("Could not store completion: %s", err)
 	}

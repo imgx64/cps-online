@@ -577,7 +577,11 @@ func studentsExportHandler(w http.ResponseWriter, r *http.Request) {
 	var students []studentType
 	var filename string
 
-	r.ParseForm()
+	if err := r.ParseForm(); err != nil {
+		c.Errorf("Could not parse form: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
 
 	if r.Form.Get("template") == "true" {
 		filename = "Students-template"

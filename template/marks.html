@@ -104,5 +104,21 @@ license that can be found in the LICENSE file.
 	</table>
 	<input type="submit" class="btn btn-default btn-primary hidden-print" value="Save">
 </form>
+<div class="hidden-print">
+	<h2>Export/Import</h2>
+	<a class="btn btn-default" href="/marks/export?Term={{.Term.Value}}&ClassSection={{.Class}}|{{.Section}}&Subject={{.Subject}}">Export Marks</a>
+	<form class="form-inline spacer" action="/marks/import" method="post" enctype="multipart/form-data">
+		<input type="hidden" name="Term" value="{{.Term.Value}}">
+		<input type="hidden" name="ClassSection" value="{{.Class}}|{{.Section}}">
+		<input type="hidden" name="Subject" value="{{.Subject}}">
+		<div class="form-group">
+			<input type="file" name="csvfile" accept="text/csv" class="form-control">
+		</div>
+		<div class="form-group">
+			<button type="submit" class="btn btn-default">Import Marks</button>
+		</div>
+	</form>
+	<div class="spacer"></div>
+</div>
 {{end}}
 {{end}}

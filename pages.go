@@ -45,6 +45,8 @@ var access = map[string]roles{
 
 	"/marks":            teacherRole,
 	"/marks/save":       teacherRole,
+	"/marks/import":     teacherRole,
+	"/marks/export":     teacherRole,
 	"/upload":           teacherRole,
 	"/upload/file":      teacherRole,
 	"/upload/link":      teacherRole,
