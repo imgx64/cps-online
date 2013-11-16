@@ -20,10 +20,8 @@ license that can be found in the LICENSE file.
 		<select id="Subject" name="Subject" class="form-control">
 			{{$subject := .Subject}}
 			{{range .Subjects}}
-				{{if not (equal . "Remarks")}}
 				<option {{if equal . $subject}}selected="selected"{{end}}
 				value="{{.}}">{{.}}</option>
-				{{end}}
 			{{end}}
 		</select>
 	</div>
