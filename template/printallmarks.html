@@ -27,6 +27,12 @@ license that can be found in the LICENSE file.
 			{{end}}
 		</select>
 	</div>
+	<div class="checkbox">
+		<label>
+			<input type="checkbox" name="Sort" {{if .Sort}}checked="checked"{{end}}>
+			Sort according to marks
+		</label>
+	</div>
 	<div class="form-group">
 		<input type="submit" class="btn btn-default hidden-print" value="Go">
 	</div>

@@ -7,7 +7,9 @@ package main
 import (
 	"appengine"
 
+	"fmt"
 	"net/http"
+	"sort"
 )
 
 func init() {
@@ -18,6 +20,21 @@ type printAllRow struct {
 	ClassSection string
 	Name         string
 	Marks        []float64
+	SortBy       float64
+}
+
+type printAllRowSorter []printAllRow
+
+func (pars printAllRowSorter) Len() int {
+	return len(pars)
+}
+
+func (pars printAllRowSorter) Less(i, j int) bool {
+	return pars[i].SortBy > pars[j].SortBy
+}
+
+func (pars printAllRowSorter) Swap(i, j int) {
+	pars[i], pars[j] = pars[j], pars[i]
 }
 
 func printAllHandler(w http.ResponseWriter, r *http.Request) {
@@ -35,9 +52,10 @@ func printAllHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	subject := r.Form.Get("Subject")
+	doSort := r.Form.Get("Sort") != ""
 
 	var cols []colDescription
-	var studentRows []printAllRow
+	studentRows := make(map[string][]printAllRow)
 
 	students, err := getStudents(c, true, "all")
 	if err != nil {
@@ -50,33 +68,49 @@ func printAllHandler(w http.ResponseWriter, r *http.Request) {
 	maxLen := 0
 	var maxCols []colDescription
 	for _, stu := range students {
-		if !classHasSubject(stu.Class, subject) {
-			continue
-		}
-		gs := getGradingSystem(stu.Class, subject)
-		if stu.Class != prevClass {
-			cols = gs.description(term)
-			if len(cols) > maxLen {
-				maxLen = len(cols)
-				maxCols = cols
+		if subject == "All" {
+			// FIXME: Get all marks + average
+		} else if classHasSubject(stu.Class, subject) {
+			gs := getGradingSystem(stu.Class, subject)
+			if stu.Class != prevClass {
+				cols = gs.description(term)
+				if len(cols) > maxLen {
+					maxLen = len(cols)
+					maxCols = cols
+				}
 			}
+			m, err := getStudentMarks(c, stu.ID, subject)
+			if err != nil {
+				// TODO: report error
+				continue
+			}
+			gs.evaluate(term, m) // TODO: check error
+			classSection := fmt.Sprintf("%s|%s", stu.Class, stu.Section)
+			row := printAllRow{stu.Class + stu.Section, stu.Name, m[term], gs.get100(term, m)}
+			studentRows[classSection] = append(studentRows[classSection], row)
 		}
-		m, err := getStudentMarks(c, stu.ID, subject)
-		if err != nil {
-			// TODO: report error
-			continue
-		}
-		gs.evaluate(term, m) // TODO: check error
-		studentRows = append(studentRows, printAllRow{stu.Class + stu.Section, stu.Name, m[term]})
 	}
 
 	for len(maxCols) < 13 {
 		maxCols = append(maxCols, colDescription{"____", 0, false})
 	}
 
+	var allRows []printAllRow
+	for _, cg := range classGroups {
+		for _, sec := range cg.Sections {
+			classSection := fmt.Sprintf("%s|%s", cg.Class, sec)
+			rows := studentRows[classSection]
+			if doSort {
+				sort.Sort(printAllRowSorter(rows))
+			}
+			allRows = append(allRows, rows...)
+		}
+	}
+
 	data := struct {
 		Term    Term
 		Subject string
+		Sort    bool
 
 		Terms    []Term
 		Subjects []string
@@ -86,12 +120,13 @@ func printAllHandler(w http.ResponseWriter, r *http.Request) {
 	}{
 		term,
 		subject,
+		doSort,
 
 		terms,
 		subjects,
 
 		maxCols,
-		studentRows,
+		allRows,
 	}
 
 	if err := render(w, r, "printallmarks", data); err != nil {
