@@ -211,7 +211,7 @@ func init() {
 			if class == "KG1" || class == "KG2" {
 				gsMap = map[string]gradingSystem{
 					"Arabic":   newGGS(class),
-					"English":  newGGS(class),
+					"English":  newEGS(class),
 					"Math":     newGGS(class),
 					"Science":  newGGS(class),
 					"Religion": newSingleGS("Evaluation", class),
@@ -219,7 +219,7 @@ func init() {
 			} else if class == "SN" {
 				gsMap = map[string]gradingSystem{
 					"Arabic":      newGGS(class),
-					"English":     newGGS(class),
+					"English":     newEGS(class),
 					"Math":        newGGS(class),
 					"Science":     newGGS(class),
 					"Religion":    newGGS(class),
@@ -231,7 +231,7 @@ func init() {
 			// class is numeric
 			gsMap = map[string]gradingSystem{
 				"Arabic":      newGGS(class),
-				"English":     newGGS(class),
+				"English":     newEGS(class),
 				"Math":        newGGS(class),
 				"Citizenship": newCitizenshipGS(class),
 			}
@@ -413,6 +413,156 @@ func (ggs genericGradingSystem) quarterWeight() float64 {
 
 func (ggs genericGradingSystem) semesterWeight() float64 {
 	return ggs.sWeight
+}
+
+// EnglishGradingSystem is used for English:
+// [5:Homework] [5:Daily Work] [10:Reading] [10:Writing]
+// [50:best 5 quizzes out of 6] [20:Quarter Exam]
+type englishGradingSystem struct {
+	qWeight float64
+	sWeight float64
+}
+
+func newEGS(class string) gradingSystem {
+	q, s := classWeights(class)
+	return englishGradingSystem{q, s}
+}
+
+func (egs englishGradingSystem) description(term Term) []colDescription {
+	if term.Typ == Quarter {
+		return []colDescription{
+			{"Homework", 5, true},
+			{"Daily Work", 5, true},
+			{"Reading", 10, true},
+			{"Writing", 10, true},
+			{"Quiz 1", 10, true},
+			{"Quiz 2", 10, true},
+			{"Quiz 3", 10, true},
+			{"Quiz 4", 10, true},
+			{"Quiz 5", 10, true},
+			{"Quiz 6", 10, true},
+			{"Best 5 Quizzes", 50, false},
+			{"Quarter Exam", 20, true},
+			{"Quarter Mark", 100, false},
+			{"Quarter %", egs.qWeight, false},
+		}
+	} else if term.Typ == Semester {
+		return []colDescription{
+			// TODO: per-subject exam marks
+			{"Semester Exam", 100, true},
+			{"Semester Exam %", egs.sWeight, false},
+			{"Semester Mark", 100, false},
+		}
+	} else if term.Typ == EndOfYear {
+		return []colDescription{
+			{"Semester 1 %", 50, false},
+			{"Semester 2 %", 50, false},
+			{"Final mark", 100, false},
+		}
+	}
+	panic(fmt.Sprintf("Invalid term type: %d", term.Typ))
+}
+
+func (egs englishGradingSystem) evaluate(term Term, marks studentMarks) (err error) {
+	m := marks[term]
+	desc := egs.description(term)
+
+	switch {
+	case m == nil: // first time to evaluate it
+		m = make([]float64, len(desc))
+		for i, _ := range desc {
+			m[i] = negZero
+		}
+	case len(m) != len(desc): // sanity check
+		err = invalidNumberOfMarks
+		m = make([]float64, len(desc))
+		for i, _ := range desc {
+			m[i] = negZero
+		}
+	}
+
+	// more sanity checks
+	for i, d := range desc {
+		if m[i] < 0 || m[i] > d.Max {
+			m[i] = negZero
+			if err == nil {
+				err = invalidRangeOfMarks
+			}
+		}
+	}
+
+	if term.Typ == Quarter {
+		// Best 5 Quizzes
+		m[10] = sumQuizzes(m[4:10]...)
+
+		// Quarter mark
+		m[12] = sumMarks(m[0], m[1], m[2], m[3], m[10], m[11])
+
+		// Quarter %
+		m[13] = m[12] * egs.qWeight / 100.0
+	} else if term.Typ == Semester {
+		// Semester Exam %
+		m[1] = m[0] * egs.sWeight / 100.0
+
+		// Semester Mark
+		q2 := uint(term.N * 2)
+		q1 := q2 - 1
+		egs.evaluate(Term{Quarter, q1}, marks)
+		egs.evaluate(Term{Quarter, q2}, marks)
+		q1Mark := marks[Term{Quarter, q1}][13]
+		q2Mark := marks[Term{Quarter, q2}][13]
+
+		m[2] = sumMarks(m[1], q1Mark, q2Mark)
+	} else if term.Typ == EndOfYear {
+		egs.evaluate(Term{Semester, 1}, marks)
+		egs.evaluate(Term{Semester, 2}, marks)
+		m[0] = marks[Term{Semester, 1}][2] / 2.0
+		m[1] = marks[Term{Semester, 2}][2] / 2.0
+
+		m[2] = sumMarks(m[0], m[1])
+	} else {
+		panic(fmt.Sprintf("Invalid term type: %d", term.Typ))
+	}
+
+	marks[term] = m
+	return
+}
+
+func (egs englishGradingSystem) get100(term Term, marks studentMarks) float64 {
+	m := marks[term]
+	if term.Typ == Quarter {
+		return m[len(m)-2]
+	} else if term.Typ == Semester {
+		return m[2]
+	} else if term.Typ == EndOfYear {
+		return m[2]
+	}
+	panic(fmt.Sprintf("Invalid term type: %d", term.Typ))
+}
+
+func (egs englishGradingSystem) getExam(term Term, marks studentMarks) float64 {
+	m := marks[term]
+	if term.Typ == Quarter {
+		return m[len(m)-3]
+	} else if term.Typ == Semester {
+		return m[1]
+	} else if term.Typ == EndOfYear {
+		return negZero
+	}
+	panic(fmt.Sprintf("Invalid term type: %d", term.Typ))
+}
+
+func (egs englishGradingSystem) ready(term Term, marks studentMarks) bool {
+	m := marks[term]
+	return !math.Signbit(m[len(m)-1])
+}
+
+func (egs englishGradingSystem) quarterWeight() float64 {
+	return egs.qWeight
+}
+
+func (egs englishGradingSystem) semesterWeight() float64 {
+	return egs.sWeight
 }
 
 // peGradingSystem is used for P.E.
