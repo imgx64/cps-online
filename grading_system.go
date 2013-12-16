@@ -212,16 +212,16 @@ func init() {
 				gsMap = map[string]gradingSystem{
 					"Arabic":   newGGS(class),
 					"English":  newEGS(class),
-					"Math":     newGGS(class),
-					"Science":  newGGS(class),
+					"Math":     newMGS(class),
+					"Science":  newSCGS(class),
 					"Religion": newSingleGS("Evaluation", class),
 				}
 			} else if class == "SN" {
 				gsMap = map[string]gradingSystem{
 					"Arabic":      newGGS(class),
 					"English":     newEGS(class),
-					"Math":        newGGS(class),
-					"Science":     newGGS(class),
+					"Math":        newMGS(class),
+					"Science":     newSCGS(class),
 					"Religion":    newGGS(class),
 					"Citizenship": newCitizenshipGS(class),
 					"Computer":    newSingleGS("Evaluation", class),
@@ -232,16 +232,16 @@ func init() {
 			gsMap = map[string]gradingSystem{
 				"Arabic":      newGGS(class),
 				"English":     newEGS(class),
-				"Math":        newGGS(class),
+				"Math":        newMGS(class),
 				"Citizenship": newCitizenshipGS(class),
 			}
 			if intClass <= 8 {
 				gsMap["Social Studies"] = newGGS(class)
-				gsMap["Science"] = newGGS(class)
+				gsMap["Science"] = newSCGS(class)
 			} else {
-				gsMap["Biology"] = newGGS(class)
-				gsMap["Chemistry"] = newGGS(class)
-				gsMap["Physics"] = newGGS(class)
+				gsMap["Biology"] = newSCGS(class)
+				gsMap["Chemistry"] = newSCGS(class)
+				gsMap["Physics"] = newSCGS(class)
 			}
 			if intClass <= 5 {
 				gsMap["Religion"] = newGGS(class)
@@ -415,7 +415,156 @@ func (ggs genericGradingSystem) semesterWeight() float64 {
 	return ggs.sWeight
 }
 
-// EnglishGradingSystem is used for English:
+// mathGradingSystem is used for Math:
+// [5:Homework] [5:Daily Work] [20:Mental Math]
+// [50:best 5 quizzes out of 6] [20:Quarter Exam]
+type mathGradingSystem struct {
+	qWeight float64
+	sWeight float64
+}
+
+func newMGS(class string) gradingSystem {
+	q, s := classWeights(class)
+	return mathGradingSystem{q, s}
+}
+
+func (mgs mathGradingSystem) description(term Term) []colDescription {
+	if term.Typ == Quarter {
+		return []colDescription{
+			{"Homework", 5, true},
+			{"Daily Work", 5, true},
+			{"Mental Math", 20, true},
+			{"Quiz 1", 10, true},
+			{"Quiz 2", 10, true},
+			{"Quiz 3", 10, true},
+			{"Quiz 4", 10, true},
+			{"Quiz 5", 10, true},
+			{"Quiz 6", 10, true},
+			{"Best 5 Quizzes", 50, false},
+			{"Quarter Exam", 20, true},
+			{"Quarter Mark", 100, false},
+			{"Quarter %", mgs.qWeight, false},
+		}
+	} else if term.Typ == Semester {
+		return []colDescription{
+			// TODO: per-subject exam marks
+			{"Semester Exam", 100, true},
+			{"Semester Exam %", mgs.sWeight, false},
+			{"Semester Mark", 100, false},
+		}
+	} else if term.Typ == EndOfYear {
+		return []colDescription{
+			{"Semester 1 %", 50, false},
+			{"Semester 2 %", 50, false},
+			{"Final mark", 100, false},
+		}
+	}
+	panic(fmt.Sprintf("Invalid term type: %d", term.Typ))
+}
+
+func (mgs mathGradingSystem) evaluate(term Term, marks studentMarks) (err error) {
+	m := marks[term]
+	desc := mgs.description(term)
+
+	switch {
+	case m == nil: // first time to evaluate it
+		m = make([]float64, len(desc))
+		for i, _ := range desc {
+			m[i] = negZero
+		}
+	case len(m) != len(desc): // sanity check
+		err = invalidNumberOfMarks
+		m = make([]float64, len(desc))
+		for i, _ := range desc {
+			m[i] = negZero
+		}
+	}
+
+	// more sanity checks
+	for i, d := range desc {
+		if m[i] < 0 || m[i] > d.Max {
+			m[i] = negZero
+			if err == nil {
+				err = invalidRangeOfMarks
+			}
+		}
+	}
+
+	if term.Typ == Quarter {
+		// Best 5 Quizzes
+		m[9] = sumQuizzes(m[3:9]...)
+
+		// Quarter mark
+		m[11] = sumMarks(m[0], m[1], m[2], m[9], m[10])
+
+		// Quarter %
+		m[12] = m[11] * mgs.qWeight / 100.0
+	} else if term.Typ == Semester {
+		// Semester Exam %
+		m[1] = m[0] * mgs.sWeight / 100.0
+
+		// Semester Mark
+		q2 := uint(term.N * 2)
+		q1 := q2 - 1
+		mgs.evaluate(Term{Quarter, q1}, marks)
+		mgs.evaluate(Term{Quarter, q2}, marks)
+		q1Mark := marks[Term{Quarter, q1}][12]
+		q2Mark := marks[Term{Quarter, q2}][12]
+
+		m[2] = sumMarks(m[1], q1Mark, q2Mark)
+	} else if term.Typ == EndOfYear {
+		mgs.evaluate(Term{Semester, 1}, marks)
+		mgs.evaluate(Term{Semester, 2}, marks)
+		m[0] = marks[Term{Semester, 1}][2] / 2.0
+		m[1] = marks[Term{Semester, 2}][2] / 2.0
+
+		m[2] = sumMarks(m[0], m[1])
+	} else {
+		panic(fmt.Sprintf("Invalid term type: %d", term.Typ))
+	}
+
+	marks[term] = m
+	return
+}
+
+func (mgs mathGradingSystem) get100(term Term, marks studentMarks) float64 {
+	m := marks[term]
+	if term.Typ == Quarter {
+		return m[len(m)-2]
+	} else if term.Typ == Semester {
+		return m[2]
+	} else if term.Typ == EndOfYear {
+		return m[2]
+	}
+	panic(fmt.Sprintf("Invalid term type: %d", term.Typ))
+}
+
+func (mgs mathGradingSystem) getExam(term Term, marks studentMarks) float64 {
+	m := marks[term]
+	if term.Typ == Quarter {
+		return m[len(m)-3]
+	} else if term.Typ == Semester {
+		return m[1]
+	} else if term.Typ == EndOfYear {
+		return negZero
+	}
+	panic(fmt.Sprintf("Invalid term type: %d", term.Typ))
+}
+
+func (mgs mathGradingSystem) ready(term Term, marks studentMarks) bool {
+	m := marks[term]
+	return !math.Signbit(m[len(m)-1])
+}
+
+func (mgs mathGradingSystem) quarterWeight() float64 {
+	return mgs.qWeight
+}
+
+func (mgs mathGradingSystem) semesterWeight() float64 {
+	return mgs.sWeight
+}
+
+// englishGradingSystem is used for English:
 // [5:Homework] [5:Daily Work] [10:Reading] [10:Writing]
 // [50:best 5 quizzes out of 6] [20:Quarter Exam]
 type englishGradingSystem struct {
@@ -563,6 +712,156 @@ func (egs englishGradingSystem) quarterWeight() float64 {
 
 func (egs englishGradingSystem) semesterWeight() float64 {
 	return egs.sWeight
+}
+
+// scienceGradingSystem is used for Science:
+// [5:Homework] [5:Daily Work] [10:Definitions] [10:Experiment]
+// [50:best 5 quizzes out of 6] [20:Quarter Exam]
+type scienceGradingSystem struct {
+	qWeight float64
+	sWeight float64
+}
+
+func newSCGS(class string) gradingSystem {
+	q, s := classWeights(class)
+	return scienceGradingSystem{q, s}
+}
+
+func (scgs scienceGradingSystem) description(term Term) []colDescription {
+	if term.Typ == Quarter {
+		return []colDescription{
+			{"Homework", 5, true},
+			{"Daily Work", 5, true},
+			{"Definitions", 10, true},
+			{"Experiment / practical", 10, true},
+			{"Quiz 1", 10, true},
+			{"Quiz 2", 10, true},
+			{"Quiz 3", 10, true},
+			{"Quiz 4", 10, true},
+			{"Quiz 5", 10, true},
+			{"Quiz 6", 10, true},
+			{"Best 5 Quizzes", 50, false},
+			{"Quarter Exam", 20, true},
+			{"Quarter Mark", 100, false},
+			{"Quarter %", scgs.qWeight, false},
+		}
+	} else if term.Typ == Semester {
+		return []colDescription{
+			// TODO: per-subject exam marks
+			{"Semester Exam", 100, true},
+			{"Semester Exam %", scgs.sWeight, false},
+			{"Semester Mark", 100, false},
+		}
+	} else if term.Typ == EndOfYear {
+		return []colDescription{
+			{"Semester 1 %", 50, false},
+			{"Semester 2 %", 50, false},
+			{"Final mark", 100, false},
+		}
+	}
+	panic(fmt.Sprintf("Invalid term type: %d", term.Typ))
+}
+
+func (scgs scienceGradingSystem) evaluate(term Term, marks studentMarks) (err error) {
+	m := marks[term]
+	desc := scgs.description(term)
+
+	switch {
+	case m == nil: // first time to evaluate it
+		m = make([]float64, len(desc))
+		for i, _ := range desc {
+			m[i] = negZero
+		}
+	case len(m) != len(desc): // sanity check
+		err = invalidNumberOfMarks
+		m = make([]float64, len(desc))
+		for i, _ := range desc {
+			m[i] = negZero
+		}
+	}
+
+	// more sanity checks
+	for i, d := range desc {
+		if m[i] < 0 || m[i] > d.Max {
+			m[i] = negZero
+			if err == nil {
+				err = invalidRangeOfMarks
+			}
+		}
+	}
+
+	if term.Typ == Quarter {
+		// Best 5 Quizzes
+		m[10] = sumQuizzes(m[4:10]...)
+
+		// Quarter mark
+		m[12] = sumMarks(m[0], m[1], m[2], m[3], m[10], m[11])
+
+		// Quarter %
+		m[13] = m[12] * scgs.qWeight / 100.0
+	} else if term.Typ == Semester {
+		// Semester Exam %
+		m[1] = m[0] * scgs.sWeight / 100.0
+
+		// Semester Mark
+		q2 := uint(term.N * 2)
+		q1 := q2 - 1
+		scgs.evaluate(Term{Quarter, q1}, marks)
+		scgs.evaluate(Term{Quarter, q2}, marks)
+		q1Mark := marks[Term{Quarter, q1}][13]
+		q2Mark := marks[Term{Quarter, q2}][13]
+
+		m[2] = sumMarks(m[1], q1Mark, q2Mark)
+	} else if term.Typ == EndOfYear {
+		scgs.evaluate(Term{Semester, 1}, marks)
+		scgs.evaluate(Term{Semester, 2}, marks)
+		m[0] = marks[Term{Semester, 1}][2] / 2.0
+		m[1] = marks[Term{Semester, 2}][2] / 2.0
+
+		m[2] = sumMarks(m[0], m[1])
+	} else {
+		panic(fmt.Sprintf("Invalid term type: %d", term.Typ))
+	}
+
+	marks[term] = m
+	return
+}
+
+func (scgs scienceGradingSystem) get100(term Term, marks studentMarks) float64 {
+	m := marks[term]
+	if term.Typ == Quarter {
+		return m[len(m)-2]
+	} else if term.Typ == Semester {
+		return m[2]
+	} else if term.Typ == EndOfYear {
+		return m[2]
+	}
+	panic(fmt.Sprintf("Invalid term type: %d", term.Typ))
+}
+
+func (scgs scienceGradingSystem) getExam(term Term, marks studentMarks) float64 {
+	m := marks[term]
+	if term.Typ == Quarter {
+		return m[len(m)-3]
+	} else if term.Typ == Semester {
+		return m[1]
+	} else if term.Typ == EndOfYear {
+		return negZero
+	}
+	panic(fmt.Sprintf("Invalid term type: %d", term.Typ))
+}
+
+func (scgs scienceGradingSystem) ready(term Term, marks studentMarks) bool {
+	m := marks[term]
+	return !math.Signbit(m[len(m)-1])
+}
+
+func (scgs scienceGradingSystem) quarterWeight() float64 {
+	return scgs.qWeight
+}
+
+func (scgs scienceGradingSystem) semesterWeight() float64 {
+	return scgs.sWeight
 }
 
 // peGradingSystem is used for P.E.
