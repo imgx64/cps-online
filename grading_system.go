@@ -1080,11 +1080,10 @@ func (sgs simpleGradingSystem) evaluate(term Term, marks studentMarks) (err erro
 		}
 	}
 
-	l := len(desc)
 	if term.Typ == Quarter {
-		sum := sumMarks(m[0 : l-2]...)
-		m[l-2] = sum
-		m[l-1] = sum * sgs.qWeight / 100.0
+		sum := sumMarks(m[0 : len(m)-2]...)
+		m[len(m)-2] = sum
+		m[len(m)-1] = sum * sgs.qWeight / 100.0
 	} else if term.Typ == Semester {
 		// Semester Exam %
 		m[1] = m[0] * sgs.sWeight / 100.0
@@ -1094,8 +1093,10 @@ func (sgs simpleGradingSystem) evaluate(term Term, marks studentMarks) (err erro
 		q1 := q2 - 1
 		sgs.evaluate(Term{Quarter, q1}, marks)
 		sgs.evaluate(Term{Quarter, q2}, marks)
-		q1Mark := marks[Term{Quarter, q1}][l-2]
-		q2Mark := marks[Term{Quarter, q2}][l-2]
+		q1m := marks[Term{Quarter, q1}]
+		q1Mark := q1m[len(q1m)-1]
+		q2m := marks[Term{Quarter, q2}]
+		q2Mark := q2m[len(q2m)-1]
 
 		m[2] = sumMarks(m[1], q1Mark, q2Mark)
 	} else if term.Typ == EndOfYear {
