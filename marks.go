@@ -513,17 +513,31 @@ func marksImportHandler(w http.ResponseWriter, r *http.Request) {
 		if i == 1 {
 			// header
 			if !reflect.DeepEqual(record, fieldNames) {
-				c.Errorf("Invalid file header: %q", record)
+				c.Errorf("Invalid file header: %q. Expected: %q", record, fieldNames)
 				renderError(w, r, http.StatusInternalServerError)
 				return
 			}
 			continue
 		}
 		if i == 2 {
-			if !reflect.DeepEqual(record, fieldMax) {
-				c.Errorf("Invalid file header: %q", record)
-				renderError(w, r, http.StatusInternalServerError)
-				return
+			for i, recordStr := range record {
+				recordNum, recordErr := strconv.ParseFloat(recordStr, 64)
+				expectedStr := fieldMax[i]
+				expectedNum, expectedErr := strconv.ParseFloat(expectedStr, 64)
+				if recordErr == nil && expectedErr == nil {
+					if recordNum != expectedNum {
+						c.Errorf("Invalid file header: %q. Expected: %q", record, fieldMax)
+						renderError(w, r, http.StatusInternalServerError)
+						return
+					}
+				} else {
+					// not numbers
+					if recordStr != expectedStr {
+						c.Errorf("Invalid file header: %q. Expected: %q", record, fieldMax)
+						renderError(w, r, http.StatusInternalServerError)
+						return
+					}
+				}
 			}
 			continue
 		}
