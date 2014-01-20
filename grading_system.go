@@ -245,14 +245,13 @@ func init() {
 			}
 			if intClass <= 5 {
 				gsMap["Religion"] = newGGS(class)
+				gsMap["Islamic Studies"] = newSingleGS("Evaluation", class)
+				if intClass >= 2 {
+					gsMap["Computer"] = newComputer2to5GS(class)
+				}
 			} else {
 				gsMap["Religion"] = newReligion7GS(class)
-			}
-			if intClass > 1 {
-				gsMap["Computer"] = newSingleGS("Evaluation", class)
-			}
-			if intClass <= 5 {
-				gsMap["Islamic Studies"] = newSingleGS("Evaluation", class)
+				gsMap["Computer"] = newComputer6to12GS(class)
 			}
 		}
 
@@ -366,8 +365,8 @@ func (ggs genericGradingSystem) evaluate(term Term, marks studentMarks) (err err
 	} else if term.Typ == EndOfYear {
 		ggs.evaluate(Term{Semester, 1}, marks)
 		ggs.evaluate(Term{Semester, 2}, marks)
-		m[0] = marks[Term{Semester, 1}][2] / 2.0
-		m[1] = marks[Term{Semester, 2}][2] / 2.0
+		m[0] = ggs.get100(Term{Semester, 1}, marks) / 2.0
+		m[1] = ggs.get100(Term{Semester, 2}, marks) / 2.0
 
 		m[2] = sumMarks(m[0], m[1])
 	} else {
@@ -515,8 +514,8 @@ func (mgs mathGradingSystem) evaluate(term Term, marks studentMarks) (err error)
 	} else if term.Typ == EndOfYear {
 		mgs.evaluate(Term{Semester, 1}, marks)
 		mgs.evaluate(Term{Semester, 2}, marks)
-		m[0] = marks[Term{Semester, 1}][2] / 2.0
-		m[1] = marks[Term{Semester, 2}][2] / 2.0
+		m[0] = mgs.get100(Term{Semester, 1}, marks) / 2.0
+		m[1] = mgs.get100(Term{Semester, 2}, marks) / 2.0
 
 		m[2] = sumMarks(m[0], m[1])
 	} else {
@@ -665,8 +664,8 @@ func (egs englishGradingSystem) evaluate(term Term, marks studentMarks) (err err
 	} else if term.Typ == EndOfYear {
 		egs.evaluate(Term{Semester, 1}, marks)
 		egs.evaluate(Term{Semester, 2}, marks)
-		m[0] = marks[Term{Semester, 1}][2] / 2.0
-		m[1] = marks[Term{Semester, 2}][2] / 2.0
+		m[0] = egs.get100(Term{Semester, 1}, marks) / 2.0
+		m[1] = egs.get100(Term{Semester, 2}, marks) / 2.0
 
 		m[2] = sumMarks(m[0], m[1])
 	} else {
@@ -815,8 +814,8 @@ func (scgs scienceGradingSystem) evaluate(term Term, marks studentMarks) (err er
 	} else if term.Typ == EndOfYear {
 		scgs.evaluate(Term{Semester, 1}, marks)
 		scgs.evaluate(Term{Semester, 2}, marks)
-		m[0] = marks[Term{Semester, 1}][2] / 2.0
-		m[1] = marks[Term{Semester, 2}][2] / 2.0
+		m[0] = scgs.get100(Term{Semester, 1}, marks) / 2.0
+		m[1] = scgs.get100(Term{Semester, 2}, marks) / 2.0
 
 		m[2] = sumMarks(m[0], m[1])
 	} else {
@@ -931,8 +930,8 @@ func (pgs peGradingSystem) evaluate(term Term, marks studentMarks) (err error) {
 	} else if term.Typ == EndOfYear {
 		pgs.evaluate(Term{Semester, 1}, marks)
 		pgs.evaluate(Term{Semester, 2}, marks)
-		m[0] = marks[Term{Semester, 1}][0] / 2.0
-		m[1] = marks[Term{Semester, 2}][0] / 2.0
+		m[0] = pgs.get100(Term{Semester, 1}, marks) / 2.0
+		m[1] = pgs.get100(Term{Semester, 2}, marks) / 2.0
 
 		m[2] = sumMarks(m[0], m[1])
 	} else {
@@ -1001,7 +1000,7 @@ func newCitizenshipGS(class string) gradingSystem {
 	q, s := classWeights(class)
 	return simpleGradingSystem{
 		[]colDescription{
-			{"DW", 20, true},
+			{"Daily Work", 20, true},
 			{"Oral", 50, true},
 			{"Project", 10, true},
 			{"Exam", 20, true},
@@ -1015,8 +1014,8 @@ func newReligion7GS(class string) gradingSystem {
 	q, s := classWeights(class)
 	return simpleGradingSystem{
 		[]colDescription{
-			{"DW", 15, true},
-			{"HW", 5, true},
+			{"Daily Work", 15, true},
+			{"Homework", 5, true},
 			{"Quran", 30, true},
 			{"Exam", 50, true},
 		},
@@ -1102,8 +1101,8 @@ func (sgs simpleGradingSystem) evaluate(term Term, marks studentMarks) (err erro
 	} else if term.Typ == EndOfYear {
 		sgs.evaluate(Term{Semester, 1}, marks)
 		sgs.evaluate(Term{Semester, 2}, marks)
-		m[0] = marks[Term{Semester, 1}][0] / 2.0
-		m[1] = marks[Term{Semester, 2}][0] / 2.0
+		m[0] = sgs.get100(Term{Semester, 1}, marks) / 2.0
+		m[1] = sgs.get100(Term{Semester, 2}, marks) / 2.0
 
 		m[2] = sumMarks(m[0], m[1])
 	} else {
@@ -1149,6 +1148,313 @@ func (sgs simpleGradingSystem) quarterWeight() float64 {
 
 func (sgs simpleGradingSystem) semesterWeight() float64 {
 	return sgs.sWeight
+}
+
+// computer2to5GradingSystem is computer from grades 2 to 5
+// Quarters [Homework: 5, Participation: 5, Behavior: 10, Project1: 10, Project2: 10
+// Exam: 30, Practical: 30]
+// Semesters [Written: 25, Practical: 25]
+type computer2to5GradingSystem struct {
+	qWeight float64
+	sWeight float64
+}
+
+func newComputer2to5GS(class string) gradingSystem {
+	q, s := classWeights(class)
+	return computer2to5GradingSystem{
+		q,
+		s,
+	}
+}
+
+func (c2gs computer2to5GradingSystem) description(term Term) []colDescription {
+	if term.Typ == Quarter {
+		return []colDescription{
+			{"Homework", 5, true},
+			{"Participation", 5, true},
+			{"Behavior", 10, true},
+			{"Project1", 10, true},
+			{"Project2", 10, true},
+			{"Quarter Exam", 30, true},
+			{"Practical Exam", 30, true},
+			{"Quarter Mark", 100, false},
+			{"Quarter %", c2gs.qWeight, false},
+		}
+	} else if term.Typ == Semester {
+		return []colDescription{
+			{"Written Exam", 25, true},
+			{"Practical Exam", 25, true},
+			{"Semester Exam", 100, false},
+			{"Semester Exam %", c2gs.sWeight, false},
+			{"Semester Mark", 100, false},
+		}
+	} else if term.Typ == EndOfYear {
+		return []colDescription{
+			{"Semester 1 %", 50, false},
+			{"Semester 2 %", 50, false},
+			{"Final mark", 100, false},
+		}
+	}
+	panic(fmt.Sprintf("Invalid term type: %d", term.Typ))
+}
+
+func (c2gs computer2to5GradingSystem) evaluate(term Term, marks studentMarks) (err error) {
+	m := marks[term]
+	desc := c2gs.description(term)
+
+	switch {
+	case m == nil: // first time to evaluate it
+		m = make([]float64, len(desc))
+		for i, _ := range desc {
+			m[i] = negZero
+		}
+	case len(m) != len(desc): // sanity check
+		err = invalidNumberOfMarks
+		m = make([]float64, len(desc))
+		for i, _ := range desc {
+			m[i] = negZero
+		}
+	}
+
+	// more sanity checks
+	for i, d := range desc {
+		if m[i] < 0 || m[i] > d.Max {
+			m[i] = negZero
+			if err == nil {
+				err = invalidRangeOfMarks
+			}
+		}
+	}
+
+	if term.Typ == Quarter {
+		sum := sumMarks(m[0 : len(m)-2]...)
+		m[len(m)-2] = sum
+		m[len(m)-1] = sum * c2gs.qWeight / 100.0
+	} else if term.Typ == Semester {
+		// Semester Exam 100
+		m[2] = (m[0] + m[1]) * 2
+
+		// Semester Exam %
+		m[3] = m[2] * c2gs.sWeight / 100.0
+
+		// Semester Mark
+		q2 := uint(term.N * 2)
+		q1 := q2 - 1
+		c2gs.evaluate(Term{Quarter, q1}, marks)
+		c2gs.evaluate(Term{Quarter, q2}, marks)
+		q1m := marks[Term{Quarter, q1}]
+		q1Mark := q1m[len(q1m)-1]
+		q2m := marks[Term{Quarter, q2}]
+		q2Mark := q2m[len(q2m)-1]
+
+		m[4] = sumMarks(m[3], q1Mark, q2Mark)
+	} else if term.Typ == EndOfYear {
+		c2gs.evaluate(Term{Semester, 1}, marks)
+		c2gs.evaluate(Term{Semester, 2}, marks)
+		m[0] = c2gs.get100(Term{Semester, 1}, marks) / 2.0
+		m[1] = c2gs.get100(Term{Semester, 2}, marks) / 2.0
+
+		m[2] = sumMarks(m[0], m[1])
+	} else {
+		panic(fmt.Sprintf("Invalid term type: %d", term.Typ))
+	}
+
+	marks[term] = m
+	return
+}
+
+func (c2gs computer2to5GradingSystem) get100(term Term, marks studentMarks) float64 {
+	m := marks[term]
+	if term.Typ == Quarter {
+		return m[len(m)-2]
+	} else if term.Typ == Semester {
+		return m[len(m)-1]
+	} else if term.Typ == EndOfYear {
+		return m[len(m)-1]
+	}
+	panic(fmt.Sprintf("Invalid term type: %d", term.Typ))
+}
+
+func (c2gs computer2to5GradingSystem) getExam(term Term, marks studentMarks) float64 {
+	m := marks[term]
+	if term.Typ == Quarter {
+		return m[len(m)-3]
+	} else if term.Typ == Semester {
+		return m[len(m)-2]
+	} else if term.Typ == EndOfYear {
+		return negZero
+	}
+	panic(fmt.Sprintf("Invalid term type: %d", term.Typ))
+}
+
+func (c2gs computer2to5GradingSystem) ready(term Term, marks studentMarks) bool {
+	m := marks[term]
+	return !math.Signbit(m[len(m)-1])
+}
+
+func (c2gs computer2to5GradingSystem) quarterWeight() float64 {
+	return c2gs.qWeight
+}
+
+func (c2gs computer2to5GradingSystem) semesterWeight() float64 {
+	return c2gs.sWeight
+}
+
+// computer6to12GradingSystem is computer from grades 6 to 12
+// Quarters [Homework: 5, Participation: 5, Behavior: 5
+// Quizzes: 50, Exam: 20, Practical: 15]
+// Semesters [Written: 25, Practical: 25]
+type computer6to12GradingSystem struct {
+	qWeight float64
+	sWeight float64
+}
+
+func newComputer6to12GS(class string) gradingSystem {
+	q, s := classWeights(class)
+	return computer6to12GradingSystem{q, s}
+}
+
+func (c6gs computer6to12GradingSystem) description(term Term) []colDescription {
+	if term.Typ == Quarter {
+		return []colDescription{
+			{"Homework", 5, true},
+			{"Participation", 5, true},
+			{"Behavior", 5, true},
+			{"Quiz 1", 10, true},
+			{"Quiz 2", 10, true},
+			{"Quiz 3", 10, true},
+			{"Quiz 4", 10, true},
+			{"Quiz 5", 10, true},
+			{"Quiz 6", 10, true},
+			{"Best 5 Quizzes", 50, false},
+			{"Quarter Exam", 20, true},
+			{"Practical Exam", 15, true},
+			{"Quarter Mark", 100, false},
+			{"Quarter %", c6gs.qWeight, false},
+		}
+	} else if term.Typ == Semester {
+		return []colDescription{
+			{"Written Exam", 25, true},
+			{"Practical Exam", 25, true},
+			{"Semester Exam", 100, false},
+			{"Semester Exam %", c6gs.sWeight, false},
+			{"Semester Mark", 100, false},
+		}
+	} else if term.Typ == EndOfYear {
+		return []colDescription{
+			{"Semester 1 %", 50, false},
+			{"Semester 2 %", 50, false},
+			{"Final mark", 100, false},
+		}
+	}
+	panic(fmt.Sprintf("Invalid term type: %d", term.Typ))
+}
+
+func (c6gs computer6to12GradingSystem) evaluate(term Term, marks studentMarks) (err error) {
+	m := marks[term]
+	desc := c6gs.description(term)
+
+	switch {
+	case m == nil: // first time to evaluate it
+		m = make([]float64, len(desc))
+		for i, _ := range desc {
+			m[i] = negZero
+		}
+	case len(m) != len(desc): // sanity check
+		err = invalidNumberOfMarks
+		m = make([]float64, len(desc))
+		for i, _ := range desc {
+			m[i] = negZero
+		}
+	}
+
+	// more sanity checks
+	for i, d := range desc {
+		if m[i] < 0 || m[i] > d.Max {
+			m[i] = negZero
+			if err == nil {
+				err = invalidRangeOfMarks
+			}
+		}
+	}
+
+	if term.Typ == Quarter {
+		// Best 5 Quizzes
+		m[9] = sumQuizzes(m[3:9]...)
+
+		// Quarter mark
+		m[12] = sumMarks(m[0], m[1], m[2], m[9], m[10], m[11])
+
+		// Quarter %
+		m[13] = m[12] * c6gs.qWeight / 100.0
+	} else if term.Typ == Semester {
+		// Semester Exam 100
+		m[2] = (m[0] + m[1]) * 2
+
+		// Semester Exam %
+		m[3] = m[2] * c6gs.sWeight / 100.0
+
+		// Semester Mark
+		q2 := uint(term.N * 2)
+		q1 := q2 - 1
+		c6gs.evaluate(Term{Quarter, q1}, marks)
+		c6gs.evaluate(Term{Quarter, q2}, marks)
+		q1m := marks[Term{Quarter, q1}]
+		q1Mark := q1m[len(q1m)-1]
+		q2m := marks[Term{Quarter, q2}]
+		q2Mark := q2m[len(q2m)-1]
+
+		m[4] = sumMarks(m[3], q1Mark, q2Mark)
+	} else if term.Typ == EndOfYear {
+		c6gs.evaluate(Term{Semester, 1}, marks)
+		c6gs.evaluate(Term{Semester, 2}, marks)
+		m[0] = c6gs.get100(Term{Semester, 1}, marks) / 2.0
+		m[1] = c6gs.get100(Term{Semester, 2}, marks) / 2.0
+
+		m[2] = sumMarks(m[0], m[1])
+	} else {
+		panic(fmt.Sprintf("Invalid term type: %d", term.Typ))
+	}
+
+	marks[term] = m
+	return
+}
+
+func (c6gs computer6to12GradingSystem) get100(term Term, marks studentMarks) float64 {
+	m := marks[term]
+	if term.Typ == Quarter {
+		return m[len(m)-2]
+	} else if term.Typ == Semester {
+		return m[len(m)-1]
+	} else if term.Typ == EndOfYear {
+		return m[len(m)-1]
+	}
+	panic(fmt.Sprintf("Invalid term type: %d", term.Typ))
+}
+
+func (c6gs computer6to12GradingSystem) getExam(term Term, marks studentMarks) float64 {
+	m := marks[term]
+	if term.Typ == Quarter {
+		return m[len(m)-3] + m[len(m)-2]
+	} else if term.Typ == Semester {
+		return m[len(m)-2]
+	} else if term.Typ == EndOfYear {
+		return negZero
+	}
+	panic(fmt.Sprintf("Invalid term type: %d", term.Typ))
+}
+
+func (c6gs computer6to12GradingSystem) ready(term Term, marks studentMarks) bool {
+	m := marks[term]
+	return !math.Signbit(m[len(m)-1])
+}
+
+func (c6gs computer6to12GradingSystem) quarterWeight() float64 {
+	return c6gs.qWeight
+}
+
+func (c6gs computer6to12GradingSystem) semesterWeight() float64 {
+	return c6gs.sWeight
 }
 
 // behaviorGradingSystem contains behavrior. There are no calculations to make
