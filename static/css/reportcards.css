@@ -51,11 +51,32 @@
 
 .cps-reportcard-header {
 	text-align: center;
+	position: relative;
 }
 
 .cps-reportcard-header p {
 	margin-top: 2mm;
 	margin-bottom: 2mm;
+}
+
+.cps-reportcard-cps-logo {
+	height: 60px;
+}
+
+.cps-reportcard-advanced-logo {
+	width: 120px;
+	position: absolute;
+	float: left;
+	left: 5%;
+	top: 5mm;
+}
+
+.cps-reportcard-cambridge-logo {
+	width: 140px;
+	position: absolute;
+	float: right;
+	right: 5%;
+	top: 7mm;
 }
 
 p.cps-reportcard-kob {
