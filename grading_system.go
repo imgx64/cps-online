@@ -1614,7 +1614,7 @@ func (ls letterSystem) getLetter(mark float64) string {
 	}
 
 	for _, l := range ls {
-		if mark > l.minMark {
+		if mark >= l.minMark {
 			return l.letter
 		}
 	}

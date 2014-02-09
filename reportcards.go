@@ -161,7 +161,7 @@ func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 				rcRow.Marks = []float64{
 					gs.get100(Term{Quarter, q1}, marks) * gs.quarterWeight() / 100.0,
 					gs.get100(Term{Quarter, q2}, marks) * gs.quarterWeight() / 100.0,
-					gs.get100(term, marks) * gs.semesterWeight() / 100.0,
+					gs.getExam(term, marks),
 					gs.get100(term, marks),
 				}
 			} else if term.Typ == EndOfYear {
