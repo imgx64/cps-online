@@ -1590,7 +1590,6 @@ func getLetterSystem(class string) letterSystem {
 			return ABCDF
 		}
 	}
-
 }
 
 // String returns a description of the letter system
@@ -1627,6 +1626,14 @@ func subjectInAverage(subject, class string) bool {
 	if (class == "KG1" || class == "KG2") && subject == "Religion" {
 		return false
 	}
+
+	if subject == "Computer" {
+		intClass, err := strconv.Atoi(class)
+		if err == nil && intClass >= 9 {
+			return true
+		}
+	}
+
 	subjectsInAverage := map[string]bool{
 		"Arabic":         true,
 		"English":        true,
@@ -1638,5 +1645,6 @@ func subjectInAverage(subject, class string) bool {
 		"Social Studies": true,
 		"Religion":       true,
 	}
+
 	return subjectsInAverage[subject]
 }
