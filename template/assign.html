@@ -1,0 +1,80 @@
+{{/*
+Copyright 2013 Ibrahim Ghazal. All rights reserved.
+Use of this source code is governed by a BSD-style
+license that can be found in the LICENSE file.
+*/}}
+
+{{define "title"}}Assign Teachers{{end}}
+{{define "content"}}
+<div>
+	<table class="table table-bordered table-condensed">
+		<thead>
+			<tr>
+				<th scope="col">Class/Section</th>
+				<th scope="col">Subject</th>
+				<th scope="col">Assigned Teacher</th>
+				<th scope="col">Options</th>
+			</tr>
+		</thead>
+		<tbody>
+			{{$teachersMap := .TeachersMap}}
+			{{range .Assigns}}
+			<tr>
+				<td>{{classSection .ClassSection}}</td>
+				<td>{{.Subject}}</td>
+				{{$teacher := .Teacher}}
+				<td>{{mapInt64Get $teachersMap $teacher}}</td>
+				<td>
+					<form action="/assign/save" method="POST">
+						<input type="hidden" name="classSection" value="{{.ClassSection}}">
+						<input type="hidden" name="subject" value="{{.Subject}}">
+						<input type="hidden" name="teacher" value="{{.Teacher}}">
+						<input type="hidden" name="delete" value="on">
+						<input type="submit" class="btn btn-default btn-sm" value="Delete">
+					</form>
+				</td>
+			</tr>
+			{{end}}
+		</tbody>
+	</table>
+</div>
+<div class="spacer">
+</div>
+<form class="form-inline" action="/assign/save" method="POST">
+	<fieldset>
+		<legend>Assign teacher to class/subject</legend>
+		<div class="form-group">
+			<select  name="classSection" class="form-control">
+				{{range .CG}}
+				{{$class := .Class}}
+				<optgroup label="{{.Class}}">
+					{{range .Sections}}
+					<option value="{{$class}}|{{.}}">{{$class}}{{.}}</option>
+					{{end}}
+				</optgroup>
+				{{end}}
+			</select>
+		</div>
+		<div class="form-group">
+			<select name="subject" class="form-control">
+				{{range .Subjects}}
+				<option value="{{.}}">{{.}}</option>
+				{{end}}
+			</select>
+		</div>
+		<div class="form-group">
+			<select name="teacher" class="form-control">
+				{{range .Teachers}}
+				<option value="{{.ID}}">{{.Name}}</option>
+				{{end}}
+			</select>
+		</div>
+		<div class="form-group">
+			<input type="submit" class="btn btn-default" value="Add">
+		</div>
+	</fieldset>
+</form>
+<div class="spacer">
+</div>
+{{end}}
+

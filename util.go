@@ -103,6 +103,16 @@ var funcMap = htmltemplate.FuncMap{
 	"increment": func(i int) int {
 		return i + 1
 	},
+	"classSection": func(classSection string) (string, error) {
+		class, section, err := parseClassSection(classSection)
+		if err != nil {
+			return "", err
+		}
+		return class + section, nil
+	},
+	"mapInt64Get": func(m map[int64]string, key int64) string {
+		return m[key]
+	},
 }
 
 func formatMark(mark float64) string {
