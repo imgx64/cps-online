@@ -159,7 +159,7 @@ func (emp *employeeType) save(c appengine.Context) error {
 func getEmployeeFromEmail(c appengine.Context, email string) (employeeType, error) {
 	q := datastore.NewQuery("employee").Filter("CPSEmail =", email).Limit(2)
 	var employees []employeeType
-	_, err := q.GetAll(c, &employees)
+	keys, err := q.GetAll(c, &employees)
 	if err != nil {
 		return employeeType{}, err
 	}
@@ -170,7 +170,10 @@ func getEmployeeFromEmail(c appengine.Context, email string) (employeeType, erro
 		return employeeType{}, fmt.Errorf("Users with duplicate emails: %s", email)
 	}
 
-	return employees[0], nil
+	emp := employees[0]
+	emp.ID = keys[0].IntID()
+
+	return emp, nil
 }
 
 func init() {

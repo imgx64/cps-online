@@ -136,41 +136,75 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 	var cols []colDescription
 	var studentRows []studentRow
 
-	if classHasSubject(class, subject) {
-		gs := getGradingSystem(class, subject)
-		cols = gs.description(term)
-		students, err := getStudents(c, true, classSection)
+	if subject != "" {
+		user, err := getUser(c)
 		if err != nil {
-			c.Errorf("Could not get students: %s", err)
+			c.Errorf("Could not get user: %s", err)
 			renderError(w, r, http.StatusInternalServerError)
 			return
 		}
-
-		for _, s := range students {
-			m, err := getStudentMarks(c, s.ID, subject)
+		allowAccess := false
+		if user.Roles.Admin {
+			allowAccess = true
+		} else if user.Roles.Teacher {
+			emp, err := getEmployeeFromEmail(c, user.Email)
 			if err != nil {
-				// TODO: report error
-				continue
+				c.Errorf("Could not get employee: %s", err)
+				renderError(w, r, http.StatusInternalServerError)
+				return
 			}
-			gs.evaluate(term, m) // TODO: check error
-			studentRows = append(studentRows, studentRow{s.ID, s.Name, m[term], ""})
+			c.Infof("classSection: %s, subject: %s, emp: %v", classSection, subject, emp)
+			allowAccess, err = isTeacherAssigned(c, classSection, subject, emp.ID)
+			if err != nil {
+				c.Errorf("Could not get assignment: %s", err)
+				renderError(w, r, http.StatusInternalServerError)
+				return
+			}
+		} else {
+			allowAccess = false
 		}
-	} else if subject == "Remarks" {
-		cols = []colDescription{{Name: "Remarks"}}
-		students, err := getStudents(c, true, classSection)
-		if err != nil {
-			c.Errorf("Could not get students: %s", err)
-			renderError(w, r, http.StatusInternalServerError)
+
+		if !allowAccess {
+			renderErrorMsg(w, r, http.StatusForbidden, "You do not have access to this class/subject")
 			return
 		}
 
-		for _, s := range students {
-			rem, err := getStudentRemark(c, s.ID, term)
+		if classHasSubject(class, subject) {
+			gs := getGradingSystem(class, subject)
+			cols = gs.description(term)
+			students, err := getStudents(c, true, classSection)
 			if err != nil {
-				// TODO: report error
-				continue
+				c.Errorf("Could not get students: %s", err)
+				renderError(w, r, http.StatusInternalServerError)
+				return
 			}
-			studentRows = append(studentRows, studentRow{s.ID, s.Name, nil, rem})
+
+			for _, s := range students {
+				m, err := getStudentMarks(c, s.ID, subject)
+				if err != nil {
+					// TODO: report error
+					continue
+				}
+				gs.evaluate(term, m) // TODO: check error
+				studentRows = append(studentRows, studentRow{s.ID, s.Name, m[term], ""})
+			}
+		} else if subject == "Remarks" {
+			cols = []colDescription{{Name: "Remarks"}}
+			students, err := getStudents(c, true, classSection)
+			if err != nil {
+				c.Errorf("Could not get students: %s", err)
+				renderError(w, r, http.StatusInternalServerError)
+				return
+			}
+
+			for _, s := range students {
+				rem, err := getStudentRemark(c, s.ID, term)
+				if err != nil {
+					// TODO: report error
+					continue
+				}
+				studentRows = append(studentRows, studentRow{s.ID, s.Name, nil, rem})
+			}
 		}
 	}
 

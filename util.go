@@ -34,10 +34,14 @@ func renderError(w http.ResponseWriter, r *http.Request, code int) {
 	if !ok {
 		description = "Unknown error."
 	}
+	renderErrorMsg(w, r, code, description)
+}
+
+func renderErrorMsg(w http.ResponseWriter, r *http.Request, code int, message string) {
 	data := struct {
 		Code        int
 		Description string
-	}{code, description}
+	}{code, message}
 
 	w.WriteHeader(code)
 	if err := render(w, r, "error", data); err != nil {
