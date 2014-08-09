@@ -153,7 +153,6 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 				renderError(w, r, http.StatusInternalServerError)
 				return
 			}
-			c.Infof("classSection: %s, subject: %s, emp: %v", classSection, subject, emp)
 			allowAccess, err = isTeacherAssigned(c, classSection, subject, emp.ID)
 			if err != nil {
 				c.Errorf("Could not get assignment: %s", err)

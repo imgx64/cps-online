@@ -56,6 +56,11 @@ func printAllHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	classSection := r.Form.Get("ClassSection")
+	if classSection == "" {
+		classSection = "all"
+	}
+
 	term, err := parseTerm(r.Form.Get("Term"))
 	if err != nil {
 		term = Term{}
@@ -67,7 +72,7 @@ func printAllHandler(w http.ResponseWriter, r *http.Request) {
 	var cols []colDescription
 	studentRows := make(map[string][]printAllRow)
 
-	students, err := getStudents(c, true, "all")
+	students, err := getStudents(c, true, classSection)
 	if err != nil {
 		c.Errorf("Could not get students: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
@@ -179,22 +184,26 @@ func printAllHandler(w http.ResponseWriter, r *http.Request) {
 	subjectsData = append(subjectsData, "All")
 
 	data := struct {
+		ClassSection string
 		Term    Term
 		Subject string
 		Sort    bool
 
 		Terms    []Term
 		Subjects []string
+		CG []classGroup
 
 		Cols     []colDescription
 		Students []printAllRow
 	}{
+		classSection,
 		term,
 		subject,
 		doSort,
 
 		terms,
 		subjectsData,
+		classGroups,
 
 		maxCols,
 		allRows,
