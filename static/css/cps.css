@@ -43,4 +43,9 @@ input[type=number]::-webkit-outer-spin-button {
 	.spacer {
 		margin-top: 0;
 	}
+
+	.table.marks-table {
+		margin-bottom: 5px;
+		page-break-inside: avoid;
+	}
 }

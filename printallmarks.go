@@ -185,13 +185,13 @@ func printAllHandler(w http.ResponseWriter, r *http.Request) {
 
 	data := struct {
 		ClassSection string
-		Term    Term
-		Subject string
-		Sort    bool
+		Term         Term
+		Subject      string
+		Sort         bool
 
 		Terms    []Term
 		Subjects []string
-		CG []classGroup
+		CG       []classGroup
 
 		Cols     []colDescription
 		Students []printAllRow

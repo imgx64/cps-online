@@ -1,0 +1,79 @@
+{{/*
+Copyright 2013 Ibrahim Ghazal. All rights reserved.
+Use of this source code is governed by a BSD-style
+license that can be found in the LICENSE file.
+*/}}
+
+{{define "title"}}Print Student Marks{{end}}
+{{define "content"}}
+<h2><strong>Student:</strong> {{.Name}} / {{.Class}}{{.Section}}</h2>
+
+{{$descriptions := .BehaviorDesc}}
+{{range .MarksTerms}}
+<div>
+	<hr>
+	<h2>{{.Term}}</h2>
+	{{range .SubjectRows}}
+		<table class="table table-bordered table-condensed marks-table">
+		<thead>
+			<tr>
+				<th scope="row"></th>
+				{{range .DetailsCols}}
+				<th scope="col">{{.Name}}</th>
+				{{end}}
+				<th scope="col">Letter</th>
+			</tr>
+			<tr>
+				<th scope="row"></th>
+				{{range .DetailsCols}}
+				<th scope="col">{{.Max}}</th>
+				{{end}}
+				<th scope="col"></th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				{{$cols := .DetailsCols}}
+				<th scope="row">{{.Subject}}</th>
+				{{range $i, $m := .DetailsMarks}}
+				{{$c := index $cols $i}}
+				<td>
+					<span>
+						{{mark $m}}
+					<span>
+				</td>
+				{{end}}
+				<td><strong>{{.Letter}}</strong></td>
+			</tr>
+		</tbody>
+		</table>
+	{{end}}
+	{{if .Behavior}}
+	<table class="table table-bordered table-condensed">
+		<thead>
+			<tr>
+				<th scope="col">Behavior</th>
+				<th scope="col">4.0</th>
+			</tr>
+		</thead>
+		<tbody>
+		{{range $i, $beh := .Behavior}}
+			<tr>
+				<td>{{(index $descriptions $i).Name}}</td>
+				<td>{{mark $beh}}</td>
+			</tr>
+		{{end}}
+		</tbody>
+	</table>
+	{{end}}
+	<table class="table table-bordered table-condensed marks-table">
+		<tbody>
+			<tr>
+				<th scope="row">{{.Term}} Remarks</th>
+				<td>{{.Remark}}</td>
+			</tr>
+		</tbody>
+	</table>
+</div>
+{{end}}
+{{end}}
