@@ -93,7 +93,7 @@ func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 
 	for _, stu := range students {
 		rc := reportcard{
-			SY:   "2013-2014", //TODO
+			SY:   "2014-2015", //TODO
 			Term: term,
 
 			Name:  stu.Name,

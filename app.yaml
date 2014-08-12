@@ -1,5 +1,5 @@
 application: creativity-private-school
-version: 1
+version: 2
 runtime: go
 api_version: go1
 
