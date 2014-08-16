@@ -126,7 +126,7 @@ func getStudentsCount(c appengine.Context, enabled bool, classSection string) (i
 	return n, nil
 }
 
-func (stu *studentType) validate() error {
+func (stu *studentType) validate(c appengine.Context) error {
 	stu.ID = strings.ToLower(stu.ID)
 	if stu.ID != "" && !strings.HasPrefix(stu.ID, studentPrefix) {
 		return fmt.Errorf("Invalid student ID: %s", stu.ID)
@@ -152,6 +152,7 @@ func (stu *studentType) validate() error {
 	}
 
 	if stu.Section == "" {
+		sections := getClassSections(c)
 		if len(sections[stu.Class]) != 1 || sections[stu.Class][0] != "" {
 			return fmt.Errorf("Invalid class and section: %s %s", stu.Class, stu.Section)
 		}
@@ -171,7 +172,7 @@ func (stu *studentType) validate() error {
 }
 
 func (stu *studentType) save(c appengine.Context) error {
-	if err := stu.validate(); err != nil {
+	if err := stu.validate(c); err != nil {
 		return err
 	}
 
@@ -291,6 +292,8 @@ func studentsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	classGroups := getClassGroups(c)
+
 	data := struct {
 		S []studentType
 
@@ -339,6 +342,8 @@ func studentsDetailsHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+
+	classGroups := getClassGroups(c)
 
 	data := struct {
 		S  studentType
@@ -396,7 +401,7 @@ func studentsSaveHandler(w http.ResponseWriter, r *http.Request) {
 		Comments:       f.Get("Comments"),
 	}
 
-	err := stu.validate()
+	err := stu.validate(c)
 	if err != nil {
 		// TODO: message to user
 		c.Errorf("Invalid student details: %s", err)
@@ -539,7 +544,7 @@ func studentsImportHandler(w http.ResponseWriter, r *http.Request) {
 			Comments:       record[14],
 		}
 
-		err = stu.validate()
+		err = stu.validate(c)
 		if err != nil {
 			errors = append(errors, fmt.Errorf("Error in row %d: %s", i, err))
 			continue

@@ -70,7 +70,7 @@ func reportcardHandler(w http.ResponseWriter, r *http.Request) {
 			if subject == "Remarks" {
 				continue
 			}
-			gs := getGradingSystem(stu.Class, subject)
+			gs := getGradingSystem(c, stu.Class, subject)
 			if gs == nil {
 				continue
 			}

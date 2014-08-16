@@ -81,6 +81,8 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	classes := getClasses(c)
+
 	data := struct {
 		UploadURL *url.URL
 		Classes   []string

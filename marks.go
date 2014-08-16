@@ -168,8 +168,7 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if classHasSubject(class, subject) {
-			gs := getGradingSystem(class, subject)
+		if gs := getGradingSystem(c, class, subject); gs != nil {
 			cols = gs.description(term)
 			students, err := getStudents(c, true, classSection)
 			if err != nil {
@@ -206,6 +205,8 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
+
+	classGroups := getClassGroups(c)
 
 	data := struct {
 		Term    Term
@@ -270,8 +271,7 @@ func marksSaveHandler(w http.ResponseWriter, r *http.Request) {
 	redirectURL := fmt.Sprintf("/marks?%s", urlValues.Encode())
 
 	nComplete := 0
-	if classHasSubject(class, subject) {
-		gs := getGradingSystem(class, subject)
+	if gs := getGradingSystem(c, class, subject); gs != nil {
 		cols := gs.description(term)
 		hasEditable := false
 		for _, col := range cols {
@@ -385,8 +385,7 @@ func marksExportHandler(w http.ResponseWriter, r *http.Request) {
 	var cols []colDescription
 	var studentRows []studentRow
 
-	if classHasSubject(class, subject) {
-		gs := getGradingSystem(class, subject)
+	if gs := getGradingSystem(c, class, subject); gs != nil {
 		cols = gs.description(term)
 		students, err := getStudents(c, true, classSection)
 		if err != nil {
@@ -515,8 +514,7 @@ func marksImportHandler(w http.ResponseWriter, r *http.Request) {
 	fieldNames := []string{filename, "Student Name"}
 	fieldMax := []string{"Do not modify this column", ""}
 	var cols []colDescription
-	if classHasSubject(class, subject) {
-		gs := getGradingSystem(class, subject)
+	if gs := getGradingSystem(c, class, subject); gs != nil {
 		cols = gs.description(term)
 		for _, col := range cols {
 			fieldNames = append(fieldNames, col.Name)
@@ -578,8 +576,7 @@ func marksImportHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	nComplete := 0
-	if classHasSubject(class, subject) {
-		gs := getGradingSystem(class, subject)
+	if gs := getGradingSystem(c, class, subject); gs != nil {
 		cols := gs.description(term)
 		hasEditable := false
 		for _, col := range cols {

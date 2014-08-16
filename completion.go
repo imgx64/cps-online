@@ -73,6 +73,9 @@ func completionHandler(w http.ResponseWriter, r *http.Request) {
 
 	var completionRows []completionRow
 
+	classes := getClasses(c)
+	sections := getClassSections(c)
+
 	if (term != Term{}) {
 		for _, class := range classes {
 			for _, section := range sections[class] {
@@ -92,7 +95,8 @@ func completionHandler(w http.ResponseWriter, r *http.Request) {
 
 				cr.Completion = make(map[string]int)
 				for _, subject := range subjects {
-					if !classHasSubject(class, subject) {
+					if getGradingSystem(c, class, subject) == nil {
+						// class doesn't have subject
 						cr.Completion[subject] = -1
 					}
 				}

@@ -99,6 +99,8 @@ func dailylogHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	classGroups := getClassGroups(c)
+
 	data := struct {
 		S []studentType
 

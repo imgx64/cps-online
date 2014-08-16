@@ -48,6 +48,8 @@ func init() {
 func reportcardsHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 
+	classGroups := getClassGroups(c)
+
 	data := struct {
 		Terms []Term
 		CG    []classGroup
@@ -107,7 +109,7 @@ func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 		} else if term.Typ == Semester {
 			q2 := uint(term.N * 2)
 			q1 := q2 - 1
-			gs := getGradingSystem(stu.Class, "English") //TODO: find a better way
+			gs := getGradingSystem(c, stu.Class, "English") //TODO: find a better way
 			rc.Cols = []string{
 				fmt.Sprintf("Quarter %d (%.0f%%)", q1, gs.quarterWeight()),
 				fmt.Sprintf("Quarter %d (%.0f%%)", q2, gs.quarterWeight()),
@@ -133,7 +135,7 @@ func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 			if subject == "Remarks" {
 				continue
 			}
-			gs := getGradingSystem(stu.Class, subject)
+			gs := getGradingSystem(c, stu.Class, subject)
 			if gs == nil {
 				continue
 			}

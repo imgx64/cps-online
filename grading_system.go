@@ -5,6 +5,8 @@
 package main
 
 import (
+	"appengine"
+
 	"bytes"
 	"fmt"
 	"math"
@@ -132,19 +134,6 @@ var subjects = []string{
 	"Remarks",
 }
 
-func classHasSubject(class, subject string) bool {
-	ss, ok := gradingSystems[class]
-	if !ok {
-		// invalid class
-		return false
-	}
-	_, ok = ss[subject]
-	if ok {
-		return true
-	}
-	return false
-}
-
 type colDescription struct {
 	Name     string
 	Max      float64
@@ -198,10 +187,12 @@ type gradingSystem interface {
 	semesterWeight() float64
 }
 
-// class -> subject -> gradingSystem
-var gradingSystems map[string]map[string]gradingSystem
+func getGradingSystem(c appengine.Context, class string, subject string) gradingSystem {
+	classes := getClasses(c)
 
-func init() {
+	// class -> subject -> gradingSystem
+	var gradingSystems map[string]map[string]gradingSystem
+
 	gradingSystems = make(map[string]map[string]gradingSystem)
 	for _, class := range classes {
 		var gsMap map[string]gradingSystem
@@ -259,10 +250,13 @@ func init() {
 		gsMap["Behavior"] = behaviorGradingSystem{}
 		gradingSystems[class] = gsMap
 	}
-}
 
-func getGradingSystem(class, subject string) gradingSystem {
-	return gradingSystems[class][subject]
+	classGradingSystem, ok := gradingSystems[class]
+	if !ok {
+		return nil
+	}
+
+	return classGradingSystem[subject]
 }
 
 // genericGradingSystem is used for most subjects:

@@ -136,6 +136,8 @@ func assignHandler(w http.ResponseWriter, r *http.Request) {
 		teachersMap[teacher.ID] = teacher.Name
 	}
 
+	classGroups := getClassGroups(c)
+
 	data := struct {
 		CG       []classGroup
 		Subjects []string

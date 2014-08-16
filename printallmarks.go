@@ -99,11 +99,12 @@ func printAllHandler(w http.ResponseWriter, r *http.Request) {
 				if subject == "Remarks" || subject == "Behavior" {
 					continue
 				}
-				if !classHasSubject(stu.Class, subject) {
+				gs := getGradingSystem(c, stu.Class, subject)
+				if gs == nil {
+					// class doesn't have subject
 					studentMarks = append(studentMarks, negZero)
 					continue
 				}
-				gs := getGradingSystem(stu.Class, subject)
 				marks, err := getStudentMarks(c, stu.ID, subject)
 				if err != nil {
 					c.Errorf("Could not get marks: %s", err)
@@ -136,8 +137,7 @@ func printAllHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		for _, stu := range students {
-			if classHasSubject(stu.Class, subject) {
-				gs := getGradingSystem(stu.Class, subject)
+			if gs := getGradingSystem(c, stu.Class, subject); gs != nil {
 				if stu.Class != prevClass {
 					cols = gs.description(term)
 					if len(cols) > maxLen {
@@ -163,6 +163,7 @@ func printAllHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var allRows []printAllRow
+	classGroups := getClassGroups(c)
 	for _, cg := range classGroups {
 		for _, sec := range cg.Sections {
 			classSection := fmt.Sprintf("%s|%s", cg.Class, sec)
