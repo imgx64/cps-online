@@ -1,0 +1,49 @@
+{{/*
+Copyright 2013 Ibrahim Ghazal. All rights reserved.
+Use of this source code is governed by a BSD-style
+license that can be found in the LICENSE file.
+*/}}
+
+{{define "title"}}Upload Documents{{end}}
+{{define "content"}}
+<form  action="/settings/save" method="POST">
+	<fieldset>
+		<legend>School Year</legend>
+		<div class="form-inline">
+			<div class="form-group">
+				<input type="text" name="sy" class="form-control" placeholder="School Year" required="required" value="{{.SY}}">
+			</div>
+		</div>
+	</fieldset>
+	<div class="spacer">
+	</div>
+	<fieldset>
+		<legend>Sections Up To</legend>
+		{{$sectionChoices := .SectionChoices}}
+		{{range .MaxSections}}
+		<div class="form-inline">
+			<div class="form-group">
+				<label for="sections-{{.Class}}">Grade {{.Class}}:</label>
+			</div>
+			<div class="form-group">
+				<select id="class" id="sections-{{.Class}}"
+					name="sections-{{.Class}}" class="form-control">
+					{{$currentMaxSection := .Section}}
+					{{range $sectionChoices}}
+					<option {{if equal . $currentMaxSection}}selected="selected"{{end}}>
+						{{.}}
+					</option>
+					{{end}}
+				</select>
+			</div>
+		</div>
+		{{end}}
+	</fieldset>
+	<div >
+		<input type="submit" class="btn btn-default" value="Save">
+	</div>
+</form>
+<div class="spacer">
+</div>
+{{end}}
+

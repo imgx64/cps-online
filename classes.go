@@ -40,22 +40,12 @@ func getClasses(c appengine.Context) []string {
 func getClassSections(c appengine.Context) map[string][]string {
 	// TODO: caching
 
-	sections := map[string][]string{
-		"KG1": {"A", "B", "C", "D"},
-		"KG2": {"A", "B", "C", "D"},
-		"1":   {"A", "B", "C", "D"},
-		"2":   {"A", "B", "C", "D"},
-		"3":   {"A", "B", "C", "D"},
-		"4":   {"A", "B", "C", "D"},
-		"5":   {"A", "B", "C", "D"},
-		"6":   {"A", "B", "C", "D"},
-		"7":   {"A", "B", "C", "D"},
-		"8":   {"A", "B", "C", "D"},
-		"9":   {"A", "B", "C", "D"},
-		"10":  {"A", "B", "C", "D"},
-		"11":  {"A", "B", "C", "D"},
-		"12":  {"A", "B", "C", "D"},
-		"SN":  {"A", "B", "C", "D"},
+	maxSections := getMaxSections(c)
+
+	sections := make(map[string][]string, len(maxSections))
+
+	for _, maxSection := range maxSections {
+		sections[maxSection.Class] = sectionsUntil(maxSection.Section)
 	}
 
 	return sections

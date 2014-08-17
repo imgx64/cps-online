@@ -17,13 +17,11 @@ type link struct {
 }
 
 var access = map[string]roles{
-	"/users":   adminRole,
-	"/reports": adminRole,
-	"/backup":  adminRole,
-	"/publish": adminRole,
 
-	"/assign":      adminRole,
-	"/assign/save": adminRole,
+	"/settings":      adminRole,
+	"/settings/save": adminRole,
+	"/assign":        adminRole,
+	"/assign/save":   adminRole,
 
 	"/students":         hrRole,
 	"/students/details": hrRole,
@@ -31,15 +29,11 @@ var access = map[string]roles{
 	"/students/import":  hrRole,
 	"/students/export":  hrRole,
 
-	"/payments": hrRole,
-
 	"/employees":         hrRole,
 	"/employees/details": hrRole,
 	"/employees/save":    hrRole,
 	"/employees/import":  hrRole,
 	"/employees/export":  hrRole,
-
-	"/classes": hrRole,
 
 	"/completion":        hrRole,
 	"/printallmarks":     hrRole,
@@ -83,15 +77,9 @@ func accessHandler(f func(w http.ResponseWriter, r *http.Request)) func(w http.R
 }
 
 var pages = []link{
-	//{Name: "Users", URL: "/users"},
-	//{Name: "Reports", URL: "/reports"},
-	//{Name: "Backup/Restore", URL: "/backup"},
 
 	{Name: "Students", URL: "/students"},
-	//{Name: "Payment Structure", URL: "/payments"},
 	{Name: "Employees", URL: "/employees"},
-	//{Name: "Classes", URL: "/classes"},
-	//{Name: "Publish Reportcards", URL: "/publish"},
 	{Name: "Assign Teachers", URL: "/assign"},
 	{Name: "Check Completion", URL: "/completion"},
 	{Name: "Print All Marks", URL: "/printallmarks"},
@@ -100,6 +88,7 @@ var pages = []link{
 	{Name: "Upload documents", URL: "/upload"},
 	{Name: "Daily Log", URL: "/dailylog"},
 	{Name: "Print Reportcards", URL: "/reportcards"},
+	{Name: "Settings", URL: "/settings"},
 
 	{Name: "Reportcard", URL: "/reportcard"},
 	{Name: "Download Documents", URL: "/documents"},
