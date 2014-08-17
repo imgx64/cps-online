@@ -47,8 +47,8 @@ const (
 func classWeights(class string) (quarter, semester float64) {
 	intClass, err := strconv.Atoi(class)
 	if err != nil {
-		// class is KG1, KG2, or SN
-		if class == "KG1" || class == "KG2" {
+		// class is KG or SN
+		if class == "KG1" || class == "KG2" || class == "PreKG" {
 			return 40.0, 20.0
 		} else if class == "SN" {
 			return 40.0, 20.0
@@ -198,8 +198,8 @@ func getGradingSystem(c appengine.Context, class string, subject string) grading
 		var gsMap map[string]gradingSystem
 		intClass, err := strconv.Atoi(class)
 		if err != nil {
-			// class is KG1, KG2, or SN
-			if class == "KG1" || class == "KG2" {
+			// class is KG or SN
+			if class == "KG1" || class == "KG2" || class == "PreKG" {
 				gsMap = map[string]gradingSystem{
 					"Arabic":   newGGS(class),
 					"English":  newEGS(class),
@@ -1574,7 +1574,7 @@ var OVSLU = letterSystem{
 func getLetterSystem(class string) letterSystem {
 	intClass, err := strconv.Atoi(class)
 	if err != nil {
-		// class is KG1, KG2, or SN
+		// class is KG or SN
 		return OVSLU
 	} else {
 		if intClass <= 2 {
@@ -1617,7 +1617,7 @@ func (ls letterSystem) getLetter(mark float64) string {
 
 // subjectInAverage returns true if subject should be calculated in average
 func subjectInAverage(subject, class string) bool {
-	if (class == "KG1" || class == "KG2") && subject == "Religion" {
+	if (class == "KG1" || class == "KG2" || class == "PreKG") && subject == "Religion" {
 		return false
 	}
 

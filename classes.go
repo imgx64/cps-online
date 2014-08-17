@@ -17,8 +17,6 @@ func getClasses(c appengine.Context) []string {
 	// TODO: caching
 
 	classes := []string{
-		"KG1",
-		"KG2",
 		"1",
 		"2",
 		"3",
@@ -32,6 +30,9 @@ func getClasses(c appengine.Context) []string {
 		"11",
 		"12",
 		"SN",
+		"PreKG",
+		"KG1",
+		"KG2",
 	}
 
 	return classes
