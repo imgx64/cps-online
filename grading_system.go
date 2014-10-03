@@ -47,11 +47,14 @@ const (
 func classWeights(class string) (quarter, semester float64) {
 	intClass, err := strconv.Atoi(class)
 	if err != nil {
-		// class is KG or SN
+		// class is KG or SN, or *sci/*com
 		if class == "KG1" || class == "KG2" || class == "PreKG" {
 			return 40.0, 20.0
 		} else if class == "SN" {
 			return 40.0, 20.0
+		} else if strings.HasSuffix(class, "sci") ||
+			strings.HasSuffix(class, "com") {
+			return 25.0, 50.0
 		}
 	} else {
 		if intClass <= 2 {
@@ -124,9 +127,12 @@ var subjects = []string{
 	"Biology",
 	"Chemistry",
 	"Physics",
+	"Economics",
+	"Accounts",
+	"Business Studies",
 	"Social Studies",
 	"Religion",
-	"Islamic Studies",
+	"UCMAS",
 	"Citizenship",
 	"Computer",
 	"P.E.",
@@ -207,6 +213,10 @@ func getGradingSystem(c appengine.Context, class string, subject string) grading
 					"Science":  newSCGS(class),
 					"Religion": newSingleGS("Evaluation", class),
 				}
+				if class == "KG2" {
+					gsMap["UCMAS"] = newUcmasGS(class)
+				}
+
 			} else if class == "SN" {
 				gsMap = map[string]gradingSystem{
 					"Arabic":      newGGS(class),
@@ -216,6 +226,32 @@ func getGradingSystem(c appengine.Context, class string, subject string) grading
 					"Religion":    newGGS(class),
 					"Citizenship": newCitizenshipGS(class),
 					"Computer":    newSingleGS("Evaluation", class),
+				}
+			} else if strings.HasSuffix(class, "sci") {
+				gsMap = map[string]gradingSystem{
+					"Arabic":      newGGS(class),
+					"English":     newEGS(class),
+					"Math":        newMGS(class),
+					"Citizenship": newCitizenshipGS(class),
+					"Religion":    newReligion7GS(class),
+					"Computer":    newComputer6to12GS(class),
+
+					"Biology":   newSCGS(class),
+					"Chemistry": newSCGS(class),
+					"Physics":   newSCGS(class),
+				}
+			} else if strings.HasSuffix(class, "com") {
+				gsMap = map[string]gradingSystem{
+					"Arabic":      newGGS(class),
+					"English":     newEGS(class),
+					"Math":        newMGS(class),
+					"Citizenship": newCitizenshipGS(class),
+					"Religion":    newReligion7GS(class),
+					"Computer":    newComputer6to12GS(class),
+
+					"Economics":        newGGS(class),
+					"Accounts":         newGGS(class),
+					"Business Studies": newGGS(class),
 				}
 			}
 		} else {
@@ -229,14 +265,12 @@ func getGradingSystem(c appengine.Context, class string, subject string) grading
 			if intClass <= 8 {
 				gsMap["Social Studies"] = newGGS(class)
 				gsMap["Science"] = newSCGS(class)
-			} else {
-				gsMap["Biology"] = newSCGS(class)
-				gsMap["Chemistry"] = newSCGS(class)
-				gsMap["Physics"] = newSCGS(class)
+			}
+			if intClass <= 6 {
+				gsMap["UCMAS"] = newUcmasGS(class)
 			}
 			if intClass <= 5 {
 				gsMap["Religion"] = newGGS(class)
-				gsMap["Islamic Studies"] = newSingleGS("Evaluation", class)
 				if intClass >= 2 {
 					gsMap["Computer"] = newComputer2to5GS(class)
 				}
@@ -1018,6 +1052,25 @@ func newReligion7GS(class string) gradingSystem {
 	}
 }
 
+func newUcmasGS(class string) gradingSystem {
+	q, s := classWeights(class)
+	return simpleGradingSystem{
+		[]colDescription{
+			{"Speed Writing", 5, true},
+			{"Flash Cards", 5, true},
+			{"Using Abacus", 10, true},
+			{"Magic Bar", 10, true},
+			{"Oral", 10, true},
+			{"Mental", 10, true},
+			{"Classwork", 10, true},
+			{"H.W.", 10, true},
+			{"Summative Test", 30, true},
+		},
+		q,
+		s,
+	}
+}
+
 func (sgs simpleGradingSystem) description(term Term) []colDescription {
 	if term.Typ == Quarter {
 		var desc []colDescription
@@ -1575,7 +1628,12 @@ func getLetterSystem(class string) letterSystem {
 	intClass, err := strconv.Atoi(class)
 	if err != nil {
 		// class is KG or SN
-		return OVSLU
+		if class == "KG1" || class == "KG2" || class == "PreKG" {
+			return OVSLU
+		} else if strings.HasSuffix(class, "sci") ||
+			strings.HasSuffix(class, "com") {
+			return ABCDF
+		}
 	} else {
 		if intClass <= 2 {
 			return OVSLU
@@ -1584,6 +1642,8 @@ func getLetterSystem(class string) letterSystem {
 			return ABCDF
 		}
 	}
+	// should never happen
+	return ABCDF
 }
 
 // String returns a description of the letter system
@@ -1625,19 +1685,25 @@ func subjectInAverage(subject, class string) bool {
 		intClass, err := strconv.Atoi(class)
 		if err == nil && intClass >= 9 {
 			return true
+		} else if strings.HasSuffix(class, "sci") ||
+			strings.HasSuffix(class, "com") {
+			return true
 		}
 	}
 
 	subjectsInAverage := map[string]bool{
-		"Arabic":         true,
-		"English":        true,
-		"Math":           true,
-		"Science":        true,
-		"Biology":        true,
-		"Chemistry":      true,
-		"Physics":        true,
-		"Social Studies": true,
-		"Religion":       true,
+		"Arabic":           true,
+		"English":          true,
+		"Math":             true,
+		"Science":          true,
+		"Biology":          true,
+		"Chemistry":        true,
+		"Physics":          true,
+		"Economics":        true,
+		"Accounts":         true,
+		"Business Studies": true,
+		"Social Studies":   true,
+		"Religion":         true,
 	}
 
 	return subjectsInAverage[subject]
