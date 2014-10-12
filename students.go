@@ -60,6 +60,10 @@ func getStudent(c appengine.Context, id string) (studentType, error) {
 }
 
 func getStudents(c appengine.Context, enabled bool, classSection string) ([]studentType, error) {
+	return getStudentsSorted(c, enabled, classSection, false)
+}
+
+func getStudentsSorted(c appengine.Context, enabled bool, classSection string, sorted bool) ([]studentType, error) {
 	akey, err := getStudentsAncestor(c)
 	if err != nil {
 		return nil, err
@@ -83,7 +87,12 @@ func getStudents(c appengine.Context, enabled bool, classSection string) ([]stud
 			q = q.Filter("Section =", section)
 		}
 	}
-	q = q.Order("Class").Order("Section").Order("ID")
+	q = q.Order("Class").Order("Section")
+	if sorted {
+		q = q.Order("Name")
+	} else {
+		q = q.Order("ID")
+	}
 	var students []studentType
 	_, err = q.GetAll(c, &students)
 	if err != nil {

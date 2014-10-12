@@ -61,7 +61,9 @@ license that can be found in the LICENSE file.
 				{{end}}
 			</tr>
 			<tr>
-				<th scope="col"></th>
+				<th scope="col">
+					<a class="btn btn-default btn-xs hidden-print" href="/marks?Term={{.Term.Value}}&ClassSection={{.Class}}|{{.Section}}&Subject={{.Subject}}&sort=true">(sort)</a>
+				</th>
 				{{range .Cols}}
 				<th scope="col">{{.Max}}</th>
 				{{end}}

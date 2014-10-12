@@ -168,9 +168,11 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		sorted := r.Form.Get("sort") == "true"
+
 		if gs := getGradingSystem(c, class, subject); gs != nil {
 			cols = gs.description(term)
-			students, err := getStudents(c, true, classSection)
+			students, err := getStudentsSorted(c, true, classSection, sorted)
 			if err != nil {
 				c.Errorf("Could not get students: %s", err)
 				renderError(w, r, http.StatusInternalServerError)

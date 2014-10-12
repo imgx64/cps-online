@@ -38,6 +38,14 @@ indexes:
   ancestor: yes
   properties:
   - name: Class
+  - name: Enabled
+  - name: Section
+  - name: Name
+
+- kind: student
+  ancestor: yes
+  properties:
+  - name: Class
   - name: Section
   - name: ID
 
