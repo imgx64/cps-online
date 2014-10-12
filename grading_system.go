@@ -131,6 +131,7 @@ var subjects = []string{
 	"Accounts",
 	"Business Studies",
 	"Social Studies",
+	"Social Studies (Arabic)",
 	"Religion",
 	"UCMAS",
 	"Citizenship",
@@ -264,6 +265,7 @@ func getGradingSystem(c appengine.Context, class string, subject string) grading
 			}
 			if intClass <= 8 {
 				gsMap["Social Studies"] = newGGS(class)
+				gsMap["Social Studies (Arabic)"] = newCitizenshipGS(class)
 				gsMap["Science"] = newSCGS(class)
 			}
 			if intClass <= 6 {
