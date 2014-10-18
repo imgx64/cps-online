@@ -7,6 +7,7 @@ package main
 import (
 	"appengine"
 	"appengine/datastore"
+	"github.com/qedus/nds"
 
 	"bytes"
 	"encoding/csv"
@@ -51,7 +52,7 @@ func getStudent(c appengine.Context, id string) (studentType, error) {
 	}
 	key := datastore.NewKey(c, "student", id, 0, akey)
 	var stu studentType
-	err = datastore.Get(c, key, &stu)
+	err = nds.Get(c, key, &stu)
 	if err != nil {
 		return studentType{}, err
 	}
@@ -191,7 +192,7 @@ func (stu *studentType) save(c appengine.Context) error {
 	}
 
 	if stu.ID == "" {
-		err := datastore.RunInTransaction(c, func(c appengine.Context) error {
+		err := nds.RunInTransaction(c, func(c appengine.Context) error {
 			q := datastore.NewQuery("student").Ancestor(akey).
 				Order("-ID").KeysOnly().Limit(1)
 			keys, err := q.GetAll(c, nil)
@@ -216,7 +217,7 @@ func (stu *studentType) save(c appengine.Context) error {
 			}
 			id := fmt.Sprintf("%s%d", studentPrefix, i)
 			stu.ID = id
-			_, err = datastore.Put(c, datastore.NewKey(c, "student", id, 0, akey), stu)
+			_, err = nds.Put(c, datastore.NewKey(c, "student", id, 0, akey), stu)
 			if err != nil {
 				return err
 			}
@@ -226,7 +227,7 @@ func (stu *studentType) save(c appengine.Context) error {
 			return fmt.Errorf("Could not create student: %s", err)
 		}
 	} else {
-		_, err := datastore.Put(c, datastore.NewKey(c, "student", stu.ID, 0, akey), stu)
+		_, err := nds.Put(c, datastore.NewKey(c, "student", stu.ID, 0, akey), stu)
 		if err != nil {
 			return err
 		}
@@ -246,10 +247,10 @@ func getStudentsAncestor(c appengine.Context) (*datastore.Key, error) {
 	}
 
 	key := datastore.NewKey(c, "ancestor", "student", 0, nil)
-	err := datastore.Get(c, key, &struct{}{})
+	err := nds.Get(c, key, &struct{}{})
 
 	if err == datastore.ErrNoSuchEntity {
-		datastore.Put(c, key, &struct{}{})
+		nds.Put(c, key, &struct{}{})
 	} else if err != nil {
 		return nil, err
 	}

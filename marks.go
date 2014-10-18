@@ -7,6 +7,7 @@ package main
 import (
 	"appengine"
 	"appengine/datastore"
+	"github.com/qedus/nds"
 
 	"encoding/csv"
 	"fmt"
@@ -59,7 +60,7 @@ func storeMarksRow(c appengine.Context, id string, term Term,
 	mr := marksRow{id, term.Value(), subject, marks}
 	keyStr := fmt.Sprintf("%s|%s|%s", id, term, subject)
 	key := datastore.NewKey(c, "marks", keyStr, 0, nil)
-	_, err := datastore.Put(c, key, &mr)
+	_, err := nds.Put(c, key, &mr)
 	if err != nil {
 		return err
 	}
@@ -95,7 +96,7 @@ func storeRemark(c appengine.Context, id string, term Term, remark string) error
 	rr := remarksRow{id, term.Value(), remark}
 	keyStr := fmt.Sprintf("%s|%s", id, term)
 	key := datastore.NewKey(c, "remarks", keyStr, 0, nil)
-	_, err := datastore.Put(c, key, &rr)
+	_, err := nds.Put(c, key, &rr)
 	if err != nil {
 		return err
 	}

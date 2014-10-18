@@ -8,6 +8,7 @@ import (
 	"appengine"
 	"appengine/blobstore"
 	"appengine/datastore"
+	"github.com/qedus/nds"
 
 	"net/http"
 	"net/url"
@@ -56,7 +57,7 @@ func getDocuments(c appengine.Context, class string) ([]documentType, error) {
 
 func (dt documentType) save(c appengine.Context) error {
 	key := datastore.NewIncompleteKey(c, "document", nil)
-	_, err := datastore.Put(c, key, &dt)
+	_, err := nds.Put(c, key, &dt)
 	if err != nil {
 		return err
 	}

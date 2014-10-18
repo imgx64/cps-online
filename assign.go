@@ -7,6 +7,7 @@ package main
 import (
 	"appengine"
 	"appengine/datastore"
+	"github.com/qedus/nds"
 	"strconv"
 
 	"net/http"
@@ -81,7 +82,7 @@ func (at assignType) save(c appengine.Context) error {
 		key = keys[0]
 	}
 
-	_, err = datastore.Put(c, key, &at)
+	_, err = nds.Put(c, key, &at)
 	if err != nil {
 		return err
 	}
@@ -106,7 +107,7 @@ func (at assignType) delete(c appengine.Context) error {
 		key = keys[0]
 	}
 
-	err = datastore.Delete(c, key)
+	err = nds.Delete(c, key)
 	if err != nil {
 		return err
 	}

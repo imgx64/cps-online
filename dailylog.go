@@ -7,6 +7,7 @@ package main
 import (
 	"appengine"
 	"appengine/datastore"
+	"github.com/qedus/nds"
 
 	"fmt"
 	"net/http"
@@ -36,7 +37,7 @@ type dailylogType struct {
 func getDailylog(c appengine.Context, studentID, date string) (dailylogType, error) {
 	key := datastore.NewKey(c, "dailylog", fmt.Sprintf("%s|%s", studentID, date), 0, nil)
 	var dailylog dailylogType
-	err := datastore.Get(c, key, &dailylog)
+	err := nds.Get(c, key, &dailylog)
 	if err != nil {
 		return dailylogType{}, err
 	}
@@ -58,7 +59,7 @@ func getDailylogs(c appengine.Context, StudentID string) ([]dailylogType, error)
 func (dl dailylogType) save(c appengine.Context) error {
 	keyStr := fmt.Sprintf("%s|%s", dl.StudentID, dl.Date.Format("2006-01-02"))
 	key := datastore.NewKey(c, "dailylog", keyStr, 0, nil)
-	_, err := datastore.Put(c, key, &dl)
+	_, err := nds.Put(c, key, &dl)
 	if err != nil {
 		return err
 	}
@@ -69,7 +70,7 @@ func (dl dailylogType) save(c appengine.Context) error {
 func (dl dailylogType) delete(c appengine.Context) error {
 	keyStr := fmt.Sprintf("%s|%s", dl.StudentID, dl.Date.Format("2006-01-02"))
 	key := datastore.NewKey(c, "dailylog", keyStr, 0, nil)
-	err := datastore.Delete(c, key)
+	err := nds.Delete(c, key)
 	if err != nil {
 		return err
 	}

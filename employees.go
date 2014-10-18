@@ -8,6 +8,7 @@ import (
 	"appengine"
 	"appengine/datastore"
 	"bytes"
+	"github.com/qedus/nds"
 	"strings"
 
 	"encoding/csv"
@@ -58,7 +59,7 @@ func getEmployee(c appengine.Context, id string) (employeeType, error) {
 	}
 	key := datastore.NewKey(c, "employee", "", intID, nil)
 	var emp employeeType
-	err = datastore.Get(c, key, &emp)
+	err = nds.Get(c, key, &emp)
 	if err != nil {
 		return employeeType{}, err
 	}
@@ -148,7 +149,7 @@ func (emp *employeeType) save(c appengine.Context) error {
 	} else {
 		key = datastore.NewIncompleteKey(c, "employee", nil)
 	}
-	_, err = datastore.Put(c, key, emp)
+	_, err = nds.Put(c, key, emp)
 	if err != nil {
 		return err
 	}

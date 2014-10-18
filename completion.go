@@ -7,6 +7,7 @@ package main
 import (
 	"appengine"
 	"appengine/datastore"
+	"github.com/qedus/nds"
 
 	"fmt"
 	"net/http"
@@ -39,7 +40,7 @@ func storeCompletion(c appengine.Context, classSection string, term Term,
 	cr := completion{classSection, term.Value(), subject, nComplete}
 	keyStr := fmt.Sprintf("%s|%s|%s", classSection, term, subject)
 	key := datastore.NewKey(c, "completion", keyStr, 0, nil)
-	_, err := datastore.Put(c, key, &cr)
+	_, err := nds.Put(c, key, &cr)
 	if err != nil {
 		return err
 	}

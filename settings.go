@@ -7,6 +7,7 @@ package main
 import (
 	"appengine"
 	"appengine/datastore"
+	"github.com/qedus/nds"
 
 	"net/http"
 	"strings"
@@ -26,7 +27,7 @@ func getSchoolYear(c appengine.Context) string {
 	key := datastore.NewKey(c, "settings", "school_year", 0, nil)
 
 	setting := schoolYearSetting{}
-	err := datastore.Get(c, key, &setting)
+	err := nds.Get(c, key, &setting)
 	var sy string
 	if err == nil {
 		sy = setting.Value
@@ -42,7 +43,7 @@ func saveSchoolYear(c appengine.Context, sy string) error {
 
 	key := datastore.NewKey(c, "settings", "school_year", 0, nil)
 
-	_, err := datastore.Put(c, key, &schoolYearSetting{sy})
+	_, err := nds.Put(c, key, &schoolYearSetting{sy})
 	if err != nil {
 		return err
 	}
@@ -63,7 +64,7 @@ func getMaxSections(c appengine.Context) []maxSection {
 	key := datastore.NewKey(c, "settings", "sections", 0, nil)
 
 	setting := maxSectionSetting{}
-	err := datastore.Get(c, key, &setting)
+	err := nds.Get(c, key, &setting)
 	var storedMaxSections []maxSection
 	if err == nil {
 		storedMaxSections = setting.Value
@@ -94,7 +95,7 @@ func getMaxSections(c appengine.Context) []maxSection {
 func saveMaxSections(c appengine.Context, maxSections []maxSection) error {
 
 	key := datastore.NewKey(c, "settings", "sections", 0, nil)
-	_, err := datastore.Put(c, key, &maxSectionSetting{maxSections})
+	_, err := nds.Put(c, key, &maxSectionSetting{maxSections})
 	if err != nil {
 		return err
 	}
