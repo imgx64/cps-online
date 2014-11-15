@@ -137,6 +137,7 @@ var subjects = []string{
 	"Citizenship",
 	"Computer",
 	"P.E.",
+	"Speech and Drama",
 	"Behavior",
 	"Remarks",
 }
@@ -230,12 +231,13 @@ func getGradingSystem(c appengine.Context, class string, subject string) grading
 				}
 			} else if strings.HasSuffix(class, "sci") {
 				gsMap = map[string]gradingSystem{
-					"Arabic":      newGGS(class),
-					"English":     newEGS(class),
-					"Math":        newMGS(class),
-					"Citizenship": newCitizenshipGS(class),
-					"Religion":    newReligion7GS(class),
-					"Computer":    newComputer6to12GS(class),
+					"Arabic":           newGGS(class),
+					"English":          newEGS(class),
+					"Math":             newMGS(class),
+					"Citizenship":      newCitizenshipGS(class),
+					"Religion":         newReligion7GS(class),
+					"Computer":         newComputer6to12GS(class),
+					"Speech and Drama": newSpeechGS(class),
 
 					"Biology":   newSCGS(class),
 					"Chemistry": newSCGS(class),
@@ -243,12 +245,13 @@ func getGradingSystem(c appengine.Context, class string, subject string) grading
 				}
 			} else if strings.HasSuffix(class, "com") {
 				gsMap = map[string]gradingSystem{
-					"Arabic":      newGGS(class),
-					"English":     newEGS(class),
-					"Math":        newMGS(class),
-					"Citizenship": newCitizenshipGS(class),
-					"Religion":    newReligion7GS(class),
-					"Computer":    newComputer6to12GS(class),
+					"Arabic":           newGGS(class),
+					"English":          newEGS(class),
+					"Math":             newMGS(class),
+					"Citizenship":      newCitizenshipGS(class),
+					"Religion":         newReligion7GS(class),
+					"Computer":         newComputer6to12GS(class),
+					"Speech and Drama": newSpeechGS(class),
 
 					"Economics":        newGGS(class),
 					"Accounts":         newGGS(class),
@@ -258,10 +261,11 @@ func getGradingSystem(c appengine.Context, class string, subject string) grading
 		} else {
 			// class is numeric
 			gsMap = map[string]gradingSystem{
-				"Arabic":      newGGS(class),
-				"English":     newEGS(class),
-				"Math":        newMGS(class),
-				"Citizenship": newCitizenshipGS(class),
+				"Arabic":           newGGS(class),
+				"English":          newEGS(class),
+				"Math":             newMGS(class),
+				"Citizenship":      newCitizenshipGS(class),
+				"Speech and Drama": newSpeechGS(class),
 			}
 			if intClass <= 8 {
 				gsMap["Social Studies"] = newGGS(class)
@@ -1070,6 +1074,41 @@ func newUcmasGS(class string) gradingSystem {
 		},
 		q,
 		s,
+	}
+}
+
+func newSpeechGS(class string) gradingSystem {
+	q, s := classWeights(class)
+	trimmed := strings.TrimSuffix(class, "sci")
+	trimmed = strings.TrimSuffix(trimmed, "com")
+	intClass, err := strconv.Atoi(trimmed)
+	if err != nil {
+		panic("Class " + class + " does not have Speech and Drama. " + err.Error())
+	}
+
+	if intClass <= 5 {
+		// 1-5
+		return simpleGradingSystem{
+			[]colDescription{
+				{"Performance", 50, true},
+				{"Sight Reading", 30, true},
+				{"Discussion by Portfolio", 20, true},
+			},
+			q,
+			s,
+		}
+	} else {
+		// 6-12
+		return simpleGradingSystem{
+			[]colDescription{
+				{"Preparation", 25, true},
+				{"Context", 25, true},
+				{"Delivery", 25, true},
+				{"Attendance / Homework", 25, true},
+			},
+			q,
+			s,
+		}
 	}
 }
 
