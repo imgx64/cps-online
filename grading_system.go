@@ -132,6 +132,8 @@ var subjects = []string{
 	"Business Studies",
 	"Social Studies",
 	"Social Studies (Arabic)",
+	"Economic Geography",
+	"Arabian Gulf Geography",
 	"Religion",
 	"UCMAS",
 	"Citizenship",
@@ -283,6 +285,19 @@ func getGradingSystem(c appengine.Context, class string, subject string) grading
 			} else {
 				gsMap["Religion"] = newReligion7GS(class)
 				gsMap["Computer"] = newComputer6to12GS(class)
+			}
+		}
+
+		trimmed := strings.TrimSuffix(class, "sci")
+		trimmed = strings.TrimSuffix(trimmed, "com")
+		trimmedIntClass, err := strconv.Atoi(trimmed)
+		if err == nil {
+			if trimmedIntClass == 9 {
+				gsMap["Social Studies (Arabic)"] = newCitizenshipGS(class)
+			} else if trimmedIntClass == 10 {
+				gsMap["Economic Geography"] = newCitizenshipGS(class)
+			} else if trimmedIntClass == 11 {
+				gsMap["Arabian Gulf Geography"] = newCitizenshipGS(class)
 			}
 		}
 
