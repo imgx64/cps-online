@@ -16,7 +16,7 @@ import (
 
 type Term struct {
 	Typ termType
-	N   uint
+	N   int
 }
 
 var negZero = math.Copysign(0, -1) // sentinel for non-entered marks
@@ -36,7 +36,7 @@ var terms = []Term{
 	{EndOfYear, 0},
 }
 
-type termType uint
+type termType int
 
 const (
 	Quarter termType = iota + 1
@@ -95,7 +95,7 @@ func parseTerm(s string) (Term, error) {
 		return Term{}, fmt.Errorf("Invalid term: %s", s)
 	}
 
-	return Term{typ, uint(n)}, nil
+	return Term{typ, n}, nil
 }
 
 // Value is used in forms
@@ -403,7 +403,7 @@ func (ggs genericGradingSystem) evaluate(term Term, marks studentMarks) (err err
 		m[1] = m[0] * ggs.sWeight / 100.0
 
 		// Semester Mark
-		q2 := uint(term.N * 2)
+		q2 := term.N * 2
 		q1 := q2 - 1
 		ggs.evaluate(Term{Quarter, q1}, marks)
 		ggs.evaluate(Term{Quarter, q2}, marks)
@@ -552,7 +552,7 @@ func (mgs mathGradingSystem) evaluate(term Term, marks studentMarks) (err error)
 		m[1] = m[0] * mgs.sWeight / 100.0
 
 		// Semester Mark
-		q2 := uint(term.N * 2)
+		q2 := term.N * 2
 		q1 := q2 - 1
 		mgs.evaluate(Term{Quarter, q1}, marks)
 		mgs.evaluate(Term{Quarter, q2}, marks)
@@ -702,7 +702,7 @@ func (egs englishGradingSystem) evaluate(term Term, marks studentMarks) (err err
 		m[1] = m[0] * egs.sWeight / 100.0
 
 		// Semester Mark
-		q2 := uint(term.N * 2)
+		q2 := term.N * 2
 		q1 := q2 - 1
 		egs.evaluate(Term{Quarter, q1}, marks)
 		egs.evaluate(Term{Quarter, q2}, marks)
@@ -852,7 +852,7 @@ func (scgs scienceGradingSystem) evaluate(term Term, marks studentMarks) (err er
 		m[1] = m[0] * scgs.sWeight / 100.0
 
 		// Semester Mark
-		q2 := uint(term.N * 2)
+		q2 := term.N * 2
 		q1 := q2 - 1
 		scgs.evaluate(Term{Quarter, q1}, marks)
 		scgs.evaluate(Term{Quarter, q2}, marks)
@@ -968,7 +968,7 @@ func (pgs peGradingSystem) evaluate(term Term, marks studentMarks) (err error) {
 		// no calculations
 	} else if term.Typ == Semester {
 		// Semester Mark
-		q2 := uint(term.N * 2)
+		q2 := term.N * 2
 		q1 := q2 - 1
 		pgs.evaluate(Term{Quarter, q1}, marks)
 		pgs.evaluate(Term{Quarter, q2}, marks)
@@ -1191,7 +1191,7 @@ func (sgs simpleGradingSystem) evaluate(term Term, marks studentMarks) (err erro
 		m[1] = m[0] * sgs.sWeight / 100.0
 
 		// Semester Mark
-		q2 := uint(term.N * 2)
+		q2 := term.N * 2
 		q1 := q2 - 1
 		sgs.evaluate(Term{Quarter, q1}, marks)
 		sgs.evaluate(Term{Quarter, q2}, marks)
@@ -1341,7 +1341,7 @@ func (c2gs computer2to5GradingSystem) evaluate(term Term, marks studentMarks) (e
 		m[3] = m[2] * c2gs.sWeight / 100.0
 
 		// Semester Mark
-		q2 := uint(term.N * 2)
+		q2 := term.N * 2
 		q1 := q2 - 1
 		c2gs.evaluate(Term{Quarter, q1}, marks)
 		c2gs.evaluate(Term{Quarter, q2}, marks)
@@ -1498,7 +1498,7 @@ func (c6gs computer6to12GradingSystem) evaluate(term Term, marks studentMarks) (
 		m[3] = m[2] * c6gs.sWeight / 100.0
 
 		// Semester Mark
-		q2 := uint(term.N * 2)
+		q2 := term.N * 2
 		q1 := q2 - 1
 		c6gs.evaluate(Term{Quarter, q1}, marks)
 		c6gs.evaluate(Term{Quarter, q2}, marks)
@@ -1763,4 +1763,118 @@ func subjectInAverage(subject, class string) bool {
 	}
 
 	return subjectsInAverage[subject]
+}
+
+func displayName(subject, class string, term Term) string {
+	trimmed := strings.TrimSuffix(class, "sci")
+	trimmed = strings.TrimSuffix(trimmed, "com")
+	trimmedIntClass, err := strconv.Atoi(trimmed)
+	if err != nil {
+		return subject
+	}
+
+	var semNo = semesterNumber(term)
+
+	if trimmedIntClass == 10 {
+		if subject == "Arabic" {
+			if semNo == 1 {
+				return "Arab 101"
+			} else if semNo == 2 {
+				return "Arab 102"
+			} else {
+				return subject
+			}
+		}
+		if subject == "Religion" {
+			if semNo == 1 {
+				return "Islamic Studies 101"
+			} else if semNo == 2 {
+				return "Islamic Studies 301"
+			} else {
+				return subject
+			}
+		}
+		if subject == "Citizenship" {
+			if semNo == 1 {
+				return "Citizenship 101"
+			} else if semNo == 2 {
+				return ""
+			} else {
+				return subject
+			}
+		}
+		if subject == "Economic Geography" {
+			if semNo == 1 {
+				return ""
+			} else if semNo == 2 {
+				return "Economic Geography 102"
+			} else {
+				return subject
+			}
+		}
+		return subject
+	} else if trimmedIntClass == 11 {
+		if subject == "Arabic" {
+			if semNo == 1 {
+				return "Arab 201"
+			} else if semNo == 2 {
+				return "Arab 202"
+			} else {
+				return subject
+			}
+		}
+		if subject == "Religion" {
+			if semNo == 1 {
+				return "Islamic Studies 201"
+			} else if semNo == 2 {
+				return "Islamic Studies 103"
+			} else {
+				return subject
+			}
+		}
+		return subject
+	} else if trimmedIntClass == 12 {
+		if subject == "Arabic" {
+			if semNo == 1 {
+				return "Arabic 301"
+			} else if semNo == 2 {
+				return "Arabic 302"
+			} else {
+				return subject
+			}
+		}
+		if subject == "Religion" {
+			if semNo == 1 {
+				return "Islamic Studies 104"
+			} else if semNo == 2 {
+				return ""
+			} else {
+				return subject
+			}
+		}
+		if subject == "Social Studies" {
+			if semNo == 1 {
+				return "History of the World of Modern and Contemporary 103"
+			} else if semNo == 2 {
+				return ""
+			} else {
+				return subject
+			}
+		}
+		return subject
+	}
+
+	return subject
+}
+
+func semesterNumber(term Term) int {
+	if term.Typ == Quarter {
+		return (term.N-1)/2 + 1
+	}
+
+	if term.Typ == Semester {
+		return term.N
+	}
+
+	return 0
 }

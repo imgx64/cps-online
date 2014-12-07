@@ -109,7 +109,7 @@ func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 		if term.Typ == Quarter {
 			rc.Cols = []string{"Max Mark", "Mark Obtained"}
 		} else if term.Typ == Semester {
-			q2 := uint(term.N * 2)
+			q2 := term.N * 2
 			q1 := q2 - 1
 			gs := getGradingSystem(c, stu.Class, "English") //TODO: find a better way
 			rc.Cols = []string{
@@ -137,6 +137,12 @@ func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 			if subject == "Remarks" {
 				continue
 			}
+
+			subjectDisplayName := displayName(subject, stu.Class, term)
+			if subjectDisplayName == "" {
+				continue
+			}
+
 			gs := getGradingSystem(c, stu.Class, subject)
 			if gs == nil {
 				continue
@@ -155,12 +161,12 @@ func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 
 			mark := gs.get100(term, marks)
 			letter := ls.getLetter(mark)
-			rcRow := reportcardsRow{Name: subject, Letter: letter}
+			rcRow := reportcardsRow{Name: subjectDisplayName, Letter: letter}
 
 			if term.Typ == Quarter {
 				rcRow.Marks = []float64{100, mark}
 			} else if term.Typ == Semester {
-				q2 := uint(term.N * 2)
+				q2 := term.N * 2
 				q1 := q2 - 1
 				rcRow.Marks = []float64{
 					gs.get100(Term{Quarter, q1}, marks) * gs.quarterWeight() / 100.0,

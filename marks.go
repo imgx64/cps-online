@@ -137,6 +137,8 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 	var cols []colDescription
 	var studentRows []studentRow
 
+	subjectDisplayName := displayName(subject, class, term)
+
 	if subject != "" {
 		user, err := getUser(c)
 		if err != nil {
@@ -180,6 +182,10 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
+			if subjectDisplayName == "" {
+				students = []studentType{}
+			}
+
 			for _, s := range students {
 				m, err := getStudentMarks(c, s.ID, subject)
 				if err != nil {
@@ -217,6 +223,8 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 		Section string
 		Subject string
 
+		SubjectDisplayName string
+
 		Terms    []Term
 		CG       []classGroup
 		Subjects []string
@@ -228,6 +236,8 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 		Class:   class,
 		Section: section,
 		Subject: subject,
+
+		SubjectDisplayName: subjectDisplayName,
 
 		Terms:    terms,
 		CG:       classGroups,
