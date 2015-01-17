@@ -132,8 +132,6 @@ var subjects = []string{
 	"Business Studies",
 	"Social Studies",
 	"Social Studies (Arabic)",
-	"Economic Geography",
-	"Arabian Gulf Geography",
 	"Religion",
 	"UCMAS",
 	"Citizenship",
@@ -218,7 +216,7 @@ func getGradingSystem(c appengine.Context, class string, subject string) grading
 					"Religion": newSingleGS("Evaluation", class),
 				}
 				if class == "KG2" {
-					gsMap["UCMAS"] = newUcmasGS(class)
+					gsMap["UCMAS"] = ucmasGradingSystem{}
 				}
 
 			} else if class == "SN" {
@@ -236,7 +234,6 @@ func getGradingSystem(c appengine.Context, class string, subject string) grading
 					"Arabic":           newGGS(class),
 					"English":          newEGS(class),
 					"Math":             newMGS(class),
-					"Citizenship":      newCitizenshipGS(class),
 					"Religion":         newReligion7GS(class),
 					"Computer":         newComputer6to12GS(class),
 					"Speech and Drama": newSpeechGS(class),
@@ -250,7 +247,6 @@ func getGradingSystem(c appengine.Context, class string, subject string) grading
 					"Arabic":           newGGS(class),
 					"English":          newEGS(class),
 					"Math":             newMGS(class),
-					"Citizenship":      newCitizenshipGS(class),
 					"Religion":         newReligion7GS(class),
 					"Computer":         newComputer6to12GS(class),
 					"Speech and Drama": newSpeechGS(class),
@@ -275,7 +271,7 @@ func getGradingSystem(c appengine.Context, class string, subject string) grading
 				gsMap["Science"] = newSCGS(class)
 			}
 			if intClass <= 6 {
-				gsMap["UCMAS"] = newUcmasGS(class)
+				gsMap["UCMAS"] = ucmasGradingSystem{}
 			}
 			if intClass <= 5 {
 				gsMap["Religion"] = newGGS(class)
@@ -293,11 +289,13 @@ func getGradingSystem(c appengine.Context, class string, subject string) grading
 		trimmedIntClass, err := strconv.Atoi(trimmed)
 		if err == nil {
 			if trimmedIntClass == 9 {
+				gsMap["Citizenship"] = newCitizenshipGS(class)
 				gsMap["Social Studies (Arabic)"] = newCitizenshipGS(class)
 			} else if trimmedIntClass == 10 {
-				gsMap["Economic Geography"] = newCitizenshipGS(class)
+				gsMap["Citizenship"] = newCitizenshipGS(class)
+				gsMap["Social Studies"] = newCitizenshipGS(class)
 			} else if trimmedIntClass == 11 {
-				gsMap["Arabian Gulf Geography"] = newCitizenshipGS(class)
+				gsMap["Social Studies"] = newCitizenshipGS(class)
 			}
 		}
 
@@ -1073,25 +1071,6 @@ func newReligion7GS(class string) gradingSystem {
 	}
 }
 
-func newUcmasGS(class string) gradingSystem {
-	q, s := classWeights(class)
-	return simpleGradingSystem{
-		[]colDescription{
-			{"Speed Writing", 5, true},
-			{"Flash Cards", 5, true},
-			{"Using Abacus", 10, true},
-			{"Magic Bar", 10, true},
-			{"Oral", 10, true},
-			{"Mental", 10, true},
-			{"Classwork", 10, true},
-			{"H.W.", 10, true},
-			{"Summative Test", 30, true},
-		},
-		q,
-		s,
-	}
-}
-
 func newSpeechGS(class string) gradingSystem {
 	q, s := classWeights(class)
 	trimmed := strings.TrimSuffix(class, "sci")
@@ -1560,6 +1539,132 @@ func (c6gs computer6to12GradingSystem) semesterWeight() float64 {
 	return c6gs.sWeight
 }
 
+// ucmasGradingSystem is used for UCMAS
+// No quarters
+// Semesters: [Speed Writing: 5], [Flash Cards: 5],
+// [Using Abacus: 10], [Magic Bar: 10], [Oral: 10],
+// [Mental: 10], [Classwork: 10], [H.W.: 10], [Summative Test: 30]
+type ucmasGradingSystem struct {
+}
+
+func (ugs ucmasGradingSystem) description(term Term) []colDescription {
+	if term.Typ == Quarter {
+		return []colDescription{}
+	} else if term.Typ == Semester {
+		return []colDescription{
+			{"Speed Writing", 5, true},
+			{"Flash Cards", 5, true},
+			{"Using Abacus", 10, true},
+			{"Magic Bar", 10, true},
+			{"Oral", 10, true},
+			{"Mental", 10, true},
+			{"Classwork", 10, true},
+			{"H.W.", 10, true},
+			{"Summative Test", 30, true},
+			{"Semester Mark", 100, false},
+		}
+	} else if term.Typ == EndOfYear {
+		return []colDescription{
+			{"Semester 1 %", 50, false},
+			{"Semester 2 %", 50, false},
+			{"Final mark", 100, false},
+		}
+	}
+	panic(fmt.Sprintf("Invalid term type: %d", term.Typ))
+}
+
+func (ugs ucmasGradingSystem) evaluate(term Term, marks studentMarks) (err error) {
+	m := marks[term]
+	desc := ugs.description(term)
+
+	switch {
+	case m == nil: // first time to evaluate it
+		m = make([]float64, len(desc))
+		for i, _ := range desc {
+			m[i] = negZero
+		}
+	case len(m) != len(desc): // sanity check
+		err = invalidNumberOfMarks
+		m = make([]float64, len(desc))
+		for i, _ := range desc {
+			m[i] = negZero
+		}
+	}
+
+	// more sanity checks
+	for i, d := range desc {
+		if m[i] < 0 || m[i] > d.Max {
+			m[i] = negZero
+			if err == nil {
+				err = invalidRangeOfMarks
+			}
+		}
+	}
+
+	if term.Typ == Quarter {
+		// no calculations
+	} else if term.Typ == Semester {
+		// Semester Mark
+		m[9] = sumMarks(m[0:9]...)
+	} else if term.Typ == EndOfYear {
+		ugs.evaluate(Term{Semester, 1}, marks)
+		ugs.evaluate(Term{Semester, 2}, marks)
+		m[0] = ugs.get100(Term{Semester, 1}, marks) / 2.0
+		m[1] = ugs.get100(Term{Semester, 2}, marks) / 2.0
+
+		m[2] = sumMarks(m[0], m[1])
+	} else {
+		panic(fmt.Sprintf("Invalid term type: %d", term.Typ))
+	}
+
+	marks[term] = m
+	return
+}
+
+func (ugs ucmasGradingSystem) get100(term Term, marks studentMarks) float64 {
+	m := marks[term]
+	if term.Typ == Quarter {
+		return negZero
+	} else if term.Typ == Semester {
+		return m[9]
+	} else if term.Typ == EndOfYear {
+		return m[2]
+	}
+	panic(fmt.Sprintf("Invalid term type: %d", term.Typ))
+}
+
+func (ugs ucmasGradingSystem) getExam(term Term, marks studentMarks) float64 {
+	m := marks[term]
+	if term.Typ == Quarter {
+		return negZero
+	} else if term.Typ == Semester {
+		return m[9]
+	} else if term.Typ == EndOfYear {
+		return negZero
+	}
+	panic(fmt.Sprintf("Invalid term type: %d", term.Typ))
+}
+
+func (ugs ucmasGradingSystem) ready(term Term, marks studentMarks) bool {
+	m := marks[term]
+	if term.Typ == Quarter {
+		return true
+	} else if term.Typ == Semester {
+		return !math.Signbit(m[len(m)-1])
+	} else if term.Typ == EndOfYear {
+		return !math.Signbit(m[len(m)-1])
+	}
+	return false
+}
+
+func (ugs ucmasGradingSystem) quarterWeight() float64 {
+	return 50.0
+}
+
+func (ugs ucmasGradingSystem) semesterWeight() float64 {
+	return negZero
+}
+
 // behaviorGradingSystem contains behavrior. There are no calculations to make
 type behaviorGradingSystem struct {
 }
@@ -1747,6 +1852,15 @@ func subjectInAverage(subject, class string) bool {
 		}
 	}
 
+	if subject == "Social Studies" {
+		trimmed := strings.TrimSuffix(class, "sci")
+		trimmed = strings.TrimSuffix(trimmed, "com")
+		trimmedIntClass, err := strconv.Atoi(trimmed)
+		if err == nil && trimmedIntClass >= 10 {
+			return false
+		}
+	}
+
 	subjectsInAverage := map[string]bool{
 		"Arabic":           true,
 		"English":          true,
@@ -1803,7 +1917,7 @@ func displayName(subject, class string, term Term) string {
 				return subject
 			}
 		}
-		if subject == "Economic Geography" {
+		if subject == "Social Studies" {
 			if semNo == 1 {
 				return ""
 			} else if semNo == 2 {
@@ -1828,6 +1942,15 @@ func displayName(subject, class string, term Term) string {
 				return "Islamic Studies 201"
 			} else if semNo == 2 {
 				return "Islamic Studies 103"
+			} else {
+				return subject
+			}
+		}
+		if subject == "Social Studies" {
+			if semNo == 1 {
+				return "Bahrain History and the Gulf 201"
+			} else if semNo == 2 {
+				return ""
 			} else {
 				return subject
 			}
