@@ -1926,6 +1926,9 @@ func displayName(subject, class string, term Term) string {
 				return subject
 			}
 		}
+		if subject == "P.E." {
+			return "PE 101 (Physical Preparation)"
+		}
 		return subject
 	} else if trimmedIntClass == 11 {
 		if subject == "Arabic" {
@@ -1955,6 +1958,9 @@ func displayName(subject, class string, term Term) string {
 				return subject
 			}
 		}
+		if subject == "P.E." {
+			return "PE 201 (Basketball)"
+		}
 		return subject
 	} else if trimmedIntClass == 12 {
 		if subject == "Arabic" {
@@ -1983,6 +1989,9 @@ func displayName(subject, class string, term Term) string {
 			} else {
 				return subject
 			}
+		}
+		if subject == "P.E." {
+			return "PE 301 (Athletics)"
 		}
 		return subject
 	}
