@@ -84,11 +84,11 @@ license that can be found in the LICENSE file.
 					{{end}}
 					{{if .CalculateAll}}
 						<tr class="cps-reportcard-total">
-							<td>{{.Total.Name}}</td>
+							<th>{{.Total.Name}}</th>
 							{{range .Total.Marks}}
-								<td>{{mark .}}</td>
+								<th>{{mark .}}</th>
 							{{end}}
-							<td>{{.Total.Letter}}</td>
+							<th>{{.Total.Letter}}</th>
 						</tr>
 					{{end}}
 					</tbody>

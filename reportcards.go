@@ -200,17 +200,29 @@ func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		average := total / float64(numInAverage)
-		totalRow := reportcardsRow{
-			Name:   "Total",
-			Letter: formatMark(average) + "%",
+		totalRow := reportcardsRow{}
+		if !calculateAll {
+			totalRow.Name = "Total"
+			totalRow.Letter = formatMark(average) + "%"
+			if term.Typ == Quarter {
+				totalRow.Marks = []float64{totalMax, total}
+			} else if term.Typ == Semester {
+				totalRow.Marks = []float64{negZero, negZero, negZero, total}
+			} else if term.Typ == EndOfYear {
+				totalRow.Marks = []float64{negZero, negZero, total}
+			}
+		} else {
+			totalRow.Name = "General Weighted Average"
+			totalRow.Letter = ls.getLetter(average)
+			if term.Typ == Quarter {
+				totalRow.Marks = []float64{negZero, average}
+			} else if term.Typ == Semester {
+				totalRow.Marks = []float64{negZero, negZero, negZero, average}
+			} else if term.Typ == EndOfYear {
+				totalRow.Marks = []float64{negZero, negZero, average}
+			}
 		}
-		if term.Typ == Quarter {
-			totalRow.Marks = []float64{totalMax, total}
-		} else if term.Typ == Semester {
-			totalRow.Marks = []float64{negZero, negZero, negZero, total}
-		} else if term.Typ == EndOfYear {
-			totalRow.Marks = []float64{negZero, negZero, total}
-		}
+
 		rc.Total = totalRow
 
 		remark, err := getStudentRemark(c, stu.ID, term)

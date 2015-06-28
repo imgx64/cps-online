@@ -157,10 +157,15 @@ p.cps-reportcard-qsf {
 	padding: 1.1mm;
 }
 
-.cps-reportcard-total td {
+.cps-reportcard-total td,
+.cps-reportcard-total th {
 	font-weight: bold;
 	border-top-width: medium;
 	border-bottom-width: medium;
+}
+
+.cps-reportcard-total th {
+	background-color: #DDDDDD;
 }
 
 td.cps-reportcard-remarks {
