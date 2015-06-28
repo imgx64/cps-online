@@ -24,13 +24,15 @@ type reportcard struct {
 	Cols      []string
 	Academics []reportcardsRow
 	Other     []reportcardsRow
+	Total     reportcardsRow
 
 	Remark string
 
 	Behavior     []float64
 	BehaviorDesc []colDescription
 
-	LetterDesc string
+	LetterDesc   string
+	CalculateAll bool
 }
 
 type reportcardsRow struct {
@@ -81,6 +83,7 @@ func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO: Check if published
 
 	classSection := r.Form.Get("ClassSection")
+	calculateAll := r.Form.Get("CalculateAll") != ""
 
 	var reportcards []reportcard
 
@@ -179,23 +182,39 @@ func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 				}
 				rc.Academics = append(rc.Academics, rcRow)
 			} else {
+				if calculateAll && !math.Signbit(mark) {
+					total += mark
+					totalMax += 100
+					numInAverage++
+				}
 				rc.Other = append(rc.Other, rcRow)
 			}
 		}
 		average := total / float64(numInAverage)
-		totalRow := reportcardsRow{
-			Name:   "Total",
-			Letter: formatMark(average) + "%",
-			Total:  true,
+		totalRow := reportcardsRow{}
+		if !calculateAll {
+			totalRow.Name = "Total"
+			totalRow.Letter = formatMark(average) + "%"
+			if term.Typ == Quarter {
+				totalRow.Marks = []float64{totalMax, total}
+			} else if term.Typ == Semester {
+				totalRow.Marks = []float64{negZero, negZero, negZero, total}
+			} else if term.Typ == EndOfYear {
+				totalRow.Marks = []float64{negZero, negZero, total}
+			}
+		} else {
+			totalRow.Name = "General Weighted Average"
+			totalRow.Letter = ls.getLetter(average)
+			if term.Typ == Quarter {
+				totalRow.Marks = []float64{negZero, average}
+			} else if term.Typ == Semester {
+				totalRow.Marks = []float64{negZero, negZero, negZero, average}
+			} else if term.Typ == EndOfYear {
+				totalRow.Marks = []float64{negZero, negZero, average}
+			}
 		}
-		if term.Typ == Quarter {
-			totalRow.Marks = []float64{totalMax, total}
-		} else if term.Typ == Semester {
-			totalRow.Marks = []float64{negZero, negZero, negZero, total}
-		} else if term.Typ == EndOfYear {
-			totalRow.Marks = []float64{negZero, negZero, total}
-		}
-		rc.Academics = append(rc.Academics, totalRow)
+
+		rc.Total = totalRow
 
 		remark, err := getStudentRemark(c, stu.ID, term)
 		if err != nil {
@@ -207,6 +226,7 @@ func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 
 		rc.BehaviorDesc = behaviorDesc
 		rc.LetterDesc = ls.String()
+		rc.CalculateAll = calculateAll
 
 		reportcards = append(reportcards, rc)
 	}

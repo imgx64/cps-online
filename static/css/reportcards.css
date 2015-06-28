@@ -141,6 +141,7 @@ p.cps-reportcard-qsf {
 	font-size: small;
 	border-style: solid;
 	border-width: thin;
+	border-top-width: medium;
 	border-bottom-width: medium;
 	background-color: #DDDDDD;
 	text-align: center;
@@ -156,9 +157,15 @@ p.cps-reportcard-qsf {
 	padding: 2mm;
 }
 
-.cps-reportcard-total td {
-	font-weight: bold;
-	border-bottom-width: medium;
+.cps-reportcard-total td,
+.cps-reportcard-total th {
+        font-weight: bold;
+        border-top-width: medium;
+        border-bottom-width: medium;
+}
+
+.cps-reportcard-total th {
+        background-color: #DDDDDD;
 }
 
 td.cps-reportcard-remarks {

@@ -46,13 +46,22 @@ license that can be found in the LICENSE file.
 					</thead>
 					<tbody>
 					{{range .Academics}}
-						<tr {{if .Total}}class="cps-reportcard-total"{{end}}>
-							<td>{{.Name}}</td>
-							{{range .Marks}}
-								<td>{{mark .}}</td>
-							{{end}}
-							<td>{{.Letter}}</td>
-						</tr>
+							<tr>
+									<td>{{.Name}}</td>
+									{{range .Marks}}
+											<td>{{mark .}}</td>
+									{{end}}
+									<td>{{.Letter}}</td>
+							</tr>
+					{{end}}
+					{{if not .CalculateAll}}
+							<tr class="cps-reportcard-total">
+									<td>{{.Total.Name}}</td>
+									{{range .Total.Marks}}
+											<td>{{mark .}}</td>
+									{{end}}
+									<td>{{.Total.Letter}}</td>
+							</tr>
 					{{end}}
 						<tr>
 							<th scope="col">Other</th>
@@ -62,11 +71,25 @@ license that can be found in the LICENSE file.
 								<strong>Remarks:</strong> {{.Remark}}
 							</td>
 						</tr>
+					{{$CalculateAll := .CalculateAll}}
 					{{range .Other}}
-						<tr>
-							<td>{{.Name}}</td>
-							<td>{{.Letter}}</td>
-						</tr>
+							<tr>
+									<td>{{.Name}}</td>
+									<td>
+											{{if $CalculateAll}}
+													{{mark (index .Marks 1)}}
+											({{end}}{{.Letter}}{{if $CalculateAll}}){{end}}
+									</td>
+							</tr>
+					{{end}}
+					{{if .CalculateAll}}
+							<tr class="cps-reportcard-total">
+									<th>{{.Total.Name}}</th>
+									{{range .Total.Marks}}
+											<th>{{mark .}}</th>
+									{{end}}
+									<th>{{.Total.Letter}}</th>
+							</tr>
 					{{end}}
 					</tbody>
 				</table>
