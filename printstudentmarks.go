@@ -5,9 +5,10 @@
 package main
 
 import (
-	"appengine"
-	"math"
+	"google.golang.org/appengine"
+	"google.golang.org/appengine/log"
 
+	"math"
 	"net/http"
 )
 
@@ -35,7 +36,7 @@ func printStudentMarksHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 
 	if err := r.ParseForm(); err != nil {
-		c.Errorf("Could not parse form: %s", err)
+		log.Errorf(c, "Could not parse form: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -43,7 +44,7 @@ func printStudentMarksHandler(w http.ResponseWriter, r *http.Request) {
 	studentId := r.Form.Get("id")
 	stu, err := getStudent(c, studentId)
 	if err != nil {
-		c.Errorf("Could not get student %s: %s", studentId, err)
+		log.Errorf(c, "Could not get student %s: %s", studentId, err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -70,7 +71,7 @@ func printStudentMarksHandler(w http.ResponseWriter, r *http.Request) {
 			// TODO: don't loop over terms outside
 			marks, err := getStudentMarks(c, stu.ID, subject)
 			if err != nil {
-				c.Errorf("Could not get marks: %s", err)
+				log.Errorf(c, "Could not get marks: %s", err)
 				renderError(w, r, http.StatusInternalServerError)
 				return
 			}
@@ -102,7 +103,7 @@ func printStudentMarksHandler(w http.ResponseWriter, r *http.Request) {
 
 		remark, err = getStudentRemark(c, stu.ID, term)
 		if err != nil {
-			c.Errorf("Could not get remark: %s", err)
+			log.Errorf(c, "Could not get remark: %s", err)
 			renderError(w, r, http.StatusInternalServerError)
 			return
 		}
@@ -130,7 +131,7 @@ func printStudentMarksHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := render(w, r, "printstudentmarks", data); err != nil {
-		c.Errorf("Could not render template printstudentmarks: %s", err)
+		log.Errorf(c, "Could not render template printstudentmarks: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}

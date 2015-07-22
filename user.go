@@ -5,8 +5,8 @@
 package main
 
 import (
-	"appengine"
-	appengineuser "appengine/user"
+	"golang.org/x/net/context"
+	appengineuser "google.golang.org/appengine/user"
 )
 
 type user struct {
@@ -33,7 +33,7 @@ var (
 	teacherRole = roles{Teacher: true}
 )
 
-func getUser(c appengine.Context) (user, error) {
+func getUser(c context.Context) (user, error) {
 	u := appengineuser.Current(c)
 
 	name := u.String()

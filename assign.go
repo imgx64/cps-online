@@ -5,9 +5,11 @@
 package main
 
 import (
-	"appengine"
-	"appengine/datastore"
 	"github.com/qedus/nds"
+	"golang.org/x/net/context"
+	"google.golang.org/appengine"
+	"google.golang.org/appengine/datastore"
+	"google.golang.org/appengine/log"
 	"strconv"
 
 	"net/http"
@@ -24,7 +26,7 @@ type assignType struct {
 	Teacher      int64
 }
 
-func getAllAssignments(c appengine.Context) ([]assignType, error) {
+func getAllAssignments(c context.Context) ([]assignType, error) {
 	q := datastore.NewQuery("assign")
 	q = q.Order("ClassSection")
 	q = q.Order("Subject")
@@ -37,7 +39,7 @@ func getAllAssignments(c appengine.Context) ([]assignType, error) {
 	return assigns, nil
 }
 
-func isTeacherAssigned(c appengine.Context, classSection string, subject string, teacher int64) (bool, error) {
+func isTeacherAssigned(c context.Context, classSection string, subject string, teacher int64) (bool, error) {
 	q := datastore.NewQuery("assign")
 	q = q.Filter("ClassSection =", classSection)
 	q = q.Filter("Subject =", subject)
@@ -51,7 +53,7 @@ func isTeacherAssigned(c appengine.Context, classSection string, subject string,
 	return count >= 1, nil
 }
 
-func getTeacherAssignments(c appengine.Context, teacher int64) ([]assignType, error) {
+func getTeacherAssignments(c context.Context, teacher int64) ([]assignType, error) {
 	q := datastore.NewQuery("assign")
 	q = q.Filter("Teacher =", teacher)
 	q = q.Order("ClassSection")
@@ -65,7 +67,7 @@ func getTeacherAssignments(c appengine.Context, teacher int64) ([]assignType, er
 	return assigns, nil
 }
 
-func (at assignType) save(c appengine.Context) error {
+func (at assignType) save(c context.Context) error {
 	q := datastore.NewQuery("assign")
 	q = q.Filter("ClassSection =", at.ClassSection)
 	q = q.Filter("Subject =", at.Subject)
@@ -90,7 +92,7 @@ func (at assignType) save(c appengine.Context) error {
 	return nil
 }
 
-func (at assignType) delete(c appengine.Context) error {
+func (at assignType) delete(c context.Context) error {
 	q := datastore.NewQuery("assign")
 	q = q.Filter("ClassSection =", at.ClassSection)
 	q = q.Filter("Subject =", at.Subject)
@@ -120,14 +122,14 @@ func assignHandler(w http.ResponseWriter, r *http.Request) {
 
 	assigns, err := getAllAssignments(c)
 	if err != nil {
-		c.Errorf("Could not get assignments: %s", err)
+		log.Errorf(c, "Could not get assignments: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
 
 	teachers, err := getEmployees(c, true, "Teacher")
 	if err != nil {
-		c.Errorf("Could not get teachers: %s", err)
+		log.Errorf(c, "Could not get teachers: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -158,7 +160,7 @@ func assignHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err = render(w, r, "assign", data); err != nil {
-		c.Errorf("Could not render template assign: %s", err)
+		log.Errorf(c, "Could not render template assign: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -167,32 +169,32 @@ func assignHandler(w http.ResponseWriter, r *http.Request) {
 func assignSaveHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 	if err := r.ParseForm(); err != nil {
-		c.Errorf("Could not parse form: %s", err)
+		log.Errorf(c, "Could not parse form: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
 
 	classSection := r.Form.Get("classSection")
 	if classSection == "" {
-		c.Errorf("No classSection submitted")
+		log.Errorf(c, "No classSection submitted")
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
 	_, _, err := parseClassSection(classSection)
 	if err != nil {
-		c.Errorf("Invalid classSection")
+		log.Errorf(c, "Invalid classSection")
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
 	subject := r.Form.Get("subject")
 	if subject == "" {
-		c.Errorf("No subject submitted")
+		log.Errorf(c, "No subject submitted")
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
 	teacher, err := strconv.ParseInt(r.Form.Get("teacher"), 10, 64)
 	if err != nil {
-		c.Errorf("Invalid teacher")
+		log.Errorf(c, "Invalid teacher")
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -207,13 +209,13 @@ func assignSaveHandler(w http.ResponseWriter, r *http.Request) {
 
 	if delet {
 		if err := assign.delete(c); err != nil {
-			c.Errorf("Could not save assignment: %s", err)
+			log.Errorf(c, "Could not save assignment: %s", err)
 			renderError(w, r, http.StatusInternalServerError)
 			return
 		}
 	} else {
 		if err := assign.save(c); err != nil {
-			c.Errorf("Could not delete assignment: %s", err)
+			log.Errorf(c, "Could not delete assignment: %s", err)
 			renderError(w, r, http.StatusInternalServerError)
 			return
 		}

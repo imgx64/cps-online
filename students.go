@@ -5,9 +5,11 @@
 package main
 
 import (
-	"appengine"
-	"appengine/datastore"
 	"github.com/qedus/nds"
+	"golang.org/x/net/context"
+	"google.golang.org/appengine"
+	"google.golang.org/appengine/datastore"
+	"google.golang.org/appengine/log"
 
 	"bytes"
 	"encoding/csv"
@@ -45,7 +47,7 @@ type studentType struct {
 	// TODO: payments
 }
 
-func getStudent(c appengine.Context, id string) (studentType, error) {
+func getStudent(c context.Context, id string) (studentType, error) {
 	akey, err := getStudentsAncestor(c)
 	if err != nil {
 		return studentType{}, err
@@ -60,11 +62,11 @@ func getStudent(c appengine.Context, id string) (studentType, error) {
 	return stu, nil
 }
 
-func getStudents(c appengine.Context, enabled bool, classSection string) ([]studentType, error) {
+func getStudents(c context.Context, enabled bool, classSection string) ([]studentType, error) {
 	return getStudentsSorted(c, enabled, classSection, false)
 }
 
-func getStudentsSorted(c appengine.Context, enabled bool, classSection string, sorted bool) ([]studentType, error) {
+func getStudentsSorted(c context.Context, enabled bool, classSection string, sorted bool) ([]studentType, error) {
 	akey, err := getStudentsAncestor(c)
 	if err != nil {
 		return nil, err
@@ -103,7 +105,7 @@ func getStudentsSorted(c appengine.Context, enabled bool, classSection string, s
 	return students, nil
 }
 
-func getStudentsCount(c appengine.Context, enabled bool, classSection string) (int, error) {
+func getStudentsCount(c context.Context, enabled bool, classSection string) (int, error) {
 	akey, err := getStudentsAncestor(c)
 	if err != nil {
 		return -1, err
@@ -136,7 +138,7 @@ func getStudentsCount(c appengine.Context, enabled bool, classSection string) (i
 	return n, nil
 }
 
-func (stu *studentType) validate(c appengine.Context) error {
+func (stu *studentType) validate(c context.Context) error {
 	stu.ID = strings.ToLower(stu.ID)
 	if stu.ID != "" && !strings.HasPrefix(stu.ID, studentPrefix) {
 		return fmt.Errorf("Invalid student ID: %s", stu.ID)
@@ -181,7 +183,7 @@ func (stu *studentType) validate(c appengine.Context) error {
 	return nil
 }
 
-func (stu *studentType) save(c appengine.Context) error {
+func (stu *studentType) save(c context.Context) error {
 	if err := stu.validate(c); err != nil {
 		return err
 	}
@@ -192,7 +194,7 @@ func (stu *studentType) save(c appengine.Context) error {
 	}
 
 	if stu.ID == "" {
-		err := nds.RunInTransaction(c, func(c appengine.Context) error {
+		err := nds.RunInTransaction(c, func(c context.Context) error {
 			q := datastore.NewQuery("student").Ancestor(akey).
 				Order("-ID").KeysOnly().Limit(1)
 			keys, err := q.GetAll(c, nil)
@@ -238,7 +240,7 @@ func (stu *studentType) save(c appengine.Context) error {
 var studentsAncestorLock sync.Mutex
 var studentsAncestor *datastore.Key
 
-func getStudentsAncestor(c appengine.Context) (*datastore.Key, error) {
+func getStudentsAncestor(c context.Context) (*datastore.Key, error) {
 	studentsAncestorLock.Lock()
 	defer studentsAncestorLock.Unlock()
 
@@ -258,7 +260,7 @@ func getStudentsAncestor(c appengine.Context) (*datastore.Key, error) {
 	return key, nil
 }
 
-func getStudentFromEmail(c appengine.Context, email string) (studentType, error) {
+func getStudentFromEmail(c context.Context, email string) (studentType, error) {
 	email = strings.ToLower(email)
 	parts := strings.Split(email, "@")
 	if len(parts) != 2 || parts[1] != schoolDomain {
@@ -287,7 +289,7 @@ func init() {
 func studentsHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 	if err := r.ParseForm(); err != nil {
-		c.Errorf("Could not parse form: %s", err)
+		log.Errorf(c, "Could not parse form: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -297,7 +299,7 @@ func studentsHandler(w http.ResponseWriter, r *http.Request) {
 
 	students, err := getStudents(c, enabled != "no", classSection)
 	if err != nil {
-		c.Errorf("Could not retrieve students: %s", err)
+		log.Errorf(c, "Could not retrieve students: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -321,7 +323,7 @@ func studentsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := render(w, r, "students", data); err != nil {
-		c.Errorf("Could not render template students: %s", err)
+		log.Errorf(c, "Could not render template students: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -331,7 +333,7 @@ func studentsDetailsHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 
 	if err := r.ParseForm(); err != nil {
-		c.Errorf("Could not parse form: %s", err)
+		log.Errorf(c, "Could not parse form: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -347,7 +349,7 @@ func studentsDetailsHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		stu, err = getStudent(c, id)
 		if err != nil {
-			c.Errorf("Could not retrieve student details: %s", err)
+			log.Errorf(c, "Could not retrieve student details: %s", err)
 			renderError(w, r, http.StatusInternalServerError)
 			return
 		}
@@ -366,7 +368,7 @@ func studentsDetailsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := render(w, r, "studentsdetails", data); err != nil {
-		c.Errorf("Could not render template studentdetails: %s", err)
+		log.Errorf(c, "Could not render template studentdetails: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -376,7 +378,7 @@ func studentsSaveHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 
 	if err := r.ParseForm(); err != nil {
-		c.Errorf("Could not parse form: %s", err)
+		log.Errorf(c, "Could not parse form: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -387,7 +389,7 @@ func studentsSaveHandler(w http.ResponseWriter, r *http.Request) {
 	dateOfBirth, err2 := time.Parse("2006-01-02", f.Get("DateOfBirth"))
 	if name == "" || err1 != nil || err2 != nil {
 		// TODO: message to user
-		c.Errorf("Error saving student: Name: %q, Class err: %s, DateOfBirth err: %s",
+		log.Errorf(c, "Error saving student: Name: %q, Class err: %s, DateOfBirth err: %s",
 			name, err1, err2)
 		renderError(w, r, http.StatusInternalServerError)
 		return
@@ -414,7 +416,7 @@ func studentsSaveHandler(w http.ResponseWriter, r *http.Request) {
 	err := stu.validate(c)
 	if err != nil {
 		// TODO: message to user
-		c.Errorf("Invalid student details: %s", err)
+		log.Errorf(c, "Invalid student details: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -422,7 +424,7 @@ func studentsSaveHandler(w http.ResponseWriter, r *http.Request) {
 	err = stu.save(c)
 	if err != nil {
 		// TODO: message to user
-		c.Errorf("Could not store student: %s", err)
+		log.Errorf(c, "Could not store student: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -485,7 +487,7 @@ func studentsImportHandler(w http.ResponseWriter, r *http.Request) {
 			message.Msg = err.Error()
 		}
 		if err := render(w, r, "studentsimport", message); err != nil {
-			c.Errorf("Could not render template studentsimport: %s", err)
+			log.Errorf(c, "Could not render template studentsimport: %s", err)
 			renderError(w, r, http.StatusInternalServerError)
 			return
 		}
@@ -494,7 +496,7 @@ func studentsImportHandler(w http.ResponseWriter, r *http.Request) {
 
 	file, err := r.MultipartForm.File["csvfile"][0].Open()
 	if err != nil {
-		c.Errorf("Could not open uploaded file: %s", err)
+		log.Errorf(c, "Could not open uploaded file: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -519,7 +521,7 @@ func studentsImportHandler(w http.ResponseWriter, r *http.Request) {
 			if !reflect.DeepEqual(record, studentFields) {
 				message.Msg = fmt.Sprintf("Invalid file format: %q", record)
 				if err := render(w, r, "studentsimport", message); err != nil {
-					c.Errorf("Could not render template studentsimport: %s", err)
+					log.Errorf(c, "Could not render template studentsimport: %s", err)
 					renderError(w, r, http.StatusInternalServerError)
 					return
 				}
@@ -579,7 +581,7 @@ func studentsImportHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	message.Msg = msg.String()
 	if err := render(w, r, "studentsimport", message); err != nil {
-		c.Errorf("Could not render template studentsimport: %s", err)
+		log.Errorf(c, "Could not render template studentsimport: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -593,7 +595,7 @@ func studentsExportHandler(w http.ResponseWriter, r *http.Request) {
 	var filename string
 
 	if err := r.ParseForm(); err != nil {
-		c.Errorf("Could not parse form: %s", err)
+		log.Errorf(c, "Could not parse form: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -608,7 +610,7 @@ func studentsExportHandler(w http.ResponseWriter, r *http.Request) {
 
 		students, err = getStudents(c, enabled != "no", classSection)
 		if err != nil {
-			c.Errorf("Could not retrieve students: %s", err)
+			log.Errorf(c, "Could not retrieve students: %s", err)
 			renderError(w, r, http.StatusInternalServerError)
 			return
 		}
@@ -653,7 +655,7 @@ func studentsExportHandler(w http.ResponseWriter, r *http.Request) {
 
 	for _, err := range errors {
 		if err != nil {
-			c.Errorf("Error writing csv: %s", err)
+			log.Errorf(c, "Error writing csv: %s", err)
 		}
 	}
 }

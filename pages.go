@@ -5,7 +5,8 @@
 package main
 
 import (
-	"appengine"
+	"google.golang.org/appengine"
+	"google.golang.org/appengine/log"
 
 	"net/http"
 )
@@ -64,7 +65,7 @@ func accessHandler(f func(w http.ResponseWriter, r *http.Request)) func(w http.R
 		c := appengine.NewContext(r)
 		user, err := getUser(c)
 		if err != nil {
-			c.Errorf("Could not get user: %s", err)
+			log.Errorf(c, "Could not get user: %s", err)
 			renderError(w, r, http.StatusInternalServerError)
 			return
 		}

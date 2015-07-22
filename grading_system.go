@@ -5,7 +5,7 @@
 package main
 
 import (
-	"appengine"
+	"golang.org/x/net/context"
 
 	"bytes"
 	"fmt"
@@ -195,7 +195,7 @@ type gradingSystem interface {
 	semesterWeight() float64
 }
 
-func getGradingSystem(c appengine.Context, class string, subject string) gradingSystem {
+func getGradingSystem(c context.Context, class string, subject string) gradingSystem {
 	classes := getClasses(c)
 
 	// class -> subject -> gradingSystem

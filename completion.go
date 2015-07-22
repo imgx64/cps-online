@@ -5,9 +5,11 @@
 package main
 
 import (
-	"appengine"
-	"appengine/datastore"
 	"github.com/qedus/nds"
+	"golang.org/x/net/context"
+	"google.golang.org/appengine"
+	"google.golang.org/appengine/datastore"
+	"google.golang.org/appengine/log"
 
 	"fmt"
 	"net/http"
@@ -21,7 +23,7 @@ type completion struct {
 	N            int
 }
 
-func getCompletions(c appengine.Context, term Term, classSection string) ([]completion, error) {
+func getCompletions(c context.Context, term Term, classSection string) ([]completion, error) {
 	q := datastore.NewQuery("completion").
 		Filter("Term =", term.Value()).
 		Filter("ClassSection =", classSection)
@@ -34,7 +36,7 @@ func getCompletions(c appengine.Context, term Term, classSection string) ([]comp
 	return completions, nil
 }
 
-func storeCompletion(c appengine.Context, classSection string, term Term,
+func storeCompletion(c context.Context, classSection string, term Term,
 	subject string, nComplete int) error {
 
 	cr := completion{classSection, term.Value(), subject, nComplete}
@@ -62,7 +64,7 @@ func completionHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 
 	if err := r.ParseForm(); err != nil {
-		c.Errorf("Could not parse form: %s", err)
+		log.Errorf(c, "Could not parse form: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -88,7 +90,7 @@ func completionHandler(w http.ResponseWriter, r *http.Request) {
 
 				numStudents, err := getStudentsCount(c, true, classSection)
 				if err != nil {
-					c.Errorf("Could not retrieve number of students: %s", err)
+					log.Errorf(c, "Could not retrieve number of students: %s", err)
 					renderError(w, r, http.StatusInternalServerError)
 					return
 				}
@@ -104,7 +106,7 @@ func completionHandler(w http.ResponseWriter, r *http.Request) {
 				cr.Completion["Remarks"] = 0
 				completions, err := getCompletions(c, term, classSection)
 				if err != nil {
-					c.Errorf("Could not retrieve completions: %s", err)
+					log.Errorf(c, "Could not retrieve completions: %s", err)
 					renderError(w, r, http.StatusInternalServerError)
 					return
 				}
@@ -132,7 +134,7 @@ func completionHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := render(w, r, "completion", data); err != nil {
-		c.Errorf("Could not render template completion: %s", err)
+		log.Errorf(c, "Could not render template completion: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}

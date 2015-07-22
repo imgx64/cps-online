@@ -5,9 +5,11 @@
 package main
 
 import (
-	"appengine"
-	"appengine/datastore"
 	"github.com/qedus/nds"
+	"golang.org/x/net/context"
+	"google.golang.org/appengine"
+	"google.golang.org/appengine/datastore"
+	"google.golang.org/appengine/log"
 
 	"encoding/csv"
 	"fmt"
@@ -34,7 +36,7 @@ type marksRow struct {
 	Marks     []float64
 }
 
-func getStudentMarks(c appengine.Context, id, subject string) (studentMarks, error) {
+func getStudentMarks(c context.Context, id, subject string) (studentMarks, error) {
 	q := datastore.NewQuery("marks").Filter("StudentID =", id).Filter("Subject =", subject)
 	var rows []marksRow
 	_, err := q.GetAll(c, &rows)
@@ -54,7 +56,7 @@ func getStudentMarks(c appengine.Context, id, subject string) (studentMarks, err
 	return marks, nil
 }
 
-func storeMarksRow(c appengine.Context, id string, term Term,
+func storeMarksRow(c context.Context, id string, term Term,
 	subject string, marks []float64) error {
 
 	mr := marksRow{id, term.Value(), subject, marks}
@@ -75,7 +77,7 @@ type remarksRow struct {
 	Remark    string
 }
 
-func getStudentRemark(c appengine.Context, id string, term Term) (string, error) {
+func getStudentRemark(c context.Context, id string, term Term) (string, error) {
 	q := datastore.NewQuery("remarks").Filter("StudentID =", id).
 		Filter("Term =", term.Value())
 	var remarks []remarksRow
@@ -91,7 +93,7 @@ func getStudentRemark(c appengine.Context, id string, term Term) (string, error)
 	return remarks[0].Remark, nil
 }
 
-func storeRemark(c appengine.Context, id string, term Term, remark string) error {
+func storeRemark(c context.Context, id string, term Term, remark string) error {
 
 	rr := remarksRow{id, term.Value(), remark}
 	keyStr := fmt.Sprintf("%s|%s", id, term)
@@ -115,7 +117,7 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 
 	if err := r.ParseForm(); err != nil {
-		c.Errorf("Could not parse form: %s", err)
+		log.Errorf(c, "Could not parse form: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -142,7 +144,7 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 	if subject != "" {
 		user, err := getUser(c)
 		if err != nil {
-			c.Errorf("Could not get user: %s", err)
+			log.Errorf(c, "Could not get user: %s", err)
 			renderError(w, r, http.StatusInternalServerError)
 			return
 		}
@@ -152,13 +154,13 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 		} else if user.Roles.Teacher {
 			emp, err := getEmployeeFromEmail(c, user.Email)
 			if err != nil {
-				c.Errorf("Could not get employee: %s", err)
+				log.Errorf(c, "Could not get employee: %s", err)
 				renderError(w, r, http.StatusInternalServerError)
 				return
 			}
 			allowAccess, err = isTeacherAssigned(c, classSection, subject, emp.ID)
 			if err != nil {
-				c.Errorf("Could not get assignment: %s", err)
+				log.Errorf(c, "Could not get assignment: %s", err)
 				renderError(w, r, http.StatusInternalServerError)
 				return
 			}
@@ -177,7 +179,7 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 			cols = gs.description(term)
 			students, err := getStudentsSorted(c, true, classSection, sorted)
 			if err != nil {
-				c.Errorf("Could not get students: %s", err)
+				log.Errorf(c, "Could not get students: %s", err)
 				renderError(w, r, http.StatusInternalServerError)
 				return
 			}
@@ -199,7 +201,7 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 			cols = []colDescription{{Name: "Remarks"}}
 			students, err := getStudents(c, true, classSection)
 			if err != nil {
-				c.Errorf("Could not get students: %s", err)
+				log.Errorf(c, "Could not get students: %s", err)
 				renderError(w, r, http.StatusInternalServerError)
 				return
 			}
@@ -248,7 +250,7 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := render(w, r, "marks", data); err != nil {
-		c.Errorf("Could not render template marks: %s", err)
+		log.Errorf(c, "Could not render template marks: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -258,7 +260,7 @@ func marksSaveHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 
 	if err := r.ParseForm(); err != nil {
-		c.Errorf("Could not parse form: %s", err)
+		log.Errorf(c, "Could not parse form: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -269,7 +271,7 @@ func marksSaveHandler(w http.ResponseWriter, r *http.Request) {
 	classSection := f.Get("ClassSection")
 	class, _, err2 := parseClassSection(classSection)
 	if err1 != nil || subject == "" || err2 != nil {
-		c.Errorf("Could not save marks: Term err: %s, subject: %q, classSection err: %s",
+		log.Errorf(c, "Could not save marks: Term err: %s, subject: %q, classSection err: %s",
 			err1, subject, err2)
 		renderError(w, r, http.StatusInternalServerError)
 		return
@@ -299,7 +301,7 @@ func marksSaveHandler(w http.ResponseWriter, r *http.Request) {
 
 		students, err := getStudents(c, true, classSection)
 		if err != nil {
-			c.Errorf("Could not retrieve students: %s", err)
+			log.Errorf(c, "Could not retrieve students: %s", err)
 			renderError(w, r, http.StatusInternalServerError)
 			return
 		}
@@ -329,7 +331,7 @@ func marksSaveHandler(w http.ResponseWriter, r *http.Request) {
 			if marksChanged {
 				err := storeMarksRow(c, s.ID, term, subject, m[term])
 				if err != nil {
-					c.Errorf("Could not store marks: %s", err)
+					log.Errorf(c, "Could not store marks: %s", err)
 					renderError(w, r, http.StatusInternalServerError)
 					return
 				}
@@ -341,7 +343,7 @@ func marksSaveHandler(w http.ResponseWriter, r *http.Request) {
 	} else if subject == "Remarks" {
 		students, err := getStudents(c, true, classSection)
 		if err != nil {
-			c.Errorf("Could not get students: %s", err)
+			log.Errorf(c, "Could not get students: %s", err)
 			renderError(w, r, http.StatusInternalServerError)
 			return
 		}
@@ -356,7 +358,7 @@ func marksSaveHandler(w http.ResponseWriter, r *http.Request) {
 
 			err := storeRemark(c, s.ID, term, remark)
 			if err != nil {
-				c.Errorf("Could not store remark: %s", err)
+				log.Errorf(c, "Could not store remark: %s", err)
 				renderError(w, r, http.StatusInternalServerError)
 				return
 			}
@@ -366,7 +368,7 @@ func marksSaveHandler(w http.ResponseWriter, r *http.Request) {
 
 	err := storeCompletion(c, classSection, term, subject, nComplete)
 	if err != nil {
-		c.Errorf("Could not store completion: %s", err)
+		log.Errorf(c, "Could not store completion: %s", err)
 	}
 
 	// TODO: message of success/fail
@@ -377,7 +379,7 @@ func marksExportHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 
 	if err := r.ParseForm(); err != nil {
-		c.Errorf("Could not parse form: %s", err)
+		log.Errorf(c, "Could not parse form: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -402,7 +404,7 @@ func marksExportHandler(w http.ResponseWriter, r *http.Request) {
 		cols = gs.description(term)
 		students, err := getStudents(c, true, classSection)
 		if err != nil {
-			c.Errorf("Could not get students: %s", err)
+			log.Errorf(c, "Could not get students: %s", err)
 			renderError(w, r, http.StatusInternalServerError)
 			return
 		}
@@ -420,7 +422,7 @@ func marksExportHandler(w http.ResponseWriter, r *http.Request) {
 		cols = []colDescription{{Name: "Remarks"}}
 		students, err := getStudents(c, true, classSection)
 		if err != nil {
-			c.Errorf("Could not get students: %s", err)
+			log.Errorf(c, "Could not get students: %s", err)
 			renderError(w, r, http.StatusInternalServerError)
 			return
 		}
@@ -474,7 +476,7 @@ func marksExportHandler(w http.ResponseWriter, r *http.Request) {
 
 	for _, err := range errors {
 		if err != nil {
-			c.Errorf("Error writing csv: %s", err)
+			log.Errorf(c, "Error writing csv: %s", err)
 		}
 	}
 
@@ -485,11 +487,11 @@ func marksImportHandler(w http.ResponseWriter, r *http.Request) {
 
 	err := r.ParseMultipartForm(1e6)
 	if err != nil {
-		c.Errorf("Could not parse multipart form: %s", err)
+		log.Errorf(c, "Could not parse multipart form: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	} else if r.MultipartForm == nil || len(r.MultipartForm.File["csvfile"]) != 1 {
-		c.Errorf("No file uploaded: %s", err)
+		log.Errorf(c, "No file uploaded: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -500,7 +502,7 @@ func marksImportHandler(w http.ResponseWriter, r *http.Request) {
 	classSection := f.Get("ClassSection")
 	class, _, err2 := parseClassSection(classSection)
 	if err1 != nil || subject == "" || err2 != nil {
-		c.Errorf("Could not import marks: Term err: %s, subject: %q, classSection err: %s",
+		log.Errorf(c, "Could not import marks: Term err: %s, subject: %q, classSection err: %s",
 			err1, subject, err2)
 		renderError(w, r, http.StatusInternalServerError)
 		return
@@ -516,7 +518,7 @@ func marksImportHandler(w http.ResponseWriter, r *http.Request) {
 
 	file, err := r.MultipartForm.File["csvfile"][0].Open()
 	if err != nil {
-		c.Errorf("Could not open uploaded file: %s", err)
+		log.Errorf(c, "Could not open uploaded file: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -557,7 +559,7 @@ func marksImportHandler(w http.ResponseWriter, r *http.Request) {
 		if i == 1 {
 			// header
 			if !reflect.DeepEqual(record, fieldNames) {
-				c.Errorf("Invalid file header: %q. Expected: %q", record, fieldNames)
+				log.Errorf(c, "Invalid file header: %q. Expected: %q", record, fieldNames)
 				renderError(w, r, http.StatusInternalServerError)
 				return
 			}
@@ -570,14 +572,14 @@ func marksImportHandler(w http.ResponseWriter, r *http.Request) {
 				expectedNum, expectedErr := strconv.ParseFloat(expectedStr, 64)
 				if recordErr == nil && expectedErr == nil {
 					if recordNum != expectedNum {
-						c.Errorf("Invalid file header: %q. Expected: %q", record, fieldMax)
+						log.Errorf(c, "Invalid file header: %q. Expected: %q", record, fieldMax)
 						renderError(w, r, http.StatusInternalServerError)
 						return
 					}
 				} else {
 					// not numbers
 					if recordStr != expectedStr {
-						c.Errorf("Invalid file header: %q. Expected: %q", record, fieldMax)
+						log.Errorf(c, "Invalid file header: %q. Expected: %q", record, fieldMax)
 						renderError(w, r, http.StatusInternalServerError)
 						return
 					}
@@ -604,7 +606,7 @@ func marksImportHandler(w http.ResponseWriter, r *http.Request) {
 
 		students, err := getStudents(c, true, classSection)
 		if err != nil {
-			c.Errorf("Could not retrieve students: %s", err)
+			log.Errorf(c, "Could not retrieve students: %s", err)
 			renderError(w, r, http.StatusInternalServerError)
 			return
 		}
@@ -612,20 +614,20 @@ func marksImportHandler(w http.ResponseWriter, r *http.Request) {
 		for _, s := range students {
 			marksRecord, ok := csvMarks[s.ID]
 			if !ok {
-				c.Errorf("Student not found in class: %s", s.ID)
+				log.Errorf(c, "Student not found in class: %s", s.ID)
 				renderError(w, r, http.StatusInternalServerError)
 				return
 			}
 			delete(csvMarks, s.ID)
 			if marksRecord[0] != s.Name {
-				c.Errorf("Student ID does not match name in csv: %s, %s", s.ID, marksRecord[0])
+				log.Errorf(c, "Student ID does not match name in csv: %s, %s", s.ID, marksRecord[0])
 				renderError(w, r, http.StatusInternalServerError)
 				return
 			}
 			marksRecord = marksRecord[1:]
 			m, err := getStudentMarks(c, s.ID, subject)
 			if err != nil {
-				c.Errorf("Could not get student marks: %s", err)
+				log.Errorf(c, "Could not get student marks: %s", err)
 				renderError(w, r, http.StatusInternalServerError)
 				return
 			}
@@ -648,7 +650,7 @@ func marksImportHandler(w http.ResponseWriter, r *http.Request) {
 			if marksChanged {
 				err := storeMarksRow(c, s.ID, term, subject, m[term])
 				if err != nil {
-					c.Errorf("Could not store marks: %s", err)
+					log.Errorf(c, "Could not store marks: %s", err)
 					renderError(w, r, http.StatusInternalServerError)
 					return
 				}
@@ -660,7 +662,7 @@ func marksImportHandler(w http.ResponseWriter, r *http.Request) {
 	} else if subject == "Remarks" {
 		students, err := getStudents(c, true, classSection)
 		if err != nil {
-			c.Errorf("Could not get students: %s", err)
+			log.Errorf(c, "Could not get students: %s", err)
 			renderError(w, r, http.StatusInternalServerError)
 			return
 		}
@@ -668,13 +670,13 @@ func marksImportHandler(w http.ResponseWriter, r *http.Request) {
 		for _, s := range students {
 			marksRecord, ok := csvMarks[s.ID]
 			if !ok {
-				c.Errorf("Student not found in class: %s", s.ID)
+				log.Errorf(c, "Student not found in class: %s", s.ID)
 				renderError(w, r, http.StatusInternalServerError)
 				return
 			}
 			delete(csvMarks, s.ID)
 			if marksRecord[0] != s.Name {
-				c.Errorf("Student ID does not match name in csv: %s, %s", s.ID, marksRecord[0])
+				log.Errorf(c, "Student ID does not match name in csv: %s, %s", s.ID, marksRecord[0])
 				renderError(w, r, http.StatusInternalServerError)
 				return
 			}
@@ -687,7 +689,7 @@ func marksImportHandler(w http.ResponseWriter, r *http.Request) {
 
 			err = storeRemark(c, s.ID, term, remark)
 			if err != nil {
-				c.Errorf("Could not store remark: %s", err)
+				log.Errorf(c, "Could not store remark: %s", err)
 				renderError(w, r, http.StatusInternalServerError)
 				return
 			}
@@ -697,7 +699,7 @@ func marksImportHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = storeCompletion(c, classSection, term, subject, nComplete)
 	if err != nil {
-		c.Errorf("Could not store completion: %s", err)
+		log.Errorf(c, "Could not store completion: %s", err)
 	}
 
 	// TODO: message of success/fail

@@ -5,9 +5,10 @@
 package main
 
 import (
-	"appengine"
-	"math"
+	"google.golang.org/appengine"
+	"google.golang.org/appengine/log"
 
+	"math"
 	"net/http"
 )
 
@@ -29,7 +30,7 @@ func reportcardHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 
 	if err := r.ParseForm(); err != nil {
-		c.Errorf("Could not parse form: %s", err)
+		log.Errorf(c, "Could not parse form: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -41,12 +42,12 @@ func reportcardHandler(w http.ResponseWriter, r *http.Request) {
 
 	user, err := getUser(c)
 	if err != nil {
-		c.Errorf("Could not get user: %s", err)
+		log.Errorf(c, "Could not get user: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
 	if user.Student == nil {
-		c.Errorf("User is not a student: %s", user.Email)
+		log.Errorf(c, "User is not a student: %s", user.Email)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -76,7 +77,7 @@ func reportcardHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			marks, err := getStudentMarks(c, stu.ID, subject)
 			if err != nil {
-				c.Errorf("Could not get marks: %s", err)
+				log.Errorf(c, "Could not get marks: %s", err)
 				renderError(w, r, http.StatusInternalServerError)
 				return
 			}
@@ -101,7 +102,7 @@ func reportcardHandler(w http.ResponseWriter, r *http.Request) {
 
 		remark, err = getStudentRemark(c, stu.ID, term)
 		if err != nil {
-			c.Errorf("Could not get remark: %s", err)
+			log.Errorf(c, "Could not get remark: %s", err)
 			renderError(w, r, http.StatusInternalServerError)
 			return
 		}
@@ -142,7 +143,7 @@ func reportcardHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := render(w, r, "reportcard", data); err != nil {
-		c.Errorf("Could not render template reportcard: %s", err)
+		log.Errorf(c, "Could not render template reportcard: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}

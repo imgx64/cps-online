@@ -5,9 +5,11 @@
 package main
 
 import (
-	"appengine"
-	"appengine/datastore"
 	"github.com/qedus/nds"
+	"golang.org/x/net/context"
+	"google.golang.org/appengine"
+	"google.golang.org/appengine/datastore"
+	"google.golang.org/appengine/log"
 
 	"fmt"
 	"net/http"
@@ -34,7 +36,7 @@ type dailylogType struct {
 	Details    string
 }
 
-func getDailylog(c appengine.Context, studentID, date string) (dailylogType, error) {
+func getDailylog(c context.Context, studentID, date string) (dailylogType, error) {
 	key := datastore.NewKey(c, "dailylog", fmt.Sprintf("%s|%s", studentID, date), 0, nil)
 	var dailylog dailylogType
 	err := nds.Get(c, key, &dailylog)
@@ -45,7 +47,7 @@ func getDailylog(c appengine.Context, studentID, date string) (dailylogType, err
 	return dailylog, nil
 }
 
-func getDailylogs(c appengine.Context, StudentID string) ([]dailylogType, error) {
+func getDailylogs(c context.Context, StudentID string) ([]dailylogType, error) {
 	q := datastore.NewQuery("dailylog").Filter("StudentID =", StudentID)
 	var dailylogs []dailylogType
 	_, err := q.GetAll(c, &dailylogs)
@@ -56,7 +58,7 @@ func getDailylogs(c appengine.Context, StudentID string) ([]dailylogType, error)
 	return dailylogs, nil
 }
 
-func (dl dailylogType) save(c appengine.Context) error {
+func (dl dailylogType) save(c context.Context) error {
 	keyStr := fmt.Sprintf("%s|%s", dl.StudentID, dl.Date.Format("2006-01-02"))
 	key := datastore.NewKey(c, "dailylog", keyStr, 0, nil)
 	_, err := nds.Put(c, key, &dl)
@@ -67,7 +69,7 @@ func (dl dailylogType) save(c appengine.Context) error {
 	return nil
 }
 
-func (dl dailylogType) delete(c appengine.Context) error {
+func (dl dailylogType) delete(c context.Context) error {
 	keyStr := fmt.Sprintf("%s|%s", dl.StudentID, dl.Date.Format("2006-01-02"))
 	key := datastore.NewKey(c, "dailylog", keyStr, 0, nil)
 	err := nds.Delete(c, key)
@@ -82,7 +84,7 @@ func dailylogHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 	err := r.ParseForm()
 	if err != nil {
-		c.Errorf("Could not parse form: %s", err)
+		log.Errorf(c, "Could not parse form: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -94,7 +96,7 @@ func dailylogHandler(w http.ResponseWriter, r *http.Request) {
 	if classSection != "" {
 		students, err = getStudents(c, true, classSection)
 		if err != nil {
-			c.Errorf("Could not retrieve students: %s", err)
+			log.Errorf(c, "Could not retrieve students: %s", err)
 			renderError(w, r, http.StatusInternalServerError)
 			return
 		}
@@ -117,7 +119,7 @@ func dailylogHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := render(w, r, "dailylog", data); err != nil {
-		c.Errorf("Could not render template dailylog: %s", err)
+		log.Errorf(c, "Could not render template dailylog: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -127,7 +129,7 @@ func dailylogStudentHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 
 	if err := r.ParseForm(); err != nil {
-		c.Errorf("Could not parse form: %s", err)
+		log.Errorf(c, "Could not parse form: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -135,14 +137,14 @@ func dailylogStudentHandler(w http.ResponseWriter, r *http.Request) {
 	id := r.Form.Get("id")
 	stu, err := getStudent(c, id)
 	if err != nil {
-		c.Errorf("Could not retrieve student details: %s", err)
+		log.Errorf(c, "Could not retrieve student details: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
 
 	dailylogs, err := getDailylogs(c, id)
 	if err != nil {
-		c.Errorf("Could not retrieve daily logs: %s", err)
+		log.Errorf(c, "Could not retrieve daily logs: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -158,7 +160,7 @@ func dailylogStudentHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := render(w, r, "dailylogstudent", data); err != nil {
-		c.Errorf("Could not render template dailylogstudent: %s", err)
+		log.Errorf(c, "Could not render template dailylogstudent: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -168,7 +170,7 @@ func dailylogEditHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 
 	if err := r.ParseForm(); err != nil {
-		c.Errorf("Could not parse form: %s", err)
+		log.Errorf(c, "Could not parse form: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -176,7 +178,7 @@ func dailylogEditHandler(w http.ResponseWriter, r *http.Request) {
 	id := r.Form.Get("id")
 	date := r.Form.Get("date")
 	if id == "" || date == "" {
-		c.Errorf("Empty student (%s) or daily log (%s)", id, date)
+		log.Errorf(c, "Empty student (%s) or daily log (%s)", id, date)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -190,7 +192,7 @@ func dailylogEditHandler(w http.ResponseWriter, r *http.Request) {
 		dailylog.StudentID = id
 		dailylog.Date = d
 	} else if err != nil {
-		c.Errorf("Could not retrieve daily log details: %s", err)
+		log.Errorf(c, "Could not retrieve daily log details: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -202,7 +204,7 @@ func dailylogEditHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := render(w, r, "dailylogedit", data); err != nil {
-		c.Errorf("Could not render template dailylogedit: %s", err)
+		log.Errorf(c, "Could not render template dailylogedit: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -212,17 +214,17 @@ func dailylogSaveHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 
 	if err := r.ParseForm(); err != nil {
-		c.Errorf("Could not parse form: %s", err)
+		log.Errorf(c, "Could not parse form: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
 
 	f := r.PostForm
-	c.Debugf("%#v", f)
+	log.Debugf(c, "%#v", f)
 	id := f.Get("ID")
 	date, err := time.Parse("2006-01-02", f.Get("Date"))
 	if err != nil {
-		c.Errorf("Invalid date: %s", err)
+		log.Errorf(c, "Invalid date: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -246,7 +248,7 @@ func dailylogSaveHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	if err != nil {
 		// TODO: message to user
-		c.Errorf("Could not store dailylog: %s", err)
+		log.Errorf(c, "Could not store dailylog: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -265,19 +267,19 @@ func viewDailylogHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 
 	if err := r.ParseForm(); err != nil {
-		c.Errorf("Could not parse form: %s", err)
+		log.Errorf(c, "Could not parse form: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
 
 	user, err := getUser(c)
 	if err != nil {
-		c.Errorf("Could not get user: %s", err)
+		log.Errorf(c, "Could not get user: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
 	if user.Student == nil {
-		c.Errorf("User is not a student: %s", user.Email)
+		log.Errorf(c, "User is not a student: %s", user.Email)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -285,7 +287,7 @@ func viewDailylogHandler(w http.ResponseWriter, r *http.Request) {
 
 	dailylogs, err := getDailylogs(c, stu.ID)
 	if err != nil {
-		c.Errorf("Could not retrieve daily logs: %s", err)
+		log.Errorf(c, "Could not retrieve daily logs: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -301,7 +303,7 @@ func viewDailylogHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := render(w, r, "viewdailylog", data); err != nil {
-		c.Errorf("Could not render template viewdailylog: %s", err)
+		log.Errorf(c, "Could not render template viewdailylog: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -311,19 +313,19 @@ func viewDailylogDayHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 
 	if err := r.ParseForm(); err != nil {
-		c.Errorf("Could not parse form: %s", err)
+		log.Errorf(c, "Could not parse form: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
 
 	user, err := getUser(c)
 	if err != nil {
-		c.Errorf("Could not get user: %s", err)
+		log.Errorf(c, "Could not get user: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
 	if user.Student == nil {
-		c.Errorf("User is not a student: %s", user.Email)
+		log.Errorf(c, "User is not a student: %s", user.Email)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -332,7 +334,7 @@ func viewDailylogDayHandler(w http.ResponseWriter, r *http.Request) {
 
 	date := r.Form.Get("date")
 	if id == "" || date == "" {
-		c.Errorf("Empty student (%s) or daily log (%s)", id, date)
+		log.Errorf(c, "Empty student (%s) or daily log (%s)", id, date)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -346,7 +348,7 @@ func viewDailylogDayHandler(w http.ResponseWriter, r *http.Request) {
 		dailylog.StudentID = id
 		dailylog.Date = d
 	} else if err != nil {
-		c.Errorf("Could not retrieve daily log details: %s", err)
+		log.Errorf(c, "Could not retrieve daily log details: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -358,7 +360,7 @@ func viewDailylogDayHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := render(w, r, "viewdailylogday", data); err != nil {
-		c.Errorf("Could not render template viewdailylogday: %s", err)
+		log.Errorf(c, "Could not render template viewdailylogday: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}

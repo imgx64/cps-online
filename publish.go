@@ -5,10 +5,10 @@
 package main
 
 import (
-	"appengine"
+	"golang.org/x/net/context"
 )
 
-func published(c appengine.Context, term Term) bool {
+func published(c context.Context, term Term) bool {
 	// TODO
 	return true
 }

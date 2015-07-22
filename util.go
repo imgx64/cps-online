@@ -5,7 +5,8 @@
 package main
 
 import (
-	"appengine"
+	"google.golang.org/appengine"
+	"google.golang.org/appengine/log"
 
 	"fmt"
 	htmltemplate "html/template"
@@ -46,7 +47,7 @@ func renderErrorMsg(w http.ResponseWriter, r *http.Request, code int, message st
 	w.WriteHeader(code)
 	if err := render(w, r, "error", data); err != nil {
 		c := appengine.NewContext(r)
-		c.Errorf("Error occured while handling error: %s", err)
+		log.Errorf(c, "Error occured while handling error: %s", err)
 	}
 }
 
@@ -63,7 +64,7 @@ func render(w http.ResponseWriter, r *http.Request,
 
 	user, err := getUser(c)
 	if err != nil {
-		c.Errorf("Could not get user: %s", user.Email)
+		log.Errorf(c, "Could not get user: %s", user.Email)
 	}
 
 	var links []link

@@ -5,9 +5,11 @@
 package main
 
 import (
-	"appengine"
-	"appengine/datastore"
 	"github.com/qedus/nds"
+	"golang.org/x/net/context"
+	"google.golang.org/appengine"
+	"google.golang.org/appengine/datastore"
+	"google.golang.org/appengine/log"
 
 	"net/http"
 	"strings"
@@ -22,7 +24,7 @@ type schoolYearSetting struct {
 	Value string
 }
 
-func getSchoolYear(c appengine.Context) string {
+func getSchoolYear(c context.Context) string {
 
 	key := datastore.NewKey(c, "settings", "school_year", 0, nil)
 
@@ -32,14 +34,14 @@ func getSchoolYear(c appengine.Context) string {
 	if err == nil {
 		sy = setting.Value
 	} else {
-		c.Warningf("Could not get school year: %s\nUsing defaults instead", err)
+		log.Warningf(c, "Could not get school year: %s\nUsing defaults instead", err)
 		sy = "2014-2015"
 	}
 
 	return sy
 }
 
-func saveSchoolYear(c appengine.Context, sy string) error {
+func saveSchoolYear(c context.Context, sy string) error {
 
 	key := datastore.NewKey(c, "settings", "school_year", 0, nil)
 
@@ -59,7 +61,7 @@ type maxSectionSetting struct {
 	Value []maxSection
 }
 
-func getMaxSections(c appengine.Context) []maxSection {
+func getMaxSections(c context.Context) []maxSection {
 
 	key := datastore.NewKey(c, "settings", "sections", 0, nil)
 
@@ -69,7 +71,7 @@ func getMaxSections(c appengine.Context) []maxSection {
 	if err == nil {
 		storedMaxSections = setting.Value
 	} else {
-		c.Warningf("Could not get max sections: %s\nUsing defaults instead", err)
+		log.Warningf(c, "Could not get max sections: %s\nUsing defaults instead", err)
 		storedMaxSections = []maxSection{}
 	}
 	// Now we have a valid storedMaxSections or an empty array
@@ -92,7 +94,7 @@ func getMaxSections(c appengine.Context) []maxSection {
 	return maxSections
 }
 
-func saveMaxSections(c appengine.Context, maxSections []maxSection) error {
+func saveMaxSections(c context.Context, maxSections []maxSection) error {
 
 	key := datastore.NewKey(c, "settings", "sections", 0, nil)
 	_, err := nds.Put(c, key, &maxSectionSetting{maxSections})
@@ -126,7 +128,7 @@ func settingsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := render(w, r, "settings", data); err != nil {
-		c.Errorf("Could not render template upload: %s", err)
+		log.Errorf(c, "Could not render template upload: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -136,7 +138,7 @@ func settingsSaveHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 
 	if err := r.ParseForm(); err != nil {
-		c.Errorf("Could not parse form: %s", err)
+		log.Errorf(c, "Could not parse form: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -144,7 +146,7 @@ func settingsSaveHandler(w http.ResponseWriter, r *http.Request) {
 	sy := r.Form.Get("sy")
 	if sy != "" {
 		if err := saveSchoolYear(c, sy); err != nil {
-			c.Errorf("Could not save school year: %s", err)
+			log.Errorf(c, "Could not save school year: %s", err)
 			renderError(w, r, http.StatusInternalServerError)
 			return
 		}
@@ -161,7 +163,7 @@ func settingsSaveHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := saveMaxSections(c, maxSections); err != nil {
-		c.Errorf("Could not save max sections: %s", err)
+		log.Errorf(c, "Could not save max sections: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}

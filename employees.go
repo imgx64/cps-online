@@ -5,18 +5,20 @@
 package main
 
 import (
-	"appengine"
-	"appengine/datastore"
-	"bytes"
 	"github.com/qedus/nds"
-	"strings"
+	"golang.org/x/net/context"
+	"google.golang.org/appengine"
+	"google.golang.org/appengine/datastore"
+	"google.golang.org/appengine/log"
 
+	"bytes"
 	"encoding/csv"
 	"fmt"
 	"io"
 	"net/http"
 	"reflect"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -52,7 +54,7 @@ var employeeTypes = []string{
 	"Other",
 }
 
-func getEmployee(c appengine.Context, id string) (employeeType, error) {
+func getEmployee(c context.Context, id string) (employeeType, error) {
 	intID, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
 		return employeeType{}, err
@@ -68,7 +70,7 @@ func getEmployee(c appengine.Context, id string) (employeeType, error) {
 	return emp, err
 }
 
-func getEmployees(c appengine.Context, enabled bool, typ string) ([]employeeType, error) {
+func getEmployees(c context.Context, enabled bool, typ string) ([]employeeType, error) {
 	q := datastore.NewQuery("employee").Filter("Enabled =", enabled)
 	if typ != "all" {
 		q = q.Filter("Type =", typ)
@@ -88,7 +90,7 @@ func getEmployees(c appengine.Context, enabled bool, typ string) ([]employeeType
 	return employees, nil
 }
 
-func (emp *employeeType) validate(c appengine.Context) error {
+func (emp *employeeType) validate(c context.Context) error {
 	if emp.ID != 0 {
 		// make sure employee actually exists
 		_, err := getEmployee(c, fmt.Sprint(emp.ID))
@@ -137,7 +139,7 @@ func (emp *employeeType) validate(c appengine.Context) error {
 	return nil
 }
 
-func (emp *employeeType) save(c appengine.Context) error {
+func (emp *employeeType) save(c context.Context) error {
 	err := emp.validate(c)
 	if err != nil {
 		return err
@@ -157,7 +159,7 @@ func (emp *employeeType) save(c appengine.Context) error {
 	return nil
 }
 
-func getEmployeeFromEmail(c appengine.Context, email string) (employeeType, error) {
+func getEmployeeFromEmail(c context.Context, email string) (employeeType, error) {
 	q := datastore.NewQuery("employee").Filter("CPSEmail =", email).Limit(2)
 	var employees []employeeType
 	keys, err := q.GetAll(c, &employees)
@@ -188,7 +190,7 @@ func init() {
 func employeesHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 	if err := r.ParseForm(); err != nil {
-		c.Errorf("Could not parse form: %s", err)
+		log.Errorf(c, "Could not parse form: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -198,7 +200,7 @@ func employeesHandler(w http.ResponseWriter, r *http.Request) {
 
 	employees, err := getEmployees(c, enabled != "no", typ)
 	if err != nil {
-		c.Errorf("Could not retrieve employees: %s", err)
+		log.Errorf(c, "Could not retrieve employees: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -220,7 +222,7 @@ func employeesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := render(w, r, "employees", data); err != nil {
-		c.Errorf("Could not render template employees: %s", err)
+		log.Errorf(c, "Could not render template employees: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -230,7 +232,7 @@ func employeesDetailsHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 
 	if err := r.ParseForm(); err != nil {
-		c.Errorf("Could not parse form: %s", err)
+		log.Errorf(c, "Could not parse form: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -249,7 +251,7 @@ func employeesDetailsHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		emp, err = getEmployee(c, id)
 		if err != nil {
-			c.Errorf("Could not retrieve employee details: %s", err)
+			log.Errorf(c, "Could not retrieve employee details: %s", err)
 			renderError(w, r, http.StatusInternalServerError)
 			return
 		}
@@ -257,7 +259,7 @@ func employeesDetailsHandler(w http.ResponseWriter, r *http.Request) {
 
 	u, err := getUser(c)
 	if err != nil {
-		c.Errorf("Could not get user: %s", err)
+		log.Errorf(c, "Could not get user: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -275,7 +277,7 @@ func employeesDetailsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := render(w, r, "employeesdetails", data); err != nil {
-		c.Errorf("Could not render template employeedetails: %s", err)
+		log.Errorf(c, "Could not render template employeedetails: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -285,7 +287,7 @@ func employeesSaveHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 
 	if err := r.ParseForm(); err != nil {
-		c.Errorf("Could not parse form: %s", err)
+		log.Errorf(c, "Could not parse form: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -296,14 +298,14 @@ func employeesSaveHandler(w http.ResponseWriter, r *http.Request) {
 	if err == datastore.ErrNoSuchEntity {
 		// new employee
 	} else if err != nil {
-		c.Errorf("Could not retrieve employee details: %s", err)
+		log.Errorf(c, "Could not retrieve employee details: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
 
 	u, err := getUser(c)
 	if err != nil {
-		c.Errorf("Could not get user: %s", err)
+		log.Errorf(c, "Could not get user: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -348,14 +350,14 @@ func employeesSaveHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = emp.validate(c)
 	if err != nil {
-		c.Errorf("Could not store employee: %s", err)
+		log.Errorf(c, "Could not store employee: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
 
 	err = emp.save(c)
 	if err != nil {
-		c.Errorf("Could not store employee: %s", err)
+		log.Errorf(c, "Could not store employee: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -432,7 +434,7 @@ func employeesImportHandler(w http.ResponseWriter, r *http.Request) {
 			message.Msg = err.Error()
 		}
 		if err := render(w, r, "employeesimport", message); err != nil {
-			c.Errorf("Could not render template employeesimport: %s", err)
+			log.Errorf(c, "Could not render template employeesimport: %s", err)
 			renderError(w, r, http.StatusInternalServerError)
 			return
 		}
@@ -441,7 +443,7 @@ func employeesImportHandler(w http.ResponseWriter, r *http.Request) {
 
 	file, err := r.MultipartForm.File["csvfile"][0].Open()
 	if err != nil {
-		c.Errorf("Could not open uploaded file: %s", err)
+		log.Errorf(c, "Could not open uploaded file: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -449,7 +451,7 @@ func employeesImportHandler(w http.ResponseWriter, r *http.Request) {
 
 	u, err := getUser(c)
 	if err != nil {
-		c.Errorf("Could not get user: %s", err)
+		log.Errorf(c, "Could not get user: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -474,7 +476,7 @@ func employeesImportHandler(w http.ResponseWriter, r *http.Request) {
 			if !reflect.DeepEqual(record, employeeFields) {
 				message.Msg = fmt.Sprintf("Invalid file format: %q", record)
 				if err := render(w, r, "employeesimport", message); err != nil {
-					c.Errorf("Could not render template employeesimport: %s", err)
+					log.Errorf(c, "Could not render template employeesimport: %s", err)
 					renderError(w, r, http.StatusInternalServerError)
 					return
 				}
@@ -563,7 +565,7 @@ func employeesImportHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	message.Msg = msg.String()
 	if err := render(w, r, "employeesimport", message); err != nil {
-		c.Errorf("Could not render template employeesimport: %s", err)
+		log.Errorf(c, "Could not render template employeesimport: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -584,7 +586,7 @@ func employeesExportHandler(w http.ResponseWriter, r *http.Request) {
 		var err error
 		employees, err = getEmployees(c, r.Form.Get("enabled") != "no", r.Form.Get("type"))
 		if err != nil {
-			c.Errorf("Could not retrieve employees: %s", err)
+			log.Errorf(c, "Could not retrieve employees: %s", err)
 			renderError(w, r, http.StatusInternalServerError)
 			return
 		}
@@ -653,7 +655,7 @@ func employeesExportHandler(w http.ResponseWriter, r *http.Request) {
 
 	for _, err := range errors {
 		if err != nil {
-			c.Errorf("Error writing csv: %s", err)
+			log.Errorf(c, "Error writing csv: %s", err)
 		}
 	}
 }

@@ -5,10 +5,12 @@
 package main
 
 import (
-	"appengine"
-	"appengine/blobstore"
-	"appengine/datastore"
 	"github.com/qedus/nds"
+	"golang.org/x/net/context"
+	"google.golang.org/appengine"
+	"google.golang.org/appengine/blobstore"
+	"google.golang.org/appengine/datastore"
+	"google.golang.org/appengine/log"
 
 	"net/http"
 	"net/url"
@@ -40,7 +42,7 @@ type documentType struct {
 	URL string
 }
 
-func getDocuments(c appengine.Context, class string) ([]documentType, error) {
+func getDocuments(c context.Context, class string) ([]documentType, error) {
 	q := datastore.NewQuery("document")
 	if class != "all" {
 		q = q.Filter("Class =", class)
@@ -55,7 +57,7 @@ func getDocuments(c appengine.Context, class string) ([]documentType, error) {
 	return documents, nil
 }
 
-func (dt documentType) save(c appengine.Context) error {
+func (dt documentType) save(c context.Context) error {
 	key := datastore.NewIncompleteKey(c, "document", nil)
 	_, err := nds.Put(c, key, &dt)
 	if err != nil {
@@ -70,14 +72,14 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 
 	uploadURL, err := blobstore.UploadURL(c, "/upload/file", nil)
 	if err != nil {
-		c.Errorf("Could not get upload URL", err)
+		log.Errorf(c, "Could not get upload URL", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
 
 	documents, err := getDocuments(c, "all")
 	if err != nil {
-		c.Errorf("Could not retrieve documents: %s", err)
+		log.Errorf(c, "Could not retrieve documents: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -97,7 +99,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := render(w, r, "upload", data); err != nil {
-		c.Errorf("Could not render template upload: %s", err)
+		log.Errorf(c, "Could not render template upload: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -107,13 +109,13 @@ func uploadFileHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 	blobs, formData, err := blobstore.ParseUpload(r)
 	if err != nil {
-		c.Errorf("Could not parse upload: %s", err)
+		log.Errorf(c, "Could not parse upload: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
 	file := blobs["file"]
 	if len(file) != 1 {
-		c.Errorf("No file uploaded")
+		log.Errorf(c, "No file uploaded")
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -137,7 +139,7 @@ func uploadFileHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := document.save(c); err != nil {
-		c.Errorf("Could not save document: %s", err)
+		log.Errorf(c, "Could not save document: %s", err)
 		blobstore.Delete(c, blobKey)
 		renderError(w, r, http.StatusInternalServerError)
 		return
@@ -150,14 +152,14 @@ func uploadFileHandler(w http.ResponseWriter, r *http.Request) {
 func uploadLinkHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 	if err := r.ParseForm(); err != nil {
-		c.Errorf("Could not parse form: %s", err)
+		log.Errorf(c, "Could not parse form: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
 
 	title := r.Form.Get("title")
 	if title == "" {
-		c.Errorf("No title submitted")
+		log.Errorf(c, "No title submitted")
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -167,7 +169,7 @@ func uploadLinkHandler(w http.ResponseWriter, r *http.Request) {
 	fileURL := r.Form.Get("url")
 	_, err := url.Parse(fileURL)
 	if err != nil {
-		c.Errorf("Invalid URL: %s", fileURL)
+		log.Errorf(c, "Invalid URL: %s", fileURL)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -181,7 +183,7 @@ func uploadLinkHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := document.save(c); err != nil {
-		c.Errorf("Could not save document: %s", err)
+		log.Errorf(c, "Could not save document: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -195,12 +197,12 @@ func documentsHandler(w http.ResponseWriter, r *http.Request) {
 
 	user, err := getUser(c)
 	if err != nil {
-		c.Errorf("Could not get user: %s", err)
+		log.Errorf(c, "Could not get user: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
 	if user.Student == nil {
-		c.Errorf("User is not a student: %s", user.Email)
+		log.Errorf(c, "User is not a student: %s", user.Email)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -209,14 +211,14 @@ func documentsHandler(w http.ResponseWriter, r *http.Request) {
 
 	classDocuments, err := getDocuments(c, class)
 	if err != nil {
-		c.Errorf("Could not retrieve documents: %s", err)
+		log.Errorf(c, "Could not retrieve documents: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
 
 	allDocuments, err := getDocuments(c, "")
 	if err != nil {
-		c.Errorf("Could not retrieve documents: %s", err)
+		log.Errorf(c, "Could not retrieve documents: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -232,7 +234,7 @@ func documentsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := render(w, r, "documents", data); err != nil {
-		c.Errorf("Could not render template documents: %s", err)
+		log.Errorf(c, "Could not render template documents: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}

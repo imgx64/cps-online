@@ -5,7 +5,7 @@
 package main
 
 import (
-	"appengine"
+	"golang.org/x/net/context"
 
 	"fmt"
 	"strings"
@@ -13,7 +13,7 @@ import (
 
 // TODO: change these into configuration
 
-func getClasses(c appengine.Context) []string {
+func getClasses(c context.Context) []string {
 	// TODO: caching
 
 	classes := []string{
@@ -42,7 +42,7 @@ func getClasses(c appengine.Context) []string {
 	return classes
 }
 
-func getClassSections(c appengine.Context) map[string][]string {
+func getClassSections(c context.Context) map[string][]string {
 	// TODO: caching
 
 	maxSections := getMaxSections(c)
@@ -71,7 +71,7 @@ type classGroup struct {
 	Sections []string
 }
 
-func getClassGroups(c appengine.Context) []classGroup {
+func getClassGroups(c context.Context) []classGroup {
 	// TODO: caching
 	classes := getClasses(c)
 	sections := getClassSections(c)

@@ -5,7 +5,8 @@
 package main
 
 import (
-	"appengine"
+	"google.golang.org/appengine"
+	"google.golang.org/appengine/log"
 
 	"fmt"
 	htmltemplate "html/template"
@@ -60,7 +61,7 @@ func reportcardsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := render(w, r, "reportcards", data); err != nil {
-		c.Errorf("Could not render template reportcards: %s", err)
+		log.Errorf(c, "Could not render template reportcards: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -70,14 +71,14 @@ func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 
 	if err := r.ParseForm(); err != nil {
-		c.Errorf("Could not parse form: %s", err)
+		log.Errorf(c, "Could not parse form: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
 
 	term, err := parseTerm(r.Form.Get("Term"))
 	if err != nil {
-		c.Errorf("Invalid term: %s", err)
+		log.Errorf(c, "Invalid term: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -90,7 +91,7 @@ func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 
 	students, err := getStudents(c, true, classSection)
 	if err != nil {
-		c.Errorf("Could not retrieve students: %s", err)
+		log.Errorf(c, "Could not retrieve students: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -127,7 +128,7 @@ func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 				"Mark Obtained (100%)",
 			}
 		} else {
-			c.Errorf("Invalid term type: %d", term.Typ)
+			log.Errorf(c, "Invalid term type: %d", term.Typ)
 			renderError(w, r, http.StatusInternalServerError)
 			return
 		}
@@ -151,7 +152,7 @@ func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			marks, err := getStudentMarks(c, stu.ID, subject)
 			if err != nil {
-				c.Errorf("Could not get marks: %s", err)
+				log.Errorf(c, "Could not get marks: %s", err)
 				renderError(w, r, http.StatusInternalServerError)
 				return
 			}
@@ -227,7 +228,7 @@ func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 
 		remark, err := getStudentRemark(c, stu.ID, term)
 		if err != nil {
-			c.Errorf("Could not get remark: %s", err)
+			log.Errorf(c, "Could not get remark: %s", err)
 			renderError(w, r, http.StatusInternalServerError)
 			return
 		}
@@ -247,12 +248,12 @@ func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl, err := htmltemplate.New("reportcardsprint.html").Funcs(funcMap).
 		ParseFiles(templateFile)
 	if err != nil {
-		c.Errorf("Could not parse template reportcardsprint: %s", err)
+		log.Errorf(c, "Could not parse template reportcardsprint: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
 	if err := tmpl.Execute(w, data); err != nil {
-		c.Errorf("Could not execute template reportcardsprint: %s", err)
+		log.Errorf(c, "Could not execute template reportcardsprint: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}

@@ -5,7 +5,8 @@
 package main
 
 import (
-	"appengine"
+	"google.golang.org/appengine"
+	"google.golang.org/appengine/log"
 
 	"bytes"
 	"fmt"
@@ -51,7 +52,7 @@ func printAllHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 
 	if err := r.ParseForm(); err != nil {
-		c.Errorf("Could not parse form: %s", err)
+		log.Errorf(c, "Could not parse form: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -74,7 +75,7 @@ func printAllHandler(w http.ResponseWriter, r *http.Request) {
 
 	students, err := getStudents(c, true, classSection)
 	if err != nil {
-		c.Errorf("Could not get students: %s", err)
+		log.Errorf(c, "Could not get students: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -107,7 +108,7 @@ func printAllHandler(w http.ResponseWriter, r *http.Request) {
 				}
 				marks, err := getStudentMarks(c, stu.ID, subject)
 				if err != nil {
-					c.Errorf("Could not get marks: %s", err)
+					log.Errorf(c, "Could not get marks: %s", err)
 					renderError(w, r, http.StatusInternalServerError)
 					return
 				}
@@ -211,7 +212,7 @@ func printAllHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := render(w, r, "printallmarks", data); err != nil {
-		c.Errorf("Could not render template marks: %s", err)
+		log.Errorf(c, "Could not render template marks: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}

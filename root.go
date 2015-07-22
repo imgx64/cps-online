@@ -5,8 +5,9 @@
 package main
 
 import (
-	"appengine"
-	appengineuser "appengine/user"
+	"google.golang.org/appengine"
+	"google.golang.org/appengine/log"
+	appengineuser "google.golang.org/appengine/user"
 
 	"net/http"
 )
@@ -25,7 +26,7 @@ func root(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := render(w, r, "root", nil); err != nil {
-		c.Errorf("Could not render template root: %s", err)
+		log.Errorf(c, "Could not render template root: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -35,7 +36,7 @@ func logout(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 	logoutURL, err := appengineuser.LogoutURL(c, "/")
 	if err != nil {
-		c.Errorf("Could not get logout URL: %s", err)
+		log.Errorf(c, "Could not get logout URL: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
