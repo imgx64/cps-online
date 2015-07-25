@@ -11,39 +11,20 @@ import (
 	"strings"
 )
 
-// TODO: change these into configuration
-
 func getClasses(c context.Context) []string {
-	// TODO: caching
 
-	classes := []string{
-		"1",
-		"2",
-		"3",
-		"4",
-		"5",
-		"6",
-		"7",
-		"8",
-		"9sci",
-		"9com",
-		"10sci",
-		"10com",
-		"11sci",
-		"11com",
-		"12sci",
-		"12com",
-		"SN",
-		"PreKG",
-		"KG1",
-		"KG2",
+	maxSections := getMaxSections(c)
+
+	classes := []string{}
+
+	for _, maxSection := range maxSections {
+		classes = append(classes, maxSection.Class)
 	}
 
 	return classes
 }
 
 func getClassSections(c context.Context) map[string][]string {
-	// TODO: caching
 
 	maxSections := getMaxSections(c)
 

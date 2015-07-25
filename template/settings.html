@@ -4,7 +4,7 @@ Use of this source code is governed by a BSD-style
 license that can be found in the LICENSE file.
 */}}
 
-{{define "title"}}Upload Documents{{end}}
+{{define "title"}}Settings{{end}}
 {{define "content"}}
 <form  action="/settings/save" method="POST">
 	<fieldset>
@@ -19,13 +19,14 @@ license that can be found in the LICENSE file.
 	</div>
 	<fieldset>
 		<legend>Sections Up To</legend>
+		<table>
 		{{$sectionChoices := .SectionChoices}}
 		{{range .MaxSections}}
-		<div class="form-inline">
-			<div class="form-group">
+		<tr>
+			<th>
 				<label for="sections-{{.Class}}">Grade {{.Class}}:</label>
-			</div>
-			<div class="form-group">
+			</th>
+			<td>
 				<select id="class" id="sections-{{.Class}}"
 					name="sections-{{.Class}}" class="form-control">
 					{{$currentMaxSection := .Section}}
@@ -35,14 +36,29 @@ license that can be found in the LICENSE file.
 					</option>
 					{{end}}
 				</select>
-			</div>
-		</div>
+			</td>
+		</tr>
 		{{end}}
+		</table>
 	</fieldset>
-	<div >
+	<div>
 		<input type="submit" class="btn btn-default" value="Save">
 	</div>
 </form>
+<div class="spacer">
+<form  action="/settings/addclass" method="POST">
+	<fieldset>
+		<legend>Add class</legend>
+		<div class="form-inline">
+			<div class="form-group">
+				<input type="text" name="class" class="form-control" placeholder="Class name" required="required">
+			</div>
+			<div class="form-group">
+				<input type="submit" class="btn btn-default" value="Add">
+			</div>
+		</div>
+	</fieldset>
+</div>
 <div class="spacer">
 </div>
 {{end}}

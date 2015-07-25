@@ -11,6 +11,7 @@ import (
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/log"
 
+	"fmt"
 	"net/http"
 	"strings"
 )
@@ -18,6 +19,7 @@ import (
 func init() {
 	http.HandleFunc("/settings", accessHandler(settingsHandler))
 	http.HandleFunc("/settings/save", accessHandler(settingsSaveHandler))
+	http.HandleFunc("/settings/addclass", accessHandler(settingsAddClassHandler))
 }
 
 type schoolYearSetting struct {
@@ -66,32 +68,12 @@ func getMaxSections(c context.Context) []maxSection {
 	key := datastore.NewKey(c, "settings", "sections", 0, nil)
 
 	setting := maxSectionSetting{}
-	err := nds.Get(c, key, &setting)
-	var storedMaxSections []maxSection
-	if err == nil {
-		storedMaxSections = setting.Value
-	} else {
-		log.Warningf(c, "Could not get max sections: %s\nUsing defaults instead", err)
-		storedMaxSections = []maxSection{}
-	}
-	// Now we have a valid storedMaxSections or an empty array
-
-	maxSectionsMap := make(map[string]string)
-	for _, maxSection := range storedMaxSections {
-		maxSectionsMap[maxSection.Class] = maxSection.Section
+	if err := nds.Get(c, key, &setting); err != nil {
+		log.Warningf(c, "Could not get max sections: %s\n. Returning empty slice instead", err)
+		return []maxSection{}
 	}
 
-	classes := getClasses(c)
-	maxSections := make([]maxSection, 0, len(classes))
-	for _, class := range classes {
-		section, ok := maxSectionsMap[class]
-		if !ok {
-			section = "D"
-		}
-		maxSections = append(maxSections, maxSection{class, section})
-	}
-
-	return maxSections
+	return setting.Value
 }
 
 func saveMaxSections(c context.Context, maxSections []maxSection) error {
@@ -152,20 +134,57 @@ func settingsSaveHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	classes := getClasses(c)
-	maxSections := make([]maxSection, 0, len(classes))
-	for _, class := range classes {
-		section := r.Form.Get("sections-" + class)
+	maxSections := getMaxSections(c)
+	for i, maxSection := range maxSections {
+		section := r.Form.Get("sections-" + maxSection.Class)
 		if !validSection(section) {
-			section = "D"
+			continue
 		}
-		maxSections = append(maxSections, maxSection{class, section})
+		maxSection.Section = section
+		maxSections[i] = maxSection
 	}
 
 	if err := saveMaxSections(c, maxSections); err != nil {
 		log.Errorf(c, "Could not save max sections: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
+	}
+
+	// TODO: message of success
+	http.Redirect(w, r, "/settings", http.StatusFound)
+}
+
+func settingsAddClassHandler(w http.ResponseWriter, r *http.Request) {
+	c := appengine.NewContext(r)
+
+	if err := r.ParseForm(); err != nil {
+		log.Errorf(c, "Could not parse form: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	if class := r.Form.Get("class"); class != "" {
+		maxSections := getMaxSections(c)
+
+		for _, maxSection := range maxSections {
+			if class == maxSection.Class {
+				log.Errorf(c, "Class already exists: %s", class)
+				renderErrorMsg(w, r, http.StatusInternalServerError, fmt.Sprintf("Class already exists: %s", class))
+				return
+			}
+		}
+
+		newMaxSection := maxSection{
+			Class:   class,
+			Section: "A",
+		}
+		maxSections = append(maxSections, newMaxSection)
+
+		if err := saveMaxSections(c, maxSections); err != nil {
+			log.Errorf(c, "Could not add class: %s", err)
+			renderError(w, r, http.StatusInternalServerError)
+			return
+		}
 	}
 
 	// TODO: message of success

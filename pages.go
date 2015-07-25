@@ -19,10 +19,11 @@ type link struct {
 
 var access = map[string]roles{
 
-	"/settings":      adminRole,
-	"/settings/save": adminRole,
-	"/assign":        adminRole,
-	"/assign/save":   adminRole,
+	"/settings":          adminRole,
+	"/settings/save":     adminRole,
+	"/settings/addclass": adminRole,
+	"/assign":            adminRole,
+	"/assign/save":       adminRole,
 
 	"/students":         hrRole,
 	"/students/details": hrRole,
