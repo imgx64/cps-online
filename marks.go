@@ -177,7 +177,7 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 
 		if gs := getGradingSystem(c, class, subject); gs != nil {
 			cols = gs.description(term)
-			students, err := getStudentsSorted(c, true, classSection, sorted)
+			students, err := getStudentsSorted(c, classSection, sorted)
 			if err != nil {
 				log.Errorf(c, "Could not get students: %s", err)
 				renderError(w, r, http.StatusInternalServerError)
@@ -199,7 +199,7 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		} else if subject == "Remarks" {
 			cols = []colDescription{{Name: "Remarks"}}
-			students, err := getStudents(c, true, classSection)
+			students, err := getStudents(c, classSection)
 			if err != nil {
 				log.Errorf(c, "Could not get students: %s", err)
 				renderError(w, r, http.StatusInternalServerError)
@@ -299,7 +299,7 @@ func marksSaveHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		students, err := getStudents(c, true, classSection)
+		students, err := getStudents(c, classSection)
 		if err != nil {
 			log.Errorf(c, "Could not retrieve students: %s", err)
 			renderError(w, r, http.StatusInternalServerError)
@@ -341,7 +341,7 @@ func marksSaveHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	} else if subject == "Remarks" {
-		students, err := getStudents(c, true, classSection)
+		students, err := getStudents(c, classSection)
 		if err != nil {
 			log.Errorf(c, "Could not get students: %s", err)
 			renderError(w, r, http.StatusInternalServerError)
@@ -402,7 +402,7 @@ func marksExportHandler(w http.ResponseWriter, r *http.Request) {
 
 	if gs := getGradingSystem(c, class, subject); gs != nil {
 		cols = gs.description(term)
-		students, err := getStudents(c, true, classSection)
+		students, err := getStudents(c, classSection)
 		if err != nil {
 			log.Errorf(c, "Could not get students: %s", err)
 			renderError(w, r, http.StatusInternalServerError)
@@ -420,7 +420,7 @@ func marksExportHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	} else if subject == "Remarks" {
 		cols = []colDescription{{Name: "Remarks"}}
-		students, err := getStudents(c, true, classSection)
+		students, err := getStudents(c, classSection)
 		if err != nil {
 			log.Errorf(c, "Could not get students: %s", err)
 			renderError(w, r, http.StatusInternalServerError)
@@ -604,7 +604,7 @@ func marksImportHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		students, err := getStudents(c, true, classSection)
+		students, err := getStudents(c, classSection)
 		if err != nil {
 			log.Errorf(c, "Could not retrieve students: %s", err)
 			renderError(w, r, http.StatusInternalServerError)
@@ -660,7 +660,7 @@ func marksImportHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	} else if subject == "Remarks" {
-		students, err := getStudents(c, true, classSection)
+		students, err := getStudents(c, classSection)
 		if err != nil {
 			log.Errorf(c, "Could not get students: %s", err)
 			renderError(w, r, http.StatusInternalServerError)

@@ -17,17 +17,6 @@ license that can be found in the LICENSE file.
 			</div>
 		</div>
 		<div class="form-group">
-			<label class="col-sm-2 control-label" for="Enabled">Enabled</label>
-			<div class="col-sm-5">
-				<label class="checkbox-inline">
-					<input type="checkbox" id="Enabled" name="Enabled"
-						{{if .S.Enabled}}checked="checked"{{end}}>
-					Enabled
-				</label>
-				<span class="help-block"></span>
-			</div>
-		</div>
-		<div class="form-group">
 			<label class="col-sm-2 control-label" for="studentName">Student Name*</label>
 			<div class="col-sm-5">
 				<input type="text" id="studentName" name="Name" value="{{.S.Name}}" required="required" class="form-control">
@@ -57,10 +46,10 @@ license that can be found in the LICENSE file.
 			</div>
 		</div>
 		<div class="form-group">
-			<label class="col-sm-2 control-label" for="classSection">Class*</label>
+			<label class="col-sm-2 control-label" for="classSection">Class</label>
 			<div class="col-sm-5">
-				<select id="classSection" name="ClassSection" required="required" pattern="^.+$" class="form-control">
-					<option></option>
+				<select id="classSection" name="ClassSection" pattern="^.+$" class="form-control">
+					<option value="">Unassigned</option>
 					{{$sclass := .S.Class}}
 					{{$ssection := .S.Section}}
 					{{range .CG}}
@@ -78,15 +67,15 @@ license that can be found in the LICENSE file.
 			</div>
 		</div>
 		<div class="form-group">
-			<label class="col-sm-2 control-label" for="dateOfBirth">Date of Birth*</label>
+			<label class="col-sm-2 control-label" for="dateOfBirth">Date of Birth</label>
 			<div class="col-sm-5">
 				<input type="date" id="dateOfBirth" name="DateOfBirth" value="{{.S.DateOfBirth | formatDate}}"
-					required="required" class="form-control">
+					class="form-control">
 				<span class="help-block"></span>
 			</div>
 		</div>
 		<div class="form-group">
-			<label class="col-sm-2 control-label" for="Nationality">Nationality*</label>
+			<label class="col-sm-2 control-label" for="Nationality">Nationality</label>
 			<div class="col-sm-5">
 				<select id="Nationality" name="Nationality" class="form-control">
 					<option></option>
@@ -100,9 +89,9 @@ license that can be found in the LICENSE file.
 			</div>
 		</div>
 		<div class="form-group">
-			<label class="col-sm-2 control-label" for="CPR">CPR Number*</label>
+			<label class="col-sm-2 control-label" for="CPR">CPR Number</label>
 			<div class="col-sm-5">
-				<input type="text" id="CPR" name="CPR" required="required"
+				<input type="text" id="CPR" name="CPR" 
 					pattern="^[0-9]{9}$" value="{{.S.CPR}}" class="form-control">
 				<span class="help-block"></span>
 			</div>
