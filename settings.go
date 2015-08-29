@@ -20,6 +20,57 @@ func init() {
 	http.HandleFunc("/settings", accessHandler(settingsHandler))
 	http.HandleFunc("/settings/save", accessHandler(settingsSaveHandler))
 	http.HandleFunc("/settings/addclass", accessHandler(settingsAddClassHandler))
+	http.HandleFunc("/settings/addschoolyear", accessHandler(settingsAddSYHandler))
+}
+
+const startYear = 2013
+
+type maxSchoolYearSetting struct {
+	Value int
+}
+
+func getSchoolYears(c context.Context) []string {
+	currentYear := startYear
+	maxSy := getMaxSchoolYear(c)
+
+	if maxSy < currentYear {
+		log.Warningf(c, "MaxSchoolYear is less than startYear constant")
+		currentYear = maxSy
+	}
+
+	schoolYears := []string{}
+	for ; currentYear <= maxSy; currentYear++ {
+		sy := fmt.Sprintf("%d-%d", currentYear, currentYear+1)
+		schoolYears = append(schoolYears, sy)
+	}
+
+	return schoolYears
+}
+
+func getMaxSchoolYear(c context.Context) int {
+	key := datastore.NewKey(c, "settings", "max_school_year", 0, nil)
+
+	setting := maxSchoolYearSetting{}
+	err := nds.Get(c, key, &setting)
+	var sy int
+	if err == nil {
+		sy = setting.Value
+	} else {
+		log.Warningf(c, "Could not get school year: %s\nUsing defaults instead", err)
+		sy = startYear
+	}
+
+	return sy
+}
+
+func saveMaxSchoolYear(c context.Context, value int) error {
+	key := datastore.NewKey(c, "settings", "max_school_year", 0, nil)
+
+	_, err := nds.Put(c, key, &maxSchoolYearSetting{value})
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 type schoolYearSetting struct {
@@ -91,22 +142,32 @@ func settingsHandler(w http.ResponseWriter, r *http.Request) {
 
 	sectionChoices := sectionsUntil("Z")
 
+	schoolYears := getSchoolYears(c)
 	sy := getSchoolYear(c)
 
 	maxSections := getMaxSections(c)
 
+	maxSchoolYear := getMaxSchoolYear(c)
+	nextSchoolYear := fmt.Sprintf("%d-%d", maxSchoolYear+1, maxSchoolYear+2)
+
 	data := struct {
 		SectionChoices []string
 
-		SY string
+		SchoolYears []string
+		SY          string
 
 		MaxSections []maxSection
+
+		NextSchoolYear string
 	}{
 		sectionChoices,
 
+		schoolYears,
 		sy,
 
 		maxSections,
+
+		nextSchoolYear,
 	}
 
 	if err := render(w, r, "settings", data); err != nil {
@@ -186,6 +247,16 @@ func settingsAddClassHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+
+	// TODO: message of success
+	http.Redirect(w, r, "/settings", http.StatusFound)
+}
+
+func settingsAddSYHandler(w http.ResponseWriter, r *http.Request) {
+	c := appengine.NewContext(r)
+
+	maxSchoolYear := getMaxSchoolYear(c)
+	saveMaxSchoolYear(c, maxSchoolYear+1)
 
 	// TODO: message of success
 	http.Redirect(w, r, "/settings", http.StatusFound)

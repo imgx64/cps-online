@@ -86,10 +86,10 @@ func getStudentsSorted(c context.Context, classSection string, sorted bool) ([]s
 	}
 
 	if class != "" {
-	q = q.Order("Class")
+		q = q.Order("Class")
 	}
 	if section != "" {
-	q = q.Order("Section")
+		q = q.Order("Section")
 	}
 
 	if sorted {
