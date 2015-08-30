@@ -31,7 +31,7 @@ func init() {
 // marksRow will be stored in the datastore
 type marksRow struct {
 	// FIXME
-	SY        string
+	//SY        string
 	StudentID string
 	Term      string
 	Subject   string
@@ -162,7 +162,7 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 				renderError(w, r, http.StatusInternalServerError)
 				return
 			}
-			allowAccess, err = isTeacherAssigned(c, classSection, subject, emp.ID)
+			allowAccess, err = isTeacherAssigned(c, sy, classSection, subject, emp.ID)
 			if err != nil {
 				log.Errorf(c, "Could not get assignment: %s", err)
 				renderError(w, r, http.StatusInternalServerError)

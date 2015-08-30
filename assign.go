@@ -21,15 +21,15 @@ func init() {
 }
 
 type assignType struct {
-	// FIXME
 	SY           string
 	ClassSection string
 	Subject      string
 	Teacher      int64
 }
 
-func getAllAssignments(c context.Context) ([]assignType, error) {
+func getAllAssignments(c context.Context, sy string) ([]assignType, error) {
 	q := datastore.NewQuery("assign")
+	q = q.Filter("SY =", sy)
 	q = q.Order("ClassSection")
 	q = q.Order("Subject")
 	var assigns []assignType
@@ -41,8 +41,9 @@ func getAllAssignments(c context.Context) ([]assignType, error) {
 	return assigns, nil
 }
 
-func isTeacherAssigned(c context.Context, classSection string, subject string, teacher int64) (bool, error) {
+func isTeacherAssigned(c context.Context, sy, classSection, subject string, teacher int64) (bool, error) {
 	q := datastore.NewQuery("assign")
+	q = q.Filter("SY =", sy)
 	q = q.Filter("ClassSection =", classSection)
 	q = q.Filter("Subject =", subject)
 	q = q.Filter("Teacher =", teacher)
@@ -55,8 +56,9 @@ func isTeacherAssigned(c context.Context, classSection string, subject string, t
 	return count >= 1, nil
 }
 
-func getTeacherAssignments(c context.Context, teacher int64) ([]assignType, error) {
+func getTeacherAssignments(c context.Context, sy string, teacher int64) ([]assignType, error) {
 	q := datastore.NewQuery("assign")
+	q = q.Filter("SY =", sy)
 	q = q.Filter("Teacher =", teacher)
 	q = q.Order("ClassSection")
 	q = q.Order("Subject")
@@ -71,6 +73,7 @@ func getTeacherAssignments(c context.Context, teacher int64) ([]assignType, erro
 
 func (at assignType) save(c context.Context) error {
 	q := datastore.NewQuery("assign")
+	q = q.Filter("SY =", at.SY)
 	q = q.Filter("ClassSection =", at.ClassSection)
 	q = q.Filter("Subject =", at.Subject)
 	q = q.Filter("Teacher =", at.Teacher)
@@ -96,6 +99,7 @@ func (at assignType) save(c context.Context) error {
 
 func (at assignType) delete(c context.Context) error {
 	q := datastore.NewQuery("assign")
+	q = q.Filter("SY =", at.SY)
 	q = q.Filter("ClassSection =", at.ClassSection)
 	q = q.Filter("Subject =", at.Subject)
 	q = q.Filter("Teacher =", at.Teacher)
@@ -124,7 +128,7 @@ func assignHandler(w http.ResponseWriter, r *http.Request) {
 
 	sy := getSchoolYear(c)
 
-	assigns, err := getAllAssignments(c)
+	assigns, err := getAllAssignments(c, sy)
 	if err != nil {
 		log.Errorf(c, "Could not get assignments: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
@@ -172,6 +176,9 @@ func assignHandler(w http.ResponseWriter, r *http.Request) {
 
 func assignSaveHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
+
+	sy := getSchoolYear(c)
+
 	if err := r.ParseForm(); err != nil {
 		log.Errorf(c, "Could not parse form: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
@@ -206,6 +213,7 @@ func assignSaveHandler(w http.ResponseWriter, r *http.Request) {
 	delet := r.Form.Get("delete") != ""
 
 	assign := assignType{
+		SY:           sy,
 		ClassSection: classSection,
 		Subject:      subject,
 		Teacher:      teacher,

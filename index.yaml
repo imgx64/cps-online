@@ -12,6 +12,7 @@ indexes:
 
 - kind: assign
   properties:
+  - name: SY
   - name: ClassSection
   - name: Subject
 
