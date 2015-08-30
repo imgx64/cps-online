@@ -13,7 +13,9 @@ import (
 
 func getClasses(c context.Context) []string {
 
-	maxSections := getMaxSections(c)
+	// FIXME
+	var sy = getSchoolYear(c)
+	maxSections := getMaxSections(c, sy)
 
 	classes := []string{}
 
@@ -26,7 +28,9 @@ func getClasses(c context.Context) []string {
 
 func getClassSections(c context.Context) map[string][]string {
 
-	maxSections := getMaxSections(c)
+	// FIXME
+	var sy = getSchoolYear(c)
+	maxSections := getMaxSections(c, sy)
 
 	sections := make(map[string][]string, len(maxSections))
 

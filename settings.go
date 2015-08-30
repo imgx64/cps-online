@@ -18,7 +18,8 @@ import (
 
 func init() {
 	http.HandleFunc("/settings", accessHandler(settingsHandler))
-	http.HandleFunc("/settings/save", accessHandler(settingsSaveHandler))
+	http.HandleFunc("/settings/saveschoolyear", accessHandler(settingsSaveSchoolYearHandler))
+	http.HandleFunc("/settings/savesections", accessHandler(settingsSaveSectionsHandler))
 	http.HandleFunc("/settings/addclass", accessHandler(settingsAddClassHandler))
 	http.HandleFunc("/settings/addschoolyear", accessHandler(settingsAddSYHandler))
 }
@@ -114,9 +115,8 @@ type maxSectionSetting struct {
 	Value []maxSection
 }
 
-func getMaxSections(c context.Context) []maxSection {
-
-	key := datastore.NewKey(c, "settings", "sections", 0, nil)
+func getMaxSections(c context.Context, sy string) []maxSection {
+	key := datastore.NewKey(c, "settings", "sections-"+sy, 0, nil)
 
 	setting := maxSectionSetting{}
 	if err := nds.Get(c, key, &setting); err != nil {
@@ -128,8 +128,9 @@ func getMaxSections(c context.Context) []maxSection {
 }
 
 func saveMaxSections(c context.Context, maxSections []maxSection) error {
+	sy := getSchoolYear(c)
 
-	key := datastore.NewKey(c, "settings", "sections", 0, nil)
+	key := datastore.NewKey(c, "settings", "sections-"+sy, 0, nil)
 	_, err := nds.Put(c, key, &maxSectionSetting{maxSections})
 	if err != nil {
 		return err
@@ -145,7 +146,7 @@ func settingsHandler(w http.ResponseWriter, r *http.Request) {
 	schoolYears := getSchoolYears(c)
 	sy := getSchoolYear(c)
 
-	maxSections := getMaxSections(c)
+	maxSections := getMaxSections(c, sy)
 
 	maxSchoolYear := getMaxSchoolYear(c)
 	nextSchoolYear := fmt.Sprintf("%d-%d", maxSchoolYear+1, maxSchoolYear+2)
@@ -177,7 +178,7 @@ func settingsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func settingsSaveHandler(w http.ResponseWriter, r *http.Request) {
+func settingsSaveSchoolYearHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 
 	if err := r.ParseForm(); err != nil {
@@ -195,7 +196,22 @@ func settingsSaveHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	maxSections := getMaxSections(c)
+	// TODO: message of success
+	http.Redirect(w, r, "/settings", http.StatusFound)
+}
+
+func settingsSaveSectionsHandler(w http.ResponseWriter, r *http.Request) {
+	c := appengine.NewContext(r)
+
+	if err := r.ParseForm(); err != nil {
+		log.Errorf(c, "Could not parse form: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	sy := getSchoolYear(c)
+
+	maxSections := getMaxSections(c, sy)
 	for i, maxSection := range maxSections {
 		section := r.Form.Get("sections-" + maxSection.Class)
 		if !validSection(section) {
@@ -225,7 +241,8 @@ func settingsAddClassHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if class := r.Form.Get("class"); class != "" {
-		maxSections := getMaxSections(c)
+		sy := getSchoolYear(c)
+		maxSections := getMaxSections(c, sy)
 
 		for _, maxSection := range maxSections {
 			if class == maxSection.Class {
