@@ -108,7 +108,7 @@ func printAllHandler(w http.ResponseWriter, r *http.Request) {
 					studentMarks = append(studentMarks, negZero)
 					continue
 				}
-				marks, err := getStudentMarks(c, stu.ID, subject)
+				marks, err := getStudentMarks(c, stu.ID, sy, subject)
 				if err != nil {
 					log.Errorf(c, "Could not get marks: %s", err)
 					renderError(w, r, http.StatusInternalServerError)
@@ -148,7 +148,7 @@ func printAllHandler(w http.ResponseWriter, r *http.Request) {
 						maxCols = cols
 					}
 				}
-				m, err := getStudentMarks(c, stu.ID, subject)
+				m, err := getStudentMarks(c, stu.ID, sy, subject)
 				if err != nil {
 					// TODO: report error
 					continue

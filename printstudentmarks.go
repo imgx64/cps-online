@@ -71,7 +71,7 @@ func printStudentMarksHandler(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 			// TODO: don't loop over terms outside
-			marks, err := getStudentMarks(c, stu.ID, subject)
+			marks, err := getStudentMarks(c, stu.ID, sy, subject)
 			if err != nil {
 				log.Errorf(c, "Could not get marks: %s", err)
 				renderError(w, r, http.StatusInternalServerError)
@@ -103,7 +103,7 @@ func printStudentMarksHandler(w http.ResponseWriter, r *http.Request) {
 		studentMarksRows = append(studentMarksRows, studentMarksRow{
 			"All", subjectsCols, subjectsMarks, ""})
 
-		remark, err = getStudentRemark(c, stu.ID, term)
+		remark, err = getStudentRemark(c, stu.ID, sy, term)
 		if err != nil {
 			log.Errorf(c, "Could not get remark: %s", err)
 			renderError(w, r, http.StatusInternalServerError)

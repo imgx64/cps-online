@@ -30,16 +30,18 @@ func init() {
 
 // marksRow will be stored in the datastore
 type marksRow struct {
-	// FIXME
-	//SY        string
 	StudentID string
+	SY        string
 	Term      string
 	Subject   string
 	Marks     []float64
 }
 
-func getStudentMarks(c context.Context, id, subject string) (studentMarks, error) {
-	q := datastore.NewQuery("marks").Filter("StudentID =", id).Filter("Subject =", subject)
+func getStudentMarks(c context.Context, id, sy, subject string) (studentMarks, error) {
+	q := datastore.NewQuery("marks")
+	q = q.Filter("StudentID =", id)
+	q = q.Filter("SY =", sy)
+	q = q.Filter("Subject =", subject)
 	var rows []marksRow
 	_, err := q.GetAll(c, &rows)
 	if err != nil {
@@ -58,11 +60,11 @@ func getStudentMarks(c context.Context, id, subject string) (studentMarks, error
 	return marks, nil
 }
 
-func storeMarksRow(c context.Context, id string, term Term,
+func storeMarksRow(c context.Context, id string, sy string, term Term,
 	subject string, marks []float64) error {
 
-	mr := marksRow{id, term.Value(), subject, marks}
-	keyStr := fmt.Sprintf("%s|%s|%s", id, term, subject)
+	mr := marksRow{id, sy, term.Value(), subject, marks}
+	keyStr := fmt.Sprintf("%s|%s|%s|%s", id, sy, term, subject)
 	key := datastore.NewKey(c, "marks", keyStr, 0, nil)
 	_, err := nds.Put(c, key, &mr)
 	if err != nil {
@@ -75,13 +77,16 @@ func storeMarksRow(c context.Context, id string, term Term,
 // remarksRow will be stored in the datastore
 type remarksRow struct {
 	StudentID string
+	SY        string
 	Term      string
 	Remark    string
 }
 
-func getStudentRemark(c context.Context, id string, term Term) (string, error) {
-	q := datastore.NewQuery("remarks").Filter("StudentID =", id).
-		Filter("Term =", term.Value())
+func getStudentRemark(c context.Context, sy string, id string, term Term) (string, error) {
+	q := datastore.NewQuery("remarks")
+	q = q.Filter("StudentID =", id)
+	q = q.Filter("SY =", sy)
+	q = q.Filter("Term =", term.Value())
 	var remarks []remarksRow
 	_, err := q.GetAll(c, &remarks)
 	if err != nil {
@@ -95,10 +100,10 @@ func getStudentRemark(c context.Context, id string, term Term) (string, error) {
 	return remarks[0].Remark, nil
 }
 
-func storeRemark(c context.Context, id string, term Term, remark string) error {
+func storeRemark(c context.Context, id string, sy string, term Term, remark string) error {
 
-	rr := remarksRow{id, term.Value(), remark}
-	keyStr := fmt.Sprintf("%s|%s", id, term)
+	rr := remarksRow{id, sy, term.Value(), remark}
+	keyStr := fmt.Sprintf("%s|%s|%s", id, sy, term)
 	key := datastore.NewKey(c, "remarks", keyStr, 0, nil)
 	_, err := nds.Put(c, key, &rr)
 	if err != nil {
@@ -193,7 +198,7 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 			}
 
 			for _, s := range students {
-				m, err := getStudentMarks(c, s.ID, subject)
+				m, err := getStudentMarks(c, s.ID, sy, subject)
 				if err != nil {
 					// TODO: report error
 					continue
@@ -211,7 +216,7 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 			}
 
 			for _, s := range students {
-				rem, err := getStudentRemark(c, s.ID, term)
+				rem, err := getStudentRemark(c, s.ID, sy, term)
 				if err != nil {
 					// TODO: report error
 					continue
@@ -313,7 +318,7 @@ func marksSaveHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		for _, s := range students {
-			m, err := getStudentMarks(c, s.ID, subject)
+			m, err := getStudentMarks(c, s.ID, sy, subject)
 			if err != nil {
 				// TODO: report error
 				continue
@@ -335,7 +340,7 @@ func marksSaveHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			gs.evaluate(term, m) // TODO: check error
 			if marksChanged {
-				err := storeMarksRow(c, s.ID, term, subject, m[term])
+				err := storeMarksRow(c, s.ID, sy, term, subject, m[term])
 				if err != nil {
 					log.Errorf(c, "Could not store marks: %s", err)
 					renderError(w, r, http.StatusInternalServerError)
@@ -362,7 +367,7 @@ func marksSaveHandler(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 
-			err := storeRemark(c, s.ID, term, remark)
+			err := storeRemark(c, s.ID, sy, term, remark)
 			if err != nil {
 				log.Errorf(c, "Could not store remark: %s", err)
 				renderError(w, r, http.StatusInternalServerError)
@@ -418,7 +423,7 @@ func marksExportHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		for _, s := range students {
-			m, err := getStudentMarks(c, s.ID, subject)
+			m, err := getStudentMarks(c, s.ID, sy, subject)
 			if err != nil {
 				// TODO: report error
 				continue
@@ -436,7 +441,7 @@ func marksExportHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		for _, s := range students {
-			rem, err := getStudentRemark(c, s.ID, term)
+			rem, err := getStudentRemark(c, s.ID, sy, term)
 			if err != nil {
 				// TODO: report error
 				continue
@@ -635,7 +640,7 @@ func marksImportHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			marksRecord = marksRecord[1:]
-			m, err := getStudentMarks(c, s.ID, subject)
+			m, err := getStudentMarks(c, s.ID, sy, subject)
 			if err != nil {
 				log.Errorf(c, "Could not get student marks: %s", err)
 				renderError(w, r, http.StatusInternalServerError)
@@ -658,7 +663,7 @@ func marksImportHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			gs.evaluate(term, m) // TODO: check error
 			if marksChanged {
-				err := storeMarksRow(c, s.ID, term, subject, m[term])
+				err := storeMarksRow(c, s.ID, sy, term, subject, m[term])
 				if err != nil {
 					log.Errorf(c, "Could not store marks: %s", err)
 					renderError(w, r, http.StatusInternalServerError)
@@ -697,7 +702,7 @@ func marksImportHandler(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 
-			err = storeRemark(c, s.ID, term, remark)
+			err = storeRemark(c, s.ID, sy, term, remark)
 			if err != nil {
 				log.Errorf(c, "Could not store remark: %s", err)
 				renderError(w, r, http.StatusInternalServerError)
