@@ -11,10 +11,8 @@ import (
 	"strings"
 )
 
-func getClasses(c context.Context) []string {
+func getClasses(c context.Context, sy string) []string {
 
-	// FIXME
-	var sy = getSchoolYear(c)
 	maxSections := getMaxSections(c, sy)
 
 	classes := []string{}
@@ -26,10 +24,8 @@ func getClasses(c context.Context) []string {
 	return classes
 }
 
-func getClassSections(c context.Context) map[string][]string {
+func getClassSections(c context.Context, sy string) map[string][]string {
 
-	// FIXME
-	var sy = getSchoolYear(c)
 	maxSections := getMaxSections(c, sy)
 
 	sections := make(map[string][]string, len(maxSections))
@@ -56,10 +52,10 @@ type classGroup struct {
 	Sections []string
 }
 
-func getClassGroups(c context.Context) []classGroup {
+func getClassGroups(c context.Context, sy string) []classGroup {
 	// TODO: caching
-	classes := getClasses(c)
-	sections := getClassSections(c)
+	classes := getClasses(c, sy)
+	sections := getClassSections(c, sy)
 
 	classGroups := make([]classGroup, 0, len(classes))
 	for _, c := range classes {

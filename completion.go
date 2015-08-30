@@ -63,6 +63,8 @@ func init() {
 func completionHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 
+	sy := getSchoolYear(c)
+
 	if err := r.ParseForm(); err != nil {
 		log.Errorf(c, "Could not parse form: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
@@ -76,8 +78,8 @@ func completionHandler(w http.ResponseWriter, r *http.Request) {
 
 	var completionRows []completionRow
 
-	classes := getClasses(c)
-	sections := getClassSections(c)
+	classes := getClasses(c, sy)
+	sections := getClassSections(c, sy)
 
 	if (term != Term{}) {
 		for _, class := range classes {
@@ -98,7 +100,7 @@ func completionHandler(w http.ResponseWriter, r *http.Request) {
 
 				cr.Completion = make(map[string]int)
 				for _, subject := range subjects {
-					if getGradingSystem(c, class, subject) == nil {
+					if getGradingSystem(c, sy, class, subject) == nil {
 						// class doesn't have subject
 						cr.Completion[subject] = -1
 					}

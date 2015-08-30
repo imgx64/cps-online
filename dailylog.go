@@ -82,6 +82,9 @@ func (dl dailylogType) delete(c context.Context) error {
 
 func dailylogHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
+
+	sy := getSchoolYear(c)
+
 	err := r.ParseForm()
 	if err != nil {
 		log.Errorf(c, "Could not parse form: %s", err)
@@ -102,7 +105,7 @@ func dailylogHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	classGroups := getClassGroups(c)
+	classGroups := getClassGroups(c, sy)
 
 	data := struct {
 		S []studentType

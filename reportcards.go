@@ -50,7 +50,9 @@ func init() {
 func reportcardsHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 
-	classGroups := getClassGroups(c)
+	sy := getSchoolYear(c)
+
+	classGroups := getClassGroups(c, sy)
 
 	data := struct {
 		Terms []Term
@@ -69,6 +71,8 @@ func reportcardsHandler(w http.ResponseWriter, r *http.Request) {
 
 func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
+
+	sy := getSchoolYear(c)
 
 	if err := r.ParseForm(); err != nil {
 		log.Errorf(c, "Could not parse form: %s", err)
@@ -96,8 +100,6 @@ func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sy := getSchoolYear(c)
-
 	for _, stu := range students {
 		rc := reportcard{
 			SY:   sy,
@@ -114,7 +116,7 @@ func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 		} else if term.Typ == Semester {
 			q2 := term.N * 2
 			q1 := q2 - 1
-			gs := getGradingSystem(c, stu.Class, "English") //TODO: find a better way
+			gs := getGradingSystem(c, sy, stu.Class, "English") //TODO: find a better way
 			rc.Cols = []string{
 				fmt.Sprintf("Quarter %d (%.0f%%)", q1, gs.quarterWeight()),
 				fmt.Sprintf("Quarter %d (%.0f%%)", q2, gs.quarterWeight()),
@@ -146,7 +148,7 @@ func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 
-			gs := getGradingSystem(c, stu.Class, subject)
+			gs := getGradingSystem(c, sy, stu.Class, subject)
 			if gs == nil {
 				continue
 			}

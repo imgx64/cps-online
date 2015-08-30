@@ -30,6 +30,8 @@ func init() {
 
 // marksRow will be stored in the datastore
 type marksRow struct {
+	// FIXME
+	SY        string
 	StudentID string
 	Term      string
 	Subject   string
@@ -116,6 +118,8 @@ type studentRow struct {
 func marksHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 
+	sy := getSchoolYear(c)
+
 	if err := r.ParseForm(); err != nil {
 		log.Errorf(c, "Could not parse form: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
@@ -175,7 +179,7 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 
 		sorted := r.Form.Get("sort") == "true"
 
-		if gs := getGradingSystem(c, class, subject); gs != nil {
+		if gs := getGradingSystem(c, sy, class, subject); gs != nil {
 			cols = gs.description(term)
 			students, err := getStudentsSorted(c, classSection, sorted)
 			if err != nil {
@@ -217,7 +221,7 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	classGroups := getClassGroups(c)
+	classGroups := getClassGroups(c, sy)
 
 	data := struct {
 		Term    Term
@@ -259,6 +263,8 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 func marksSaveHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 
+	sy := getSchoolYear(c)
+
 	if err := r.ParseForm(); err != nil {
 		log.Errorf(c, "Could not parse form: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
@@ -286,7 +292,7 @@ func marksSaveHandler(w http.ResponseWriter, r *http.Request) {
 	redirectURL := fmt.Sprintf("/marks?%s", urlValues.Encode())
 
 	nComplete := 0
-	if gs := getGradingSystem(c, class, subject); gs != nil {
+	if gs := getGradingSystem(c, sy, class, subject); gs != nil {
 		cols := gs.description(term)
 		hasEditable := false
 		for _, col := range cols {
@@ -378,6 +384,8 @@ func marksSaveHandler(w http.ResponseWriter, r *http.Request) {
 func marksExportHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 
+	sy := getSchoolYear(c)
+
 	if err := r.ParseForm(); err != nil {
 		log.Errorf(c, "Could not parse form: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
@@ -400,7 +408,7 @@ func marksExportHandler(w http.ResponseWriter, r *http.Request) {
 	var cols []colDescription
 	var studentRows []studentRow
 
-	if gs := getGradingSystem(c, class, subject); gs != nil {
+	if gs := getGradingSystem(c, sy, class, subject); gs != nil {
 		cols = gs.description(term)
 		students, err := getStudents(c, classSection)
 		if err != nil {
@@ -485,6 +493,8 @@ func marksExportHandler(w http.ResponseWriter, r *http.Request) {
 func marksImportHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 
+	sy := getSchoolYear(c)
+
 	err := r.ParseMultipartForm(1e6)
 	if err != nil {
 		log.Errorf(c, "Could not parse multipart form: %s", err)
@@ -529,7 +539,7 @@ func marksImportHandler(w http.ResponseWriter, r *http.Request) {
 	fieldNames := []string{filename, "Student Name"}
 	fieldMax := []string{"Do not modify this column", ""}
 	var cols []colDescription
-	if gs := getGradingSystem(c, class, subject); gs != nil {
+	if gs := getGradingSystem(c, sy, class, subject); gs != nil {
 		cols = gs.description(term)
 		for _, col := range cols {
 			fieldNames = append(fieldNames, col.Name)
@@ -591,7 +601,7 @@ func marksImportHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	nComplete := 0
-	if gs := getGradingSystem(c, class, subject); gs != nil {
+	if gs := getGradingSystem(c, sy, class, subject); gs != nil {
 		cols := gs.description(term)
 		hasEditable := false
 		for _, col := range cols {

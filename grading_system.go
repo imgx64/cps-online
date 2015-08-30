@@ -195,8 +195,8 @@ type gradingSystem interface {
 	semesterWeight() float64
 }
 
-func getGradingSystem(c context.Context, class string, subject string) gradingSystem {
-	classes := getClasses(c)
+func getGradingSystem(c context.Context, sy, class, subject string) gradingSystem {
+	classes := getClasses(c, sy)
 
 	// class -> subject -> gradingSystem
 	var gradingSystems map[string]map[string]gradingSystem

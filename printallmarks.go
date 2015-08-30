@@ -51,6 +51,8 @@ func (pars printAllRowSorter) Swap(i, j int) {
 func printAllHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 
+	sy := getSchoolYear(c)
+
 	if err := r.ParseForm(); err != nil {
 		log.Errorf(c, "Could not parse form: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
@@ -100,7 +102,7 @@ func printAllHandler(w http.ResponseWriter, r *http.Request) {
 				if subject == "Remarks" || subject == "Behavior" {
 					continue
 				}
-				gs := getGradingSystem(c, stu.Class, subject)
+				gs := getGradingSystem(c, sy, stu.Class, subject)
 				if gs == nil {
 					// class doesn't have subject
 					studentMarks = append(studentMarks, negZero)
@@ -138,7 +140,7 @@ func printAllHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		for _, stu := range students {
-			if gs := getGradingSystem(c, stu.Class, subject); gs != nil {
+			if gs := getGradingSystem(c, sy, stu.Class, subject); gs != nil {
 				if stu.Class != prevClass {
 					cols = gs.description(term)
 					if len(cols) > maxLen {
@@ -164,7 +166,7 @@ func printAllHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var allRows []printAllRow
-	classGroups := getClassGroups(c)
+	classGroups := getClassGroups(c, sy)
 	for _, cg := range classGroups {
 		for _, sec := range cg.Sections {
 			classSection := fmt.Sprintf("%s|%s", cg.Class, sec)

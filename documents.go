@@ -70,6 +70,8 @@ func (dt documentType) save(c context.Context) error {
 func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 
+	sy := getSchoolYear(c)
+
 	uploadURL, err := blobstore.UploadURL(c, "/upload/file", nil)
 	if err != nil {
 		log.Errorf(c, "Could not get upload URL", err)
@@ -84,7 +86,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	classes := getClasses(c)
+	classes := getClasses(c, sy)
 
 	data := struct {
 		UploadURL *url.URL

@@ -162,7 +162,8 @@ func (stu *studentType) validate(c context.Context) error {
 	}
 
 	if stu.Class != "" {
-		sections := getClassSections(c)
+		// FIXME
+		sections := getClassSections(c, getSchoolYear(c))
 		classSections, ok := sections[stu.Class]
 		if !ok {
 			return fmt.Errorf("Invalid class and section: %s %s", stu.Class, stu.Section)
@@ -310,7 +311,8 @@ func studentsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	classGroups := getClassGroups(c)
+	// FIXME
+	classGroups := getClassGroups(c, getSchoolYear(c))
 
 	data := struct {
 		S []studentType
@@ -358,7 +360,8 @@ func studentsDetailsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	classGroups := getClassGroups(c)
+	// FIXME
+	classGroups := getClassGroups(c, getSchoolYear(c))
 
 	data := struct {
 		S  studentType

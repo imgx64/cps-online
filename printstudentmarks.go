@@ -35,6 +35,8 @@ func init() {
 func printStudentMarksHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 
+	sy := getSchoolYear(c)
+
 	if err := r.ParseForm(); err != nil {
 		log.Errorf(c, "Could not parse form: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
@@ -64,7 +66,7 @@ func printStudentMarksHandler(w http.ResponseWriter, r *http.Request) {
 			if subject == "Remarks" {
 				continue
 			}
-			gs := getGradingSystem(c, stu.Class, subject)
+			gs := getGradingSystem(c, sy, stu.Class, subject)
 			if gs == nil {
 				continue
 			}

@@ -21,6 +21,8 @@ func init() {
 }
 
 type assignType struct {
+	// FIXME
+	SY           string
 	ClassSection string
 	Subject      string
 	Teacher      int64
@@ -120,6 +122,8 @@ func (at assignType) delete(c context.Context) error {
 func assignHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 
+	sy := getSchoolYear(c)
+
 	assigns, err := getAllAssignments(c)
 	if err != nil {
 		log.Errorf(c, "Could not get assignments: %s", err)
@@ -139,7 +143,7 @@ func assignHandler(w http.ResponseWriter, r *http.Request) {
 		teachersMap[teacher.ID] = teacher.Name
 	}
 
-	classGroups := getClassGroups(c)
+	classGroups := getClassGroups(c, sy)
 
 	data := struct {
 		CG       []classGroup
