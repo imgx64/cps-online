@@ -118,22 +118,9 @@ func (emp *employeeType) validate(c context.Context) error {
 		return fmt.Errorf("Type is required")
 	}
 
-	if emp.Nationality == "" {
-		return fmt.Errorf("Nationality is required")
-	}
-
 	intCPR, err := strconv.Atoi(emp.CPR)
-	if err != nil {
-		return fmt.Errorf("Invalid CPR number: %s", emp.CPR)
-	}
-	emp.CPR = fmt.Sprintf("%09d", intCPR)
-
-	if emp.DateOfHiring == (time.Time{}) {
-		return fmt.Errorf("Invalid Date of Hiring")
-	}
-
-	if emp.DateOfBirth == (time.Time{}) {
-		return fmt.Errorf("Invalid Date of Birth")
+	if err == nil {
+		emp.CPR = fmt.Sprintf("%09d", intCPR)
 	}
 
 	return nil
@@ -245,8 +232,7 @@ func employeesDetailsHandler(w http.ResponseWriter, r *http.Request) {
 		emp.ID = -1
 		emp.Enabled = true
 		emp.Type = "Teacher"
-		emp.DateOfHiring = time.Now()
-		emp.Nationality = "Bahrain"
+		emp.DateOfHiring = time.Date(1900, 1, 1, 0, 0, 0, 0, time.Local)
 		emp.DateOfBirth = time.Date(1900, 1, 1, 0, 0, 0, 0, time.Local)
 	} else {
 		emp, err = getEmployee(c, id)

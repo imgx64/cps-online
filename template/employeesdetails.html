@@ -89,7 +89,6 @@ license that can be found in the LICENSE file.
 			<label class="col-sm-2 control-label" for="Type">Type*</label>
 			<div class="col-sm-5">
 				<select id="Type" name="Type" required="required" class="form-control">
-					<option></option>
 					{{$type := .E.Type}}
 					{{range .T}}
 					<option {{if equal . $type}}selected="selected"{{end}}
@@ -107,10 +106,10 @@ license that can be found in the LICENSE file.
 			</div>
 		</div>
 		<div class="form-group">
-			<label class="col-sm-2 control-label" for="dateOfHiring">Date of Hiring*</label>
+			<label class="col-sm-2 control-label" for="dateOfHiring">Date of Hiring</label>
 			<div class="col-sm-5">
 				<input type="date" id="dateOfHiring" name="DateOfHiring" value="{{.E.DateOfHiring | formatDate}}"
-					required="required" class="form-control">
+					class="form-control">
 				<span class="help-block"></span>
 			</div>
 		</div>
@@ -122,9 +121,9 @@ license that can be found in the LICENSE file.
 			</div>
 		</div>
 		<div class="form-group">
-			<label class="col-sm-2 control-label" for="Nationality">Nationality*</label>
+			<label class="col-sm-2 control-label" for="Nationality">Nationality</label>
 			<div class="col-sm-5">
-				<select id="Nationality" name="Nationality" required="required">
+				<select id="Nationality" name="Nationality" class="form-control">
 					<option></option>
 					{{$country := .E.Nationality}}
 					{{range .C}}
@@ -136,9 +135,9 @@ license that can be found in the LICENSE file.
 			</div>
 		</div>
 		<div class="form-group">
-			<label class="col-sm-2 control-label" for="CPR">CPR Number*</label>
+			<label class="col-sm-2 control-label" for="CPR">CPR Number</label>
 			<div class="col-sm-5">
-				<input type="text" id="CPR" name="CPR" required="required"
+				<input type="number" id="CPR" name="CPR"
 					pattern="^[0-9]{9}$" value="{{.E.CPR}}" class="form-control">
 				<span class="help-block"></span>
 			</div>
