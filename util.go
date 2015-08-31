@@ -18,12 +18,6 @@ import (
 	"time"
 )
 
-type templateData struct {
-	Username string
-	Links    []link
-	Data     interface{}
-}
-
 var errorDescriptions = map[int]string{
 	http.StatusNotFound:            "The page you requested was not found.",
 	http.StatusInternalServerError: "Internal server Error. Please try again later.",
@@ -54,6 +48,8 @@ func renderErrorMsg(w http.ResponseWriter, r *http.Request, code int, message st
 func render(w http.ResponseWriter, r *http.Request,
 	template string, data interface{}) error {
 	c := appengine.NewContext(r)
+	sy := getSchoolYear(c)
+
 	baseTemplate := filepath.Join("template", "base.html")
 	templateFile := filepath.Join("template", template+".html")
 	tmpl, err := htmltemplate.New("base.html").Funcs(funcMap).
@@ -77,7 +73,17 @@ func render(w http.ResponseWriter, r *http.Request,
 		}
 	}
 
-	tmplData := templateData{user.Name, links, data}
+	tmplData := struct {
+		Username   string
+		SchoolYear string
+		Links      []link
+		Data       interface{}
+	}{
+		user.Name,
+		sy,
+		links,
+		data,
+	}
 
 	if err := tmpl.Execute(w, tmplData); err != nil {
 		return err

@@ -89,7 +89,7 @@ func getSchoolYear(c context.Context) string {
 		sy = setting.Value
 	} else {
 		log.Warningf(c, "Could not get school year: %s\nUsing defaults instead", err)
-		sy = "2014-2015"
+		sy = fmt.Sprintf("%d-%d", startYear, startYear+1)
 	}
 
 	return sy

@@ -28,6 +28,10 @@ input[type=number]::-webkit-outer-spin-button {
 .spacer {
     margin-top: 40px;
 }
+ 
+.navbar-brand, .navbar-nav>li>a {
+    text-align: center;
+}
 
 @media print {
 	.cps-mark, .cps-remarks input {
