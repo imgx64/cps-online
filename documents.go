@@ -197,6 +197,8 @@ func uploadLinkHandler(w http.ResponseWriter, r *http.Request) {
 func documentsHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 
+	sy := getSchoolYear(c)
+
 	user, err := getUser(c)
 	if err != nil {
 		log.Errorf(c, "Could not get user: %s", err)
@@ -209,7 +211,12 @@ func documentsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	stu := *user.Student
-	class := stu.Class
+	class, _, err := getStudentClass(c, stu.ID, sy)
+	if err != nil {
+		log.Errorf(c, "Could not get user: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
 
 	classDocuments, err := getDocuments(c, class)
 	if err != nil {

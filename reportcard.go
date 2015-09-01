@@ -55,6 +55,13 @@ func reportcardHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	stu := *user.Student
 
+	class, section, err := getStudentClass(c, stu.ID, sy)
+	if err != nil {
+		log.Errorf(c, "Could not get user: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
 	publish := published(c, term)
 	if term == (Term{}) {
 		publish = false
@@ -67,13 +74,13 @@ func reportcardHandler(w http.ResponseWriter, r *http.Request) {
 	if publish {
 		total := negZero
 		numInAverage := 0
-		ls := getLetterSystem(stu.Class)
+		ls := getLetterSystem(class)
 		letterDesc = ls.String()
 		for _, subject := range subjects {
 			if subject == "Remarks" {
 				continue
 			}
-			gs := getGradingSystem(c, sy, stu.Class, subject)
+			gs := getGradingSystem(c, sy, class, subject)
 			if gs == nil {
 				continue
 			}
@@ -92,7 +99,7 @@ func reportcardHandler(w http.ResponseWriter, r *http.Request) {
 			mark := gs.get100(term, marks)
 			letter := ls.getLetter(mark)
 			var inAverage bool
-			if subjectInAverage(subject, stu.Class) && !math.Signbit(mark) {
+			if subjectInAverage(subject, class) && !math.Signbit(mark) {
 				total += mark
 				numInAverage++
 				inAverage = true
@@ -132,8 +139,8 @@ func reportcardHandler(w http.ResponseWriter, r *http.Request) {
 		publish,
 
 		stu.Name,
-		stu.Class,
-		stu.Section,
+		class,
+		section,
 
 		reportcardRows,
 		average,

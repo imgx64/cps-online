@@ -11,9 +11,9 @@ license that can be found in the LICENSE file.
 		<select id="classSection" name="classsection" class="form-control">
 			<option value="all"
 				{{if equal .ClassSection "all"}} selected="selected"{{end}}
-			>All students</option>
-			<option value="|"
-				{{if equal .ClassSection "|"}} selected="selected"{{end}}
+			>All classes</option>
+			<option value=""
+				{{if equal .ClassSection ""}} selected="selected"{{end}}
 			>Unassigned</option>
 			{{$cs := .ClassSection}}
 			{{range .CG}}

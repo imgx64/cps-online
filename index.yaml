@@ -68,3 +68,21 @@ indexes:
   properties:
   - name: ID
     direction: desc
+
+- kind: studentclass
+  properties:
+  - name: Class
+  - name: SY
+  - name: Section
+  - name: ID
+
+- kind: studentclass
+  properties:
+  - name: Class
+  - name: Section
+  - name: ID
+
+- kind: studentclass
+  properties:
+  - name: SY
+  - name: ID

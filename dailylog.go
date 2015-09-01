@@ -28,6 +28,7 @@ func init() {
 }
 
 type dailylogType struct {
+	// TODO: per-year?
 	StudentID string
 
 	Date       time.Time
@@ -94,10 +95,10 @@ func dailylogHandler(w http.ResponseWriter, r *http.Request) {
 
 	classSection := r.Form.Get("classsection")
 
-	var students []studentType
+	var students []studentClass
 
 	if classSection != "" {
-		students, err = getStudents(c, classSection)
+		students, err = getStudents(c, sy, classSection)
 		if err != nil {
 			log.Errorf(c, "Could not retrieve students: %s", err)
 			renderError(w, r, http.StatusInternalServerError)
@@ -108,7 +109,7 @@ func dailylogHandler(w http.ResponseWriter, r *http.Request) {
 	classGroups := getClassGroups(c, sy)
 
 	data := struct {
-		S []studentType
+		S []studentClass
 
 		CG []classGroup
 

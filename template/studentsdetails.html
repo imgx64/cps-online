@@ -48,21 +48,29 @@ license that can be found in the LICENSE file.
 		<div class="form-group">
 			<label class="col-sm-2 control-label" for="classSection">Class</label>
 			<div class="col-sm-5">
-				<select id="classSection" name="ClassSection" pattern="^.+$" class="form-control">
-					<option value="">Unassigned</option>
-					{{$sclass := .S.Class}}
-					{{$ssection := .S.Section}}
-					{{range .CG}}
-					{{$class := .Class}}
-					<optgroup label="{{.Class}}">
-						{{range .Sections}}
-						<option value="{{$class}}|{{.}}"
-						{{if equal $class $sclass | and (equal . $ssection)}} selected="selected"{{end}}
-						>{{$class}}{{.}}</option>
+				<table>
+				{{range .SYs}}
+				{{$sy := .}}
+				<tr>
+					<th>{{.}}</th>
+					<td>
+					<select name="ClassSection-{{.}}" class="form-control">
+						<option value="">Unassigned</option>
+						{{range (index $.CGs .)}}
+						{{$class := .Class}}
+						<optgroup label="{{.Class}}">
+							{{range .Sections}}
+							<option value="{{$class}}|{{.}}"
+							{{if equal (printf "%s|%s" $class .) (index $.SC $sy)}} selected="selected"{{end}}
+							>{{$class}}{{.}}</option>
+							{{end}}
+						</optgroup>
 						{{end}}
-					</optgroup>
-					{{end}}
-				</select>
+					</select>
+					</td>
+				</tr>
+				{{end}}
+				</table>
 				<span class="help-block"></span>
 			</div>
 		</div>

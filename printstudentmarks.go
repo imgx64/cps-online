@@ -51,6 +51,13 @@ func printStudentMarksHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	class, section, err := getStudentClass(c, stu.ID, sy)
+	if err != nil {
+		log.Errorf(c, "Could not get user: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
 	var marksTerms []studentMarksTerm
 	for _, term := range terms {
 
@@ -61,12 +68,12 @@ func printStudentMarksHandler(w http.ResponseWriter, r *http.Request) {
 		var remark string
 		total := negZero
 		numInAverage := 0
-		ls := getLetterSystem(stu.Class)
+		ls := getLetterSystem(class)
 		for _, subject := range subjects {
 			if subject == "Remarks" {
 				continue
 			}
-			gs := getGradingSystem(c, sy, stu.Class, subject)
+			gs := getGradingSystem(c, sy, class, subject)
 			if gs == nil {
 				continue
 			}
@@ -85,7 +92,7 @@ func printStudentMarksHandler(w http.ResponseWriter, r *http.Request) {
 
 			mark := gs.get100(term, marks)
 			letter := ls.getLetter(mark)
-			if subjectInAverage(subject, stu.Class) && !math.Signbit(mark) {
+			if subjectInAverage(subject, class) && !math.Signbit(mark) {
 				total += mark
 				numInAverage++
 			}
@@ -126,8 +133,8 @@ func printStudentMarksHandler(w http.ResponseWriter, r *http.Request) {
 		behaviorDesc,
 
 		stu.Name,
-		stu.Class,
-		stu.Section,
+		class,
+		section,
 
 		marksTerms,
 	}

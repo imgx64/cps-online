@@ -32,8 +32,6 @@ type studentType struct {
 	Name           string
 	ArabicName     string
 	Gender         string
-	Class          string
-	Section        string
 	DateOfBirth    time.Time
 	Nationality    string
 	CPR            string
@@ -42,6 +40,14 @@ type studentType struct {
 	EmergencyPhone string
 	HealthInfo     string
 	Comments       string
+}
+
+type studentClass struct {
+	ID      string
+	Name    string
+	SY      string
+	Class   string
+	Section string
 }
 
 func getStudent(c context.Context, id string) (studentType, error) {
@@ -59,36 +65,54 @@ func getStudent(c context.Context, id string) (studentType, error) {
 	return stu, nil
 }
 
-func getStudents(c context.Context, classSection string) ([]studentType, error) {
-	return getStudentsSorted(c, classSection, false)
-}
-
-func getStudentsSorted(c context.Context, classSection string, sorted bool) ([]studentType, error) {
+func getStudentMulti(c context.Context, ids []string) ([]studentType, error) {
 	akey, err := getStudentsAncestor(c)
 	if err != nil {
 		return nil, err
 	}
-	q := datastore.NewQuery("student").Ancestor(akey)
+	var keys []*datastore.Key
+	for _, id := range ids {
+		keys = append(keys, datastore.NewKey(c, "student", id, 0, akey))
+	}
+
+	var stus []studentType
+	err = nds.GetMulti(c, keys, &stus)
+	if err != nil {
+		return nil, err
+	}
+
+	return stus, nil
+}
+
+// FIXME: rename
+func getStudents(c context.Context, sy, classSection string) ([]studentClass, error) {
+	return getStudentsSorted(c, sy, classSection, false)
+}
+
+// FIXME: rename
+func getStudentsSorted(c context.Context, sy, classSection string, sorted bool) ([]studentClass, error) {
+	if classSection == "|" || classSection == "" {
+		return getUnassignedStudents(c, sy)
+	}
+
+	q := datastore.NewQuery("studentclass")
+	q = q.Filter("SY =", sy)
 
 	var class, section string
-	if classSection != "all" && classSection != "" {
+	if classSection != "all" {
 		cs := strings.Split(classSection, "|")
 		if len(cs) != 2 {
 			return nil, fmt.Errorf("Invalid class and section: %s", classSection)
 		}
 		class = cs[0]
 		section = cs[1]
-	}
 
-	if classSection != "all" {
 		q = q.Filter("Class =", class)
-		q = q.Filter("Section =", section)
-	}
+		if section != "" {
+			q = q.Filter("Section =", section)
+		}
 
-	if class != "" {
 		q = q.Order("Class")
-	}
-	if section != "" {
 		q = q.Order("Section")
 	}
 
@@ -98,8 +122,8 @@ func getStudentsSorted(c context.Context, classSection string, sorted bool) ([]s
 		q = q.Order("ID")
 	}
 
-	var students []studentType
-	_, err = q.GetAll(c, &students)
+	var students []studentClass
+	_, err := q.GetAll(c, &students)
 	if err != nil {
 		return nil, err
 	}
@@ -107,25 +131,69 @@ func getStudentsSorted(c context.Context, classSection string, sorted bool) ([]s
 	return students, nil
 }
 
-func getStudentsCount(c context.Context, classSection string) (int, error) {
+func getUnassignedStudents(c context.Context, sy string) ([]studentClass, error) {
 	akey, err := getStudentsAncestor(c)
 	if err != nil {
-		return -1, err
+		return nil, err
 	}
 	q := datastore.NewQuery("student").Ancestor(akey)
-	if classSection == "" {
-		return 0, nil
+
+	var allStudents []studentType
+	_, err = q.GetAll(c, &allStudents)
+	if err != nil {
+		return nil, err
 	}
-	if classSection == "all" {
-		classSection = "|"
+
+	assignedStudents, err := getStudentsSorted(c, sy, "all", false)
+	if err != nil {
+		return nil, err
 	}
-	cs := strings.Split(classSection, "|")
-	if len(cs) != 2 {
-		return -1, fmt.Errorf("Invalid class and section: %s", classSection)
+
+	assignedStudentIds := make(map[string]bool)
+	for _, stu := range assignedStudents {
+		log.Infof(c, "student: %v", stu)
+		assignedStudentIds[stu.ID] = true
 	}
-	class := cs[0]
-	section := cs[1]
-	if class != "" {
+
+	var unassignedStudents []studentClass
+	for _, stu := range allStudents {
+		if assignedStudentIds[stu.ID] {
+			// Student is assigned a class
+			continue
+		}
+		unassignedStudents = append(unassignedStudents, studentClass{
+			stu.ID,
+			stu.Name,
+			sy,
+			"",
+			"",
+		})
+	}
+
+	return unassignedStudents, nil
+}
+
+func getStudentsCount(c context.Context, sy, classSection string) (int, error) {
+	if classSection == "|" || classSection == "" {
+		unassignedStudents, err := getUnassignedStudents(c, sy)
+		if err != nil {
+			return 0, err
+		}
+		return len(unassignedStudents), nil
+	}
+
+	q := datastore.NewQuery("studentclass")
+	q = q.Filter("SY =", sy)
+
+	var class, section string
+	if classSection != "all" {
+		cs := strings.Split(classSection, "|")
+		if len(cs) != 2 {
+			return 0, fmt.Errorf("Invalid class and section: %s", classSection)
+		}
+		class = cs[0]
+		section = cs[1]
+
 		q = q.Filter("Class =", class)
 		if section != "" {
 			q = q.Filter("Section =", section)
@@ -138,6 +206,7 @@ func getStudentsCount(c context.Context, classSection string) (int, error) {
 	}
 
 	return n, nil
+
 }
 
 func (stu *studentType) validate(c context.Context) error {
@@ -159,28 +228,6 @@ func (stu *studentType) validate(c context.Context) error {
 		default:
 			stu.Gender = ""
 		}
-	}
-
-	if stu.Class != "" {
-		// FIXME
-		sections := getClassSections(c, getSchoolYear(c))
-		classSections, ok := sections[stu.Class]
-		if !ok {
-			return fmt.Errorf("Invalid class and section: %s %s", stu.Class, stu.Section)
-		}
-
-		found := false
-		for _, section := range classSections {
-			if section == stu.Section {
-				found = true
-				break
-			}
-		}
-
-		if !found {
-			return fmt.Errorf("Invalid class and section: %s %s", stu.Class, stu.Section)
-		}
-
 	}
 
 	intCPR, err := strconv.Atoi(stu.CPR)
@@ -286,6 +333,71 @@ func getStudentFromEmail(c context.Context, email string) (studentType, error) {
 	return stu, nil
 }
 
+func getStudentClass(c context.Context, id, sy string) (class, section string, err error) {
+	keyStr := fmt.Sprintf("%s|%s", id, sy)
+	key := datastore.NewKey(c, "studentclass", keyStr, 0, nil)
+
+	var sc studentClass
+	err = nds.Get(c, key, &sc)
+	if err != nil {
+		return "", "", err
+	}
+
+	return sc.Class, sc.Section, nil
+
+}
+
+func saveStudentClass(c context.Context, id, name, sy, class, section string) error {
+	if class == "" || section == "" {
+		return deleteStudentClass(c, id, sy)
+	}
+
+	sections := getClassSections(c, sy)
+	classSections, ok := sections[class]
+	if !ok {
+		return fmt.Errorf("Invalid class and section: %s %s", class, section)
+	}
+
+	found := false
+	for _, section := range classSections {
+		if section == section {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		return fmt.Errorf("Invalid class and section: %s %s", class, section)
+	}
+
+	keyStr := fmt.Sprintf("%s|%s", id, sy)
+	key := datastore.NewKey(c, "studentclass", keyStr, 0, nil)
+	_, err := nds.Put(c, key, &studentClass{
+		id,
+		name,
+		sy,
+		class,
+		section,
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+
+}
+
+func deleteStudentClass(c context.Context, id, sy string) error {
+	keyStr := fmt.Sprintf("%s|%s", id, sy)
+	key := datastore.NewKey(c, "studentclass", keyStr, 0, nil)
+	err := nds.Delete(c, key)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func init() {
 	http.HandleFunc("/students", accessHandler(studentsHandler))
 	http.HandleFunc("/students/details", accessHandler(studentsDetailsHandler))
@@ -296,6 +408,9 @@ func init() {
 
 func studentsHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
+
+	sy := getSchoolYear(c)
+
 	if err := r.ParseForm(); err != nil {
 		log.Errorf(c, "Could not parse form: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
@@ -304,18 +419,17 @@ func studentsHandler(w http.ResponseWriter, r *http.Request) {
 
 	classSection := r.Form.Get("classsection")
 
-	students, err := getStudents(c, classSection)
+	students, err := getStudents(c, sy, classSection)
 	if err != nil {
 		log.Errorf(c, "Could not retrieve students: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
 
-	// FIXME
-	classGroups := getClassGroups(c, getSchoolYear(c))
+	classGroups := getClassGroups(c, sy)
 
 	data := struct {
-		S []studentType
+		S []studentClass
 
 		CG []classGroup
 
@@ -338,6 +452,8 @@ func studentsHandler(w http.ResponseWriter, r *http.Request) {
 func studentsDetailsHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 
+	schoolYears := getSchoolYears(c)
+
 	if err := r.ParseForm(); err != nil {
 		log.Errorf(c, "Could not parse form: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
@@ -345,6 +461,7 @@ func studentsDetailsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var stu studentType
+	var studentClasses map[string]string
 	var err error
 
 	if id := r.Form.Get("id"); id == "new" {
@@ -358,17 +475,37 @@ func studentsDetailsHandler(w http.ResponseWriter, r *http.Request) {
 			renderError(w, r, http.StatusInternalServerError)
 			return
 		}
+
+		studentClasses = make(map[string]string)
+		for _, sy := range schoolYears {
+			class, section, err := getStudentClass(c, id, sy)
+			if err != nil {
+				log.Errorf(c, "Could not get student class: %s", err)
+				continue
+			}
+			if class != "" && section != "" {
+				studentClasses[sy] = class + "|" + section
+			}
+		}
 	}
 
-	// FIXME
-	classGroups := getClassGroups(c, getSchoolYear(c))
+	classGroups := make(map[string][]classGroup)
+	for _, sy := range schoolYears {
+		classGroups[sy] = getClassGroups(c, sy)
+	}
 
 	data := struct {
 		S  studentType
-		CG []classGroup
-		C  []string
+		SC map[string]string
+
+		SYs []string
+		CGs map[string][]classGroup
+		C   []string
 	}{
 		stu,
+		studentClasses,
+
+		schoolYears,
 		classGroups,
 		countries,
 	}
@@ -398,11 +535,6 @@ func studentsSaveHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	class, section, err := parseClassSection(f.Get("ClassSection"))
-	if err != nil {
-		class, section = "", ""
-	}
-
 	dateOfBirth, err := time.Parse("2006-01-02", f.Get("DateOfBirth"))
 	if err != nil {
 		dateOfBirth = time.Date(1900, 1, 1, 0, 0, 0, 0, time.Local)
@@ -413,8 +545,6 @@ func studentsSaveHandler(w http.ResponseWriter, r *http.Request) {
 		Name:           name,
 		ArabicName:     f.Get("ArabicName"),
 		Gender:         f.Get("Gender"),
-		Class:          class,
-		Section:        section,
 		DateOfBirth:    dateOfBirth,
 		Nationality:    f.Get("Nationality"),
 		CPR:            f.Get("CPR"),
@@ -440,9 +570,24 @@ func studentsSaveHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Save class assignments
+	for _, sy := range getSchoolYears(c) {
+		class, section, err := parseClassSection(f.Get("ClassSection-" + sy))
+		if err == nil {
+			err := saveStudentClass(c, stu.ID, stu.Name, sy, class, section)
+			if err != nil {
+				log.Errorf(c, "Could not save student class: %s", err)
+			}
+		} else {
+			err := deleteStudentClass(c, stu.ID, sy)
+			if err != nil {
+				log.Errorf(c, "Could not delete student class: %s", err)
+			}
+		}
+	}
+
 	// TODO: message of success
 	http.Redirect(w, r, "/students", http.StatusFound)
-
 }
 
 // used for CSV
@@ -484,6 +629,9 @@ var studentFieldsDesc = []string{
 
 func studentsImportHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
+
+	sy := getSchoolYear(c)
+
 	var errors []error
 
 	message := struct {
@@ -553,8 +701,6 @@ func studentsImportHandler(w http.ResponseWriter, r *http.Request) {
 			Name:           record[2],
 			ArabicName:     record[3],
 			Gender:         record[4],
-			Class:          record[5],
-			Section:        record[6],
 			DateOfBirth:    dob,
 			Nationality:    record[8],
 			CPR:            record[9],
@@ -572,6 +718,14 @@ func studentsImportHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		err = stu.save(c)
+		if err != nil {
+			errors = append(errors, fmt.Errorf("Error in row %d: %s", i, err))
+			continue
+		}
+
+		class := record[5]
+		section := record[6]
+		err = saveStudentClass(c, stu.ID, stu.Name, sy, class, section)
 		if err != nil {
 			errors = append(errors, fmt.Errorf("Error in row %d: %s", i, err))
 			continue
@@ -599,8 +753,12 @@ func studentsImportHandler(w http.ResponseWriter, r *http.Request) {
 
 func studentsExportHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
+
+	sy := getSchoolYear(c)
+
 	var errors []error
 	var students []studentType
+	var studentClasses []studentClass
 	var filename string
 
 	if err := r.ParseForm(); err != nil {
@@ -616,7 +774,18 @@ func studentsExportHandler(w http.ResponseWriter, r *http.Request) {
 		var err error
 		classSection := r.Form.Get("classsection")
 
-		students, err = getStudents(c, classSection)
+		studentClasses, err = getStudents(c, sy, classSection)
+		if err != nil {
+			log.Errorf(c, "Could not retrieve students: %s", err)
+			renderError(w, r, http.StatusInternalServerError)
+			return
+		}
+
+		var studentIds []string
+		for _, stu := range studentClasses {
+			studentIds = append(studentIds, stu.ID)
+		}
+		students, err = getStudentMulti(c, studentIds)
 		if err != nil {
 			log.Errorf(c, "Could not retrieve students: %s", err)
 			renderError(w, r, http.StatusInternalServerError)
@@ -634,14 +803,15 @@ func studentsExportHandler(w http.ResponseWriter, r *http.Request) {
 	errors = append(errors, csvw.Write(studentFields))
 	errors = append(errors, csvw.Write(studentFieldsDesc))
 
-	for _, stu := range students {
+	for i, stu := range students {
+		stuClass := studentClasses[i]
 		var row []string
 		row = append(row, stu.ID)
 		row = append(row, stu.Name)
 		row = append(row, stu.ArabicName)
 		row = append(row, stu.Gender)
-		row = append(row, stu.Class)
-		row = append(row, stu.Section)
+		row = append(row, stuClass.Class)
+		row = append(row, stuClass.Section)
 		row = append(row, stu.DateOfBirth.Format("2006-01-02"))
 		row = append(row, stu.Nationality)
 		row = append(row, stu.CPR)
