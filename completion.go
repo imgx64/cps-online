@@ -90,7 +90,7 @@ func completionHandler(w http.ResponseWriter, r *http.Request) {
 
 				classSection := fmt.Sprintf("%s|%s", class, section)
 
-				numStudents, err := getStudentsCount(c, sy, classSection)
+				numStudents, err := findStudentsCount(c, sy, classSection)
 				if err != nil {
 					log.Errorf(c, "Could not retrieve number of students: %s", err)
 					renderError(w, r, http.StatusInternalServerError)

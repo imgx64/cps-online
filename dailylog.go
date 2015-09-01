@@ -98,7 +98,7 @@ func dailylogHandler(w http.ResponseWriter, r *http.Request) {
 	var students []studentClass
 
 	if classSection != "" {
-		students, err = getStudents(c, sy, classSection)
+		students, err = findStudents(c, sy, classSection)
 		if err != nil {
 			log.Errorf(c, "Could not retrieve students: %s", err)
 			renderError(w, r, http.StatusInternalServerError)

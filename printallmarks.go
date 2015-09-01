@@ -75,7 +75,7 @@ func printAllHandler(w http.ResponseWriter, r *http.Request) {
 	var cols []colDescription
 	studentRows := make(map[string][]printAllRow)
 
-	students, err := getStudents(c, sy, classSection)
+	students, err := findStudents(c, sy, classSection)
 	if err != nil {
 		log.Errorf(c, "Could not get students: %s", err)
 		renderError(w, r, http.StatusInternalServerError)

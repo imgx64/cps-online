@@ -51,7 +51,7 @@ type studentClass struct {
 }
 
 func getStudent(c context.Context, id string) (studentType, error) {
-	akey, err := getStudentsAncestor(c)
+	akey, err := findStudentsAncestor(c)
 	if err != nil {
 		return studentType{}, err
 	}
@@ -66,7 +66,7 @@ func getStudent(c context.Context, id string) (studentType, error) {
 }
 
 func getStudentMulti(c context.Context, ids []string) ([]studentType, error) {
-	akey, err := getStudentsAncestor(c)
+	akey, err := findStudentsAncestor(c)
 	if err != nil {
 		return nil, err
 	}
@@ -84,13 +84,11 @@ func getStudentMulti(c context.Context, ids []string) ([]studentType, error) {
 	return stus, nil
 }
 
-// FIXME: rename
-func getStudents(c context.Context, sy, classSection string) ([]studentClass, error) {
-	return getStudentsSorted(c, sy, classSection, false)
+func findStudents(c context.Context, sy, classSection string) ([]studentClass, error) {
+	return findStudentsSorted(c, sy, classSection, false)
 }
 
-// FIXME: rename
-func getStudentsSorted(c context.Context, sy, classSection string, sorted bool) ([]studentClass, error) {
+func findStudentsSorted(c context.Context, sy, classSection string, sorted bool) ([]studentClass, error) {
 	if classSection == "|" || classSection == "" {
 		return getUnassignedStudents(c, sy)
 	}
@@ -132,7 +130,7 @@ func getStudentsSorted(c context.Context, sy, classSection string, sorted bool) 
 }
 
 func getUnassignedStudents(c context.Context, sy string) ([]studentClass, error) {
-	akey, err := getStudentsAncestor(c)
+	akey, err := findStudentsAncestor(c)
 	if err != nil {
 		return nil, err
 	}
@@ -144,7 +142,7 @@ func getUnassignedStudents(c context.Context, sy string) ([]studentClass, error)
 		return nil, err
 	}
 
-	assignedStudents, err := getStudentsSorted(c, sy, "all", false)
+	assignedStudents, err := findStudentsSorted(c, sy, "all", false)
 	if err != nil {
 		return nil, err
 	}
@@ -173,7 +171,7 @@ func getUnassignedStudents(c context.Context, sy string) ([]studentClass, error)
 	return unassignedStudents, nil
 }
 
-func getStudentsCount(c context.Context, sy, classSection string) (int, error) {
+func findStudentsCount(c context.Context, sy, classSection string) (int, error) {
 	if classSection == "|" || classSection == "" {
 		unassignedStudents, err := getUnassignedStudents(c, sy)
 		if err != nil {
@@ -243,7 +241,7 @@ func (stu *studentType) save(c context.Context) error {
 		return err
 	}
 
-	akey, err := getStudentsAncestor(c)
+	akey, err := findStudentsAncestor(c)
 	if err != nil {
 		return fmt.Errorf("Could not get Students Ancestor Key: %s", err)
 	}
@@ -295,7 +293,7 @@ func (stu *studentType) save(c context.Context) error {
 var studentsAncestorLock sync.Mutex
 var studentsAncestor *datastore.Key
 
-func getStudentsAncestor(c context.Context) (*datastore.Key, error) {
+func findStudentsAncestor(c context.Context) (*datastore.Key, error) {
 	studentsAncestorLock.Lock()
 	defer studentsAncestorLock.Unlock()
 
@@ -419,7 +417,7 @@ func studentsHandler(w http.ResponseWriter, r *http.Request) {
 
 	classSection := r.Form.Get("classsection")
 
-	students, err := getStudents(c, sy, classSection)
+	students, err := findStudents(c, sy, classSection)
 	if err != nil {
 		log.Errorf(c, "Could not retrieve students: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
@@ -774,7 +772,7 @@ func studentsExportHandler(w http.ResponseWriter, r *http.Request) {
 		var err error
 		classSection := r.Form.Get("classsection")
 
-		studentClasses, err = getStudents(c, sy, classSection)
+		studentClasses, err = findStudents(c, sy, classSection)
 		if err != nil {
 			log.Errorf(c, "Could not retrieve students: %s", err)
 			renderError(w, r, http.StatusInternalServerError)
