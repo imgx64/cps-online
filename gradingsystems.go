@@ -5,6 +5,9 @@
 package main
 
 import (
+	"golang.org/x/net/context"
+	"google.golang.org/appengine/log"
+
 	"bytes"
 	"fmt"
 	"math"
@@ -150,6 +153,11 @@ var OVSLU = letterSystem{
 	{"U", "Unsatisfactory", 0.0},
 }
 
+var letterSystemMap = map[string]letterSystem{
+	"ABCDF": ABCDF,
+	"OVSLU": OVSLU,
+}
+
 // String returns a description of the letter system
 func (ls letterSystem) String() string {
 	buf := new(bytes.Buffer)
@@ -177,4 +185,45 @@ func (ls letterSystem) getLetter(mark float64) string {
 	}
 	// something wrong with the letterSystem
 	return "Error"
+}
+
+func getLetterSystem(c context.Context, sy, class string) letterSystem {
+	for _, setting := range getClassSettings(c, sy) {
+		if setting.Class != class {
+			continue
+		}
+
+		if ls, ok := letterSystemMap[setting.LetterSystem]; ok {
+			return ls
+		} else {
+			log.Errorf(c, "Invalid letter system of class %s, SY: %s, letter system: %s",
+				class, sy, setting.LetterSystem)
+			return ABCDF
+		}
+	}
+
+	// should never happen
+	log.Errorf(c, "Could not find letter system of class %s, SY: %s", class, sy)
+	return ABCDF
+}
+
+func classWeights(c context.Context, sy, class string) (quarter, semester float64) {
+	for _, setting := range getClassSettings(c, sy) {
+		if setting.Class != class {
+			continue
+		}
+
+		qw := setting.QuarterWeight
+		if qw >= 0 && qw <= 50 {
+			return qw, 100 - qw*2
+		} else {
+			log.Errorf(c, "Invalid quarter weight of class %s, SY: %s, quarter weight: %d",
+				class, sy, qw)
+			return 40, 20
+		}
+	}
+
+	// should never happen
+	log.Errorf(c, "Could not find quarter weight of class %s, SY: %s", class, sy)
+	return 40, 20
 }

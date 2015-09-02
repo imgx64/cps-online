@@ -74,7 +74,7 @@ func reportcardHandler(w http.ResponseWriter, r *http.Request) {
 	if publish {
 		total := math.NaN()
 		numInAverage := 0
-		ls := getLetterSystem(class)
+		ls := getLetterSystem(c, sy, class)
 		letterDesc = ls.String()
 		for _, subject := range subjects {
 			if subject == "Remarks" {

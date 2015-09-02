@@ -68,7 +68,7 @@ func printStudentMarksHandler(w http.ResponseWriter, r *http.Request) {
 		var remark string
 		total := math.NaN()
 		numInAverage := 0
-		ls := getLetterSystem(class)
+		ls := getLetterSystem(c, sy, class)
 		for _, subject := range subjects {
 			if subject == "Remarks" {
 				continue

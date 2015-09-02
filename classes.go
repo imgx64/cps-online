@@ -13,12 +13,12 @@ import (
 
 func getClasses(c context.Context, sy string) []string {
 
-	maxSections := getMaxSections(c, sy)
+	settings := getClassSettings(c, sy)
 
 	classes := []string{}
 
-	for _, maxSection := range maxSections {
-		classes = append(classes, maxSection.Class)
+	for _, setting := range settings {
+		classes = append(classes, setting.Class)
 	}
 
 	return classes
@@ -26,12 +26,12 @@ func getClasses(c context.Context, sy string) []string {
 
 func getClassSections(c context.Context, sy string) map[string][]string {
 
-	maxSections := getMaxSections(c, sy)
+	settings := getClassSettings(c, sy)
 
-	sections := make(map[string][]string, len(maxSections))
+	sections := make(map[string][]string, len(settings))
 
-	for _, maxSection := range maxSections {
-		sections[maxSection.Class] = sectionsUntil(maxSection.Section)
+	for _, setting := range settings {
+		sections[setting.Class] = sectionsUntil(setting.MaxSection)
 	}
 
 	return sections

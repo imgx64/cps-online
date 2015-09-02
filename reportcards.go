@@ -109,7 +109,7 @@ func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 			Class: stu.Class + stu.Section,
 		}
 
-		ls := getLetterSystem(stu.Class)
+		ls := getLetterSystem(c, sy, stu.Class)
 
 		if term.Typ == Quarter {
 			rc.Cols = []string{"Max Mark", "Mark Obtained"}

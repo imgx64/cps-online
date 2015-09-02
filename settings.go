@@ -13,6 +13,7 @@ import (
 
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -106,32 +107,34 @@ func saveSchoolYear(c context.Context, sy string) error {
 	return nil
 }
 
-type maxSection struct {
-	Class   string
-	Section string
+type classSetting struct {
+	Class         string
+	MaxSection    string
+	LetterSystem  string
+	QuarterWeight float64
 }
 
-type maxSectionSetting struct {
-	Value []maxSection
+type classSettings struct {
+	Value []classSetting
 }
 
-func getMaxSections(c context.Context, sy string) []maxSection {
-	key := datastore.NewKey(c, "settings", "sections-"+sy, 0, nil)
+func getClassSettings(c context.Context, sy string) []classSetting {
+	key := datastore.NewKey(c, "settings", "class-settings-"+sy, 0, nil)
 
-	setting := maxSectionSetting{}
+	setting := classSettings{}
 	if err := nds.Get(c, key, &setting); err != nil {
-		log.Warningf(c, "Could not get max sections: %s\n. Returning empty slice instead", err)
-		return []maxSection{}
+		log.Warningf(c, "Could not get class settings: %s\n. Returning empty slice instead", err)
+		return []classSetting{}
 	}
 
 	return setting.Value
 }
 
-func saveMaxSections(c context.Context, maxSections []maxSection) error {
+func saveClassSettings(c context.Context, settings []classSetting) error {
 	sy := getSchoolYear(c)
 
-	key := datastore.NewKey(c, "settings", "sections-"+sy, 0, nil)
-	_, err := nds.Put(c, key, &maxSectionSetting{maxSections})
+	key := datastore.NewKey(c, "settings", "class-settings-"+sy, 0, nil)
+	_, err := nds.Put(c, key, &classSettings{settings})
 	if err != nil {
 		return err
 	}
@@ -143,30 +146,37 @@ func settingsHandler(w http.ResponseWriter, r *http.Request) {
 
 	sectionChoices := sectionsUntil("Z")
 
+	var letterSystemChoices []string
+	for key, _ := range letterSystemMap {
+		letterSystemChoices = append(letterSystemChoices, key)
+	}
+
 	schoolYears := getSchoolYears(c)
 	sy := getSchoolYear(c)
 
-	maxSections := getMaxSections(c, sy)
+	settings := getClassSettings(c, sy)
 
 	maxSchoolYear := getMaxSchoolYear(c)
 	nextSchoolYear := fmt.Sprintf("%d-%d", maxSchoolYear+1, maxSchoolYear+2)
 
 	data := struct {
-		SectionChoices []string
+		SectionChoices      []string
+		LetterSystemChoices []string
 
 		SchoolYears []string
 		SY          string
 
-		MaxSections []maxSection
+		ClassSettings []classSetting
 
 		NextSchoolYear string
 	}{
 		sectionChoices,
+		letterSystemChoices,
 
 		schoolYears,
 		sy,
 
-		maxSections,
+		settings,
 
 		nextSchoolYear,
 	}
@@ -211,17 +221,29 @@ func settingsSaveSectionsHandler(w http.ResponseWriter, r *http.Request) {
 
 	sy := getSchoolYear(c)
 
-	maxSections := getMaxSections(c, sy)
-	for i, maxSection := range maxSections {
-		section := r.Form.Get("sections-" + maxSection.Class)
-		if !validSection(section) {
-			continue
+	settings := getClassSettings(c, sy)
+	for i, classSetting := range settings {
+		section := r.Form.Get("sections-" + classSetting.Class)
+		if validSection(section) {
+			classSetting.MaxSection = section
+			settings[i] = classSetting
 		}
-		maxSection.Section = section
-		maxSections[i] = maxSection
+
+		ls := r.Form.Get("letter-system-" + classSetting.Class)
+		if _, ok := letterSystemMap[ls]; ok {
+			classSetting.LetterSystem = ls
+			settings[i] = classSetting
+		}
+
+		qwStr := r.Form.Get("quarter-weight-" + classSetting.Class)
+		qw, err := strconv.ParseFloat(qwStr, 64)
+		if err == nil && qw >= 0 && qw <= 50.0 {
+			classSetting.QuarterWeight = qw
+			settings[i] = classSetting
+		}
 	}
 
-	if err := saveMaxSections(c, maxSections); err != nil {
+	if err := saveClassSettings(c, settings); err != nil {
 		log.Errorf(c, "Could not save max sections: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
@@ -242,23 +264,25 @@ func settingsAddClassHandler(w http.ResponseWriter, r *http.Request) {
 
 	if class := r.Form.Get("class"); class != "" {
 		sy := getSchoolYear(c)
-		maxSections := getMaxSections(c, sy)
+		settings := getClassSettings(c, sy)
 
-		for _, maxSection := range maxSections {
-			if class == maxSection.Class {
+		for _, classSetting := range settings {
+			if class == classSetting.Class {
 				log.Errorf(c, "Class already exists: %s", class)
 				renderErrorMsg(w, r, http.StatusInternalServerError, fmt.Sprintf("Class already exists: %s", class))
 				return
 			}
 		}
 
-		newMaxSection := maxSection{
-			Class:   class,
-			Section: "A",
+		newSetting := classSetting{
+			Class:         class,
+			MaxSection:    "A",
+			LetterSystem:  "ABCDF",
+			QuarterWeight: 0.0,
 		}
-		maxSections = append(maxSections, newMaxSection)
+		settings = append(settings, newSetting)
 
-		if err := saveMaxSections(c, maxSections); err != nil {
+		if err := saveClassSettings(c, settings); err != nil {
 			log.Errorf(c, "Could not add class: %s", err)
 			renderError(w, r, http.StatusInternalServerError)
 			return

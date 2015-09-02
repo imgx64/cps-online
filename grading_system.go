@@ -13,30 +13,6 @@ import (
 	"strings"
 )
 
-func classWeights(class string) (quarter, semester float64) {
-	intClass, err := strconv.Atoi(class)
-	if err != nil {
-		// class is KG or SN, or *sci/*com
-		if class == "KG1" || class == "KG2" || class == "PreKG" {
-			return 40.0, 20.0
-		} else if class == "SN" {
-			return 40.0, 20.0
-		} else if strings.HasSuffix(class, "sci") ||
-			strings.HasSuffix(class, "com") {
-			return 25.0, 50.0
-		}
-	} else {
-		if intClass <= 2 {
-			return 40.0, 20.0
-		} else if intClass <= 5 {
-			return 30.0, 40.0
-		} else if intClass <= 12 {
-			return 25.0, 50.0
-		}
-	}
-	panic(fmt.Sprintf("Invalid class: %s", class))
-}
-
 var subjects = []string{
 	"Arabic",
 	"English",
@@ -94,11 +70,11 @@ func getGradingSystem(c context.Context, sy, class, subject string) gradingSyste
 			// class is KG or SN
 			if class == "KG1" || class == "KG2" || class == "PreKG" {
 				gsMap = map[string]gradingSystem{
-					"Arabic":   newGGS(class),
-					"English":  newEGS(class),
-					"Math":     newMGS(class),
-					"Science":  newSCGS(class),
-					"Religion": newSingleGS("Evaluation", class),
+					"Arabic":   newGGS(c, sy, class),
+					"English":  newEGS(c, sy, class),
+					"Math":     newMGS(c, sy, class),
+					"Science":  newSCGS(c, sy, class),
+					"Religion": newSingleGS(c, sy, "Evaluation", class),
 				}
 				if class == "KG2" {
 					gsMap["UCMAS"] = ucmasGradingSystem{}
@@ -106,66 +82,66 @@ func getGradingSystem(c context.Context, sy, class, subject string) gradingSyste
 
 			} else if class == "SN" {
 				gsMap = map[string]gradingSystem{
-					"Arabic":      newGGS(class),
-					"English":     newEGS(class),
-					"Math":        newMGS(class),
-					"Science":     newSCGS(class),
-					"Religion":    newGGS(class),
-					"Citizenship": newCitizenshipGS(class),
-					"Computer":    newSingleGS("Evaluation", class),
+					"Arabic":      newGGS(c, sy, class),
+					"English":     newEGS(c, sy, class),
+					"Math":        newMGS(c, sy, class),
+					"Science":     newSCGS(c, sy, class),
+					"Religion":    newGGS(c, sy, class),
+					"Citizenship": newCitizenshipGS(c, sy, class),
+					"Computer":    newSingleGS(c, sy, "Evaluation", class),
 				}
 			} else if strings.HasSuffix(class, "sci") {
 				gsMap = map[string]gradingSystem{
-					"Arabic":           newGGS(class),
-					"English":          newEGS(class),
-					"Math":             newMGS(class),
-					"Religion":         newReligion7GS(class),
-					"Computer":         newComputer6to12GS(class),
-					"Speech and Drama": newSpeechGS(class),
+					"Arabic":           newGGS(c, sy, class),
+					"English":          newEGS(c, sy, class),
+					"Math":             newMGS(c, sy, class),
+					"Religion":         newReligion7GS(c, sy, class),
+					"Computer":         newComputer6to12GS(c, sy, class),
+					"Speech and Drama": newSpeechGS(c, sy, class),
 
-					"Biology":   newSCGS(class),
-					"Chemistry": newSCGS(class),
-					"Physics":   newSCGS(class),
+					"Biology":   newSCGS(c, sy, class),
+					"Chemistry": newSCGS(c, sy, class),
+					"Physics":   newSCGS(c, sy, class),
 				}
 			} else if strings.HasSuffix(class, "com") {
 				gsMap = map[string]gradingSystem{
-					"Arabic":           newGGS(class),
-					"English":          newEGS(class),
-					"Math":             newMGS(class),
-					"Religion":         newReligion7GS(class),
-					"Computer":         newComputer6to12GS(class),
-					"Speech and Drama": newSpeechGS(class),
+					"Arabic":           newGGS(c, sy, class),
+					"English":          newEGS(c, sy, class),
+					"Math":             newMGS(c, sy, class),
+					"Religion":         newReligion7GS(c, sy, class),
+					"Computer":         newComputer6to12GS(c, sy, class),
+					"Speech and Drama": newSpeechGS(c, sy, class),
 
-					"Economics":        newGGS(class),
-					"Accounts":         newGGS(class),
-					"Business Studies": newGGS(class),
+					"Economics":        newGGS(c, sy, class),
+					"Accounts":         newGGS(c, sy, class),
+					"Business Studies": newGGS(c, sy, class),
 				}
 			}
 		} else {
 			// class is numeric
 			gsMap = map[string]gradingSystem{
-				"Arabic":           newGGS(class),
-				"English":          newEGS(class),
-				"Math":             newMGS(class),
-				"Citizenship":      newCitizenshipGS(class),
-				"Speech and Drama": newSpeechGS(class),
+				"Arabic":           newGGS(c, sy, class),
+				"English":          newEGS(c, sy, class),
+				"Math":             newMGS(c, sy, class),
+				"Citizenship":      newCitizenshipGS(c, sy, class),
+				"Speech and Drama": newSpeechGS(c, sy, class),
 			}
 			if intClass <= 8 {
-				gsMap["Social Studies"] = newGGS(class)
-				gsMap["Social Studies (Arabic)"] = newCitizenshipGS(class)
-				gsMap["Science"] = newSCGS(class)
+				gsMap["Social Studies"] = newGGS(c, sy, class)
+				gsMap["Social Studies (Arabic)"] = newCitizenshipGS(c, sy, class)
+				gsMap["Science"] = newSCGS(c, sy, class)
 			}
 			if intClass <= 6 {
 				gsMap["UCMAS"] = ucmasGradingSystem{}
 			}
 			if intClass <= 5 {
-				gsMap["Religion"] = newGGS(class)
+				gsMap["Religion"] = newGGS(c, sy, class)
 				if intClass >= 2 {
-					gsMap["Computer"] = newComputer2to5GS(class)
+					gsMap["Computer"] = newComputer2to5GS(c, sy, class)
 				}
 			} else {
-				gsMap["Religion"] = newReligion7GS(class)
-				gsMap["Computer"] = newComputer6to12GS(class)
+				gsMap["Religion"] = newReligion7GS(c, sy, class)
+				gsMap["Computer"] = newComputer6to12GS(c, sy, class)
 			}
 		}
 
@@ -174,13 +150,13 @@ func getGradingSystem(c context.Context, sy, class, subject string) gradingSyste
 		trimmedIntClass, err := strconv.Atoi(trimmed)
 		if err == nil {
 			if trimmedIntClass == 9 {
-				gsMap["Citizenship"] = newCitizenshipGS(class)
-				gsMap["Social Studies (Arabic)"] = newCitizenshipGS(class)
+				gsMap["Citizenship"] = newCitizenshipGS(c, sy, class)
+				gsMap["Social Studies (Arabic)"] = newCitizenshipGS(c, sy, class)
 			} else if trimmedIntClass == 10 {
-				gsMap["Citizenship"] = newCitizenshipGS(class)
-				gsMap["Social Studies"] = newCitizenshipGS(class)
+				gsMap["Citizenship"] = newCitizenshipGS(c, sy, class)
+				gsMap["Social Studies"] = newCitizenshipGS(c, sy, class)
 			} else if trimmedIntClass == 11 {
-				gsMap["Social Studies"] = newCitizenshipGS(class)
+				gsMap["Social Studies"] = newCitizenshipGS(c, sy, class)
 			}
 		}
 
@@ -205,8 +181,8 @@ type genericGradingSystem struct {
 	sWeight float64
 }
 
-func newGGS(class string) gradingSystem {
-	q, s := classWeights(class)
+func newGGS(c context.Context, sy, class string) gradingSystem {
+	q, s := classWeights(c, sy, class)
 	return genericGradingSystem{q, s}
 }
 
@@ -354,8 +330,8 @@ type mathGradingSystem struct {
 	sWeight float64
 }
 
-func newMGS(class string) gradingSystem {
-	q, s := classWeights(class)
+func newMGS(c context.Context, sy, class string) gradingSystem {
+	q, s := classWeights(c, sy, class)
 	return mathGradingSystem{q, s}
 }
 
@@ -503,8 +479,8 @@ type englishGradingSystem struct {
 	sWeight float64
 }
 
-func newEGS(class string) gradingSystem {
-	q, s := classWeights(class)
+func newEGS(c context.Context, sy, class string) gradingSystem {
+	q, s := classWeights(c, sy, class)
 	return englishGradingSystem{q, s}
 }
 
@@ -653,8 +629,8 @@ type scienceGradingSystem struct {
 	sWeight float64
 }
 
-func newSCGS(class string) gradingSystem {
-	q, s := classWeights(class)
+func newSCGS(c context.Context, sy, class string) gradingSystem {
+	q, s := classWeights(c, sy, class)
 	return scienceGradingSystem{q, s}
 }
 
@@ -919,8 +895,8 @@ type simpleGradingSystem struct {
 	sWeight float64
 }
 
-func newSingleGS(column, class string) gradingSystem {
-	q, s := classWeights(class)
+func newSingleGS(c context.Context, sy, column, class string) gradingSystem {
+	q, s := classWeights(c, sy, class)
 	return simpleGradingSystem{
 		[]colDescription{{column, 100, true}},
 		q,
@@ -928,8 +904,8 @@ func newSingleGS(column, class string) gradingSystem {
 	}
 }
 
-func newCitizenshipGS(class string) gradingSystem {
-	q, s := classWeights(class)
+func newCitizenshipGS(c context.Context, sy, class string) gradingSystem {
+	q, s := classWeights(c, sy, class)
 	return simpleGradingSystem{
 		[]colDescription{
 			{"Daily Work", 20, true},
@@ -942,8 +918,8 @@ func newCitizenshipGS(class string) gradingSystem {
 	}
 }
 
-func newReligion7GS(class string) gradingSystem {
-	q, s := classWeights(class)
+func newReligion7GS(c context.Context, sy, class string) gradingSystem {
+	q, s := classWeights(c, sy, class)
 	return simpleGradingSystem{
 		[]colDescription{
 			{"Daily Work", 15, true},
@@ -956,8 +932,8 @@ func newReligion7GS(class string) gradingSystem {
 	}
 }
 
-func newSpeechGS(class string) gradingSystem {
-	q, s := classWeights(class)
+func newSpeechGS(c context.Context, sy, class string) gradingSystem {
+	q, s := classWeights(c, sy, class)
 	trimmed := strings.TrimSuffix(class, "sci")
 	trimmed = strings.TrimSuffix(trimmed, "com")
 	intClass, err := strconv.Atoi(trimmed)
@@ -1126,8 +1102,8 @@ type computer2to5GradingSystem struct {
 	sWeight float64
 }
 
-func newComputer2to5GS(class string) gradingSystem {
-	q, s := classWeights(class)
+func newComputer2to5GS(c context.Context, sy, class string) gradingSystem {
+	q, s := classWeights(c, sy, class)
 	return computer2to5GradingSystem{
 		q,
 		s,
@@ -1276,8 +1252,8 @@ type computer6to12GradingSystem struct {
 	sWeight float64
 }
 
-func newComputer6to12GS(class string) gradingSystem {
-	q, s := classWeights(class)
+func newComputer6to12GS(c context.Context, sy, class string) gradingSystem {
+	q, s := classWeights(c, sy, class)
 	return computer6to12GradingSystem{q, s}
 }
 
@@ -1644,28 +1620,6 @@ func (bgs behaviorGradingSystem) quarterWeight() float64 {
 
 func (bgs behaviorGradingSystem) semesterWeight() float64 {
 	return math.NaN()
-}
-
-func getLetterSystem(class string) letterSystem {
-	intClass, err := strconv.Atoi(class)
-	if err != nil {
-		// class is KG or SN
-		if class == "KG1" || class == "KG2" || class == "PreKG" {
-			return OVSLU
-		} else if strings.HasSuffix(class, "sci") ||
-			strings.HasSuffix(class, "com") {
-			return ABCDF
-		}
-	} else {
-		if intClass <= 2 {
-			return OVSLU
-		} else {
-			// 3-12
-			return ABCDF
-		}
-	}
-	// should never happen
-	return ABCDF
 }
 
 // subjectInAverage returns true if subject should be calculated in average
