@@ -66,7 +66,7 @@ func printStudentMarksHandler(w http.ResponseWriter, r *http.Request) {
 		var subjectsMarks []float64
 		var behavior []float64
 		var remark string
-		total := negZero
+		total := math.NaN()
 		numInAverage := 0
 		ls := getLetterSystem(class)
 		for _, subject := range subjects {
@@ -92,7 +92,7 @@ func printStudentMarksHandler(w http.ResponseWriter, r *http.Request) {
 
 			mark := gs.get100(term, marks)
 			letter := ls.getLetter(mark)
-			if subjectInAverage(subject, class) && !math.Signbit(mark) {
+			if subjectInAverage(subject, class) && !math.IsNaN(mark) {
 				total += mark
 				numInAverage++
 			}

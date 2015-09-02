@@ -330,9 +330,9 @@ func marksSaveHandler(w http.ResponseWriter, r *http.Request) {
 				v, err := strconv.ParseFloat(f.Get(fmt.Sprintf("%s|%d", s.ID, i)), 64)
 				if err != nil || v > col.Max {
 					// invalid or empty marks
-					v = negZero
+					v = math.NaN()
 				}
-				if m[term][i] != v || math.Signbit(m[term][i]) != math.Signbit(v) {
+				if m[term][i] != v || math.IsNaN(m[term][i]) != math.IsNaN(v) {
 					marksChanged = true
 					m[term][i] = v
 				}
@@ -653,7 +653,7 @@ func marksImportHandler(w http.ResponseWriter, r *http.Request) {
 				v, err := strconv.ParseFloat(marksRecord[i], 64)
 				if err != nil || v > col.Max {
 					// invalid or empty marks
-					v = negZero
+					v = math.NaN()
 				}
 				if m[term][i] != v {
 					marksChanged = true

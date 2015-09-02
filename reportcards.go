@@ -135,8 +135,8 @@ func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		total := negZero
-		totalMax := negZero
+		total := math.NaN()
+		totalMax := math.NaN()
 		numInAverage := 0
 		for _, subject := range subjects {
 			if subject == "Remarks" {
@@ -187,14 +187,14 @@ func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 			if subjectInAverage(subject, stu.Class) {
-				if !math.Signbit(mark) {
+				if !math.IsNaN(mark) {
 					total += mark
 					totalMax += 100
 					numInAverage++
 				}
 				rc.Academics = append(rc.Academics, rcRow)
 			} else {
-				if calculateAll && !math.Signbit(mark) {
+				if calculateAll && !math.IsNaN(mark) {
 					total += mark
 					totalMax += 100
 					numInAverage++
@@ -210,19 +210,19 @@ func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 			if term.Typ == Quarter {
 				totalRow.Marks = []float64{totalMax, total}
 			} else if term.Typ == Semester {
-				totalRow.Marks = []float64{negZero, negZero, negZero, total}
+				totalRow.Marks = []float64{math.NaN(), math.NaN(), math.NaN(), total}
 			} else if term.Typ == EndOfYear {
-				totalRow.Marks = []float64{negZero, negZero, total}
+				totalRow.Marks = []float64{math.NaN(), math.NaN(), total}
 			}
 		} else {
 			totalRow.Name = "General Weighted Average"
 			totalRow.Letter = ls.getLetter(average)
 			if term.Typ == Quarter {
-				totalRow.Marks = []float64{negZero, average}
+				totalRow.Marks = []float64{math.NaN(), average}
 			} else if term.Typ == Semester {
-				totalRow.Marks = []float64{negZero, negZero, negZero, average}
+				totalRow.Marks = []float64{math.NaN(), math.NaN(), math.NaN(), average}
 			} else if term.Typ == EndOfYear {
-				totalRow.Marks = []float64{negZero, negZero, average}
+				totalRow.Marks = []float64{math.NaN(), math.NaN(), average}
 			}
 		}
 

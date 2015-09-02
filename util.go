@@ -127,8 +127,7 @@ var funcMap = htmltemplate.FuncMap{
 }
 
 func formatMark(mark float64) string {
-	if math.Signbit(mark) {
-		// negative zero
+	if math.IsNaN(mark) {
 		return ""
 	}
 	return fmt.Sprintf("%.2f", mark)

@@ -94,8 +94,8 @@ func printAllHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		maxCols = append(maxCols, colDescription{"Average", 100, false})
 		for _, stu := range students {
-			total := negZero
-			totalMax := negZero
+			total := math.NaN()
+			totalMax := math.NaN()
 			numInAverage := 0
 			var studentMarks []float64
 			for _, subject := range subjects {
@@ -105,7 +105,7 @@ func printAllHandler(w http.ResponseWriter, r *http.Request) {
 				gs := getGradingSystem(c, sy, stu.Class, subject)
 				if gs == nil {
 					// class doesn't have subject
-					studentMarks = append(studentMarks, negZero)
+					studentMarks = append(studentMarks, math.NaN())
 					continue
 				}
 				marks, err := getStudentMarks(c, stu.ID, sy, subject)
@@ -119,7 +119,7 @@ func printAllHandler(w http.ResponseWriter, r *http.Request) {
 				mark := gs.get100(term, marks)
 
 				if subjectInAverage(subject, stu.Class) {
-					if !math.Signbit(mark) {
+					if !math.IsNaN(mark) {
 						total += mark
 						totalMax += 100
 						numInAverage++
@@ -127,7 +127,7 @@ func printAllHandler(w http.ResponseWriter, r *http.Request) {
 				}
 				studentMarks = append(studentMarks, mark)
 			}
-			average := negZero
+			average := math.NaN()
 			if numInAverage > 0 {
 				average = total / float64(numInAverage)
 			}

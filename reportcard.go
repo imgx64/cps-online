@@ -72,7 +72,7 @@ func reportcardHandler(w http.ResponseWriter, r *http.Request) {
 	var behavior []float64
 	var remark, letterDesc string
 	if publish {
-		total := negZero
+		total := math.NaN()
 		numInAverage := 0
 		ls := getLetterSystem(class)
 		letterDesc = ls.String()
@@ -99,7 +99,7 @@ func reportcardHandler(w http.ResponseWriter, r *http.Request) {
 			mark := gs.get100(term, marks)
 			letter := ls.getLetter(mark)
 			var inAverage bool
-			if subjectInAverage(subject, class) && !math.Signbit(mark) {
+			if subjectInAverage(subject, class) && !math.IsNaN(mark) {
 				total += mark
 				numInAverage++
 				inAverage = true
