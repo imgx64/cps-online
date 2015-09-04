@@ -58,7 +58,7 @@ func getMaxSchoolYear(c context.Context) int {
 	if err == nil {
 		sy = setting.Value
 	} else {
-		log.Warningf(c, "Could not get school year: %s\nUsing defaults instead", err)
+		log.Warningf(c, "Could not get max school year: %s\nUsing defaults instead", err)
 		sy = startYear
 	}
 

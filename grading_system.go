@@ -36,26 +36,6 @@ var subjects = []string{
 	"Remarks",
 }
 
-type colDescription struct {
-	Name     string
-	Max      float64
-	Editable bool
-}
-
-type studentMarks map[Term][]float64
-
-// sumMarks sums all values, and if one of them is math.NaN(), returns math.NaN()
-func sumMarks(marks ...float64) float64 {
-	var total float64
-	for _, v := range marks {
-		if math.IsNaN(v) {
-			return math.NaN()
-		}
-		total += v
-	}
-	return total
-}
-
 func getGradingSystem(c context.Context, sy, class, subject string) gradingSystem {
 	classes := getClasses(c, sy)
 
@@ -182,8 +162,27 @@ type genericGradingSystem struct {
 }
 
 func newGGS(c context.Context, sy, class string) gradingSystem {
-	q, s := classWeights(c, sy, class)
-	return genericGradingSystem{q, s}
+	qWeight, sWeight := classWeights(c, sy, class)
+	return Subject{
+		"Arabic",
+		"Arabic",
+		true,
+
+		[]gradingColumn{
+			{directGrading, "Homework", 5, 0, 0},
+			{directGrading, "Participation", 5, 0, 0},
+			{directGrading, "Daily Work", 20, 0, 0},
+			{quizGrading, "Quizzes", 10, 6, 5},
+			{directGrading, "Quarter Exam", 20, 0, 0},
+		},
+
+		[]gradingColumn{
+			{directGrading, "Semester Exam", 100, 0, 0},
+		},
+
+		qWeight,
+		sWeight,
+	}
 }
 
 func (ggs genericGradingSystem) description(term Term) []colDescription {
@@ -1795,4 +1794,28 @@ func semesterNumber(term Term) int {
 	}
 
 	return 0
+}
+
+// sumQuizzes returns the sum of all values except the smallest value
+// returns NaN if more than one value is NaN
+func sumQuizzes(marks ...float64) float64 {
+	var min, total float64
+	nNaN := 0
+	for i, v := range marks {
+		if math.IsNaN(v) {
+			nNaN++
+			v = 0
+		}
+		if i == 0 {
+			min = v
+		} else {
+			min = math.Min(min, v)
+		}
+		total += v
+
+	}
+	if nNaN > 1 {
+		return math.NaN()
+	}
+	return total - min
 }
