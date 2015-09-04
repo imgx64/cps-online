@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-var subjects = []string{
+var _subjects = []string{
 	"Arabic",
 	"English",
 	"Math",
@@ -34,6 +34,20 @@ var subjects = []string{
 	"Speech and Drama",
 	"Behavior",
 	"Remarks",
+}
+
+func getSubjects(c context.Context, sy, class string) ([]string, error) {
+	var subjects []string
+	for _, subject := range _subjects {
+		if getGradingSystem(c, sy, class, subject) != nil {
+			subjects = append(subjects, subject)
+		}
+	}
+	return subjects, nil
+}
+
+func getAllSubjects(c context.Context, sy string) ([]string, error) {
+	return _subjects, nil
 }
 
 func getGradingSystem(c context.Context, sy, class, subject string) gradingSystem {

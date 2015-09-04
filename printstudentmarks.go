@@ -58,6 +58,13 @@ func printStudentMarksHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	subjects, err := getSubjects(c, sy, class)
+	if err != nil {
+		log.Errorf(c, "Could not get subjects: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
 	var marksTerms []studentMarksTerm
 	for _, term := range terms {
 

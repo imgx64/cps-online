@@ -76,6 +76,13 @@ func reportcardHandler(w http.ResponseWriter, r *http.Request) {
 		numInAverage := 0
 		ls := getLetterSystem(c, sy, class)
 		letterDesc = ls.String()
+		subjects, err := getSubjects(c, sy, class)
+		if err != nil {
+			log.Errorf(c, "Could not get subjects: %s", err)
+			renderError(w, r, http.StatusInternalServerError)
+			return
+		}
+
 		for _, subject := range subjects {
 			if subject == "Remarks" {
 				continue

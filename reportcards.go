@@ -100,6 +100,20 @@ func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	class, _, err := parseClassSection(classSection)
+	if err != nil {
+		log.Errorf(c, "Could not parse classSection %s: %s", classSection, err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	subjects, err := getSubjects(c, sy, class)
+	if err != nil {
+		log.Errorf(c, "Could not get subjects: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
 	for _, stu := range students {
 		rc := reportcard{
 			SY:   sy,

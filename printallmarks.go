@@ -82,11 +82,18 @@ func printAllHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	allSubjects, err := getAllSubjects(c, sy)
+	if err != nil {
+		log.Errorf(c, "Could not get subjects: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
 	prevClass := ""
 	maxLen := 0
 	var maxCols []colDescription
 	if subject == "All" {
-		for _, sub := range subjects {
+		for _, sub := range allSubjects {
 			if sub == "Remarks" || sub == "Behavior" {
 				continue
 			}
@@ -98,7 +105,7 @@ func printAllHandler(w http.ResponseWriter, r *http.Request) {
 			totalMax := math.NaN()
 			numInAverage := 0
 			var studentMarks []float64
-			for _, subject := range subjects {
+			for _, subject := range allSubjects {
 				if subject == "Remarks" || subject == "Behavior" {
 					continue
 				}
@@ -179,7 +186,7 @@ func printAllHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	subjectsData := []string{}
-	for _, sub := range subjects {
+	for _, sub := range allSubjects {
 		if sub == "Remarks" {
 			continue
 		}

@@ -83,6 +83,12 @@ func completionHandler(w http.ResponseWriter, r *http.Request) {
 
 	if (term != Term{}) {
 		for _, class := range classes {
+			subjects, err := getSubjects(c, sy, class)
+			if err != nil {
+				log.Errorf(c, "Could not get subjects: %s", err)
+				renderError(w, r, http.StatusInternalServerError)
+				return
+			}
 			for _, section := range sections[class] {
 				var cr completionRow
 
@@ -121,6 +127,13 @@ func completionHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	allSubjects, err := getAllSubjects(c, sy)
+	if err != nil {
+		log.Errorf(c, "Could not get subjects: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
 	data := struct {
 		Terms []Term
 		Term  Term
@@ -131,7 +144,7 @@ func completionHandler(w http.ResponseWriter, r *http.Request) {
 		terms,
 		term,
 
-		subjects,
+		allSubjects,
 		completionRows,
 	}
 
