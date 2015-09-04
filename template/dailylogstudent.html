@@ -7,7 +7,7 @@ license that can be found in the LICENSE file.
 {{define "title"}}Daily Log{{end}}
 {{define "content"}}
 <p><strong>Student Name:</strong> {{.S.Name}}</p>
-<p><strong>Class:</strong> {{.S.Class}}{{.S.Section}}</p>
+<p><strong>Class:</strong> {{.Class}}{{.Section}}</p>
 <form class="form-inline" action="/dailylog/edit">
 	<input type="hidden" name="id" value="{{.S.ID}}">
 	<div class="form-group">

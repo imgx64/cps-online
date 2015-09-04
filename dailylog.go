@@ -146,6 +146,14 @@ func dailylogStudentHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	sy := getSchoolYear(c)
+	class, section, err := getStudentClass(c, stu.ID, sy)
+	if err != nil {
+		log.Errorf(c, "Could not retrieve student class: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
 	dailylogs, err := getDailylogs(c, id)
 	if err != nil {
 		log.Errorf(c, "Could not retrieve daily logs: %s", err)
@@ -155,10 +163,14 @@ func dailylogStudentHandler(w http.ResponseWriter, r *http.Request) {
 
 	data := struct {
 		S         studentType
+		Class     string
+		Section   string
 		Today     time.Time
 		Dailylogs []dailylogType
 	}{
 		stu,
+		class,
+		section,
 		time.Now(),
 		dailylogs,
 	}
@@ -289,6 +301,14 @@ func viewDailylogHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	stu := *user.Student
 
+	sy := getSchoolYear(c)
+	class, section, err := getStudentClass(c, stu.ID, sy)
+	if err != nil {
+		log.Errorf(c, "Could not retrieve student class: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
 	dailylogs, err := getDailylogs(c, stu.ID)
 	if err != nil {
 		log.Errorf(c, "Could not retrieve daily logs: %s", err)
@@ -298,10 +318,14 @@ func viewDailylogHandler(w http.ResponseWriter, r *http.Request) {
 
 	data := struct {
 		S         studentType
+		Class     string
+		Section   string
 		Today     time.Time
 		Dailylogs []dailylogType
 	}{
 		stu,
+		class,
+		section,
 		time.Now(),
 		dailylogs,
 	}
