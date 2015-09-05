@@ -46,10 +46,6 @@ func getSubjects(c context.Context, sy, class string) ([]string, error) {
 	return subjects, nil
 }
 
-func getAllSubjects(c context.Context, sy string) ([]string, error) {
-	return _subjects, nil
-}
-
 func getGradingSystem(c context.Context, sy, class, subject string) gradingSystem {
 	classes := getClasses(c, sy)
 

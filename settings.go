@@ -23,6 +23,8 @@ func init() {
 	http.HandleFunc("/settings/savesections", accessHandler(settingsSaveSectionsHandler))
 	http.HandleFunc("/settings/addclass", accessHandler(settingsAddClassHandler))
 	http.HandleFunc("/settings/addschoolyear", accessHandler(settingsAddSYHandler))
+	http.HandleFunc("/settings/addsubject", accessHandler(settingsAddSubjectHandler))
+	http.HandleFunc("/settings/deletesubject", accessHandler(settingsDeleteSubjectHandler))
 }
 
 const startYear = 2013
@@ -141,6 +143,31 @@ func saveClassSettings(c context.Context, settings []classSetting) error {
 	return nil
 }
 
+type subjectsSettings struct {
+	Value []string
+}
+
+func getAllSubjects(c context.Context, sy string) []string {
+	key := datastore.NewKey(c, "settings", "subjects-"+sy, 0, nil)
+
+	setting := subjectsSettings{}
+	if err := nds.Get(c, key, &setting); err != nil {
+		log.Warningf(c, "Could not get subjects: %s\n. Returning empty slice instead", err)
+		return []string{}
+	}
+
+	return setting.Value
+}
+
+func saveAllSubjects(c context.Context, sy string, subjects []string) error {
+	key := datastore.NewKey(c, "settings", "subjects-"+sy, 0, nil)
+	_, err := nds.Put(c, key, &subjectsSettings{subjects})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func settingsHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 
@@ -159,6 +186,8 @@ func settingsHandler(w http.ResponseWriter, r *http.Request) {
 	maxSchoolYear := getMaxSchoolYear(c)
 	nextSchoolYear := fmt.Sprintf("%d-%d", maxSchoolYear+1, maxSchoolYear+2)
 
+	subjects := getAllSubjects(c, sy)
+
 	data := struct {
 		SectionChoices      []string
 		LetterSystemChoices []string
@@ -167,6 +196,8 @@ func settingsHandler(w http.ResponseWriter, r *http.Request) {
 		SY          string
 
 		ClassSettings []classSetting
+
+		Subjects []string
 
 		NextSchoolYear string
 	}{
@@ -177,6 +208,8 @@ func settingsHandler(w http.ResponseWriter, r *http.Request) {
 		sy,
 
 		settings,
+
+		subjects,
 
 		nextSchoolYear,
 	}
@@ -298,6 +331,73 @@ func settingsAddSYHandler(w http.ResponseWriter, r *http.Request) {
 
 	maxSchoolYear := getMaxSchoolYear(c)
 	saveMaxSchoolYear(c, maxSchoolYear+1)
+
+	// TODO: message of success
+	http.Redirect(w, r, "/settings", http.StatusFound)
+}
+
+func settingsAddSubjectHandler(w http.ResponseWriter, r *http.Request) {
+	c := appengine.NewContext(r)
+
+	sy := getSchoolYear(c)
+
+	if err := r.ParseForm(); err != nil {
+		log.Errorf(c, "Could not parse form: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	subject := r.Form.Get("subject")
+	if subject == "" {
+		renderErrorMsg(w, r, http.StatusBadRequest, "Empty subject")
+		return
+	}
+
+	subjects := getAllSubjects(c, sy)
+	for _, s := range subjects {
+		if s == subject {
+			renderErrorMsg(w, r, http.StatusBadRequest, "Subject already exists")
+			return
+		}
+	}
+
+	subjects = append(subjects, subject)
+	if err := saveAllSubjects(c, sy, subjects); err != nil {
+		log.Errorf(c, "Could not save subjects: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	// TODO: message of success
+	http.Redirect(w, r, "/settings", http.StatusFound)
+}
+
+func settingsDeleteSubjectHandler(w http.ResponseWriter, r *http.Request) {
+	c := appengine.NewContext(r)
+
+	sy := getSchoolYear(c)
+
+	if err := r.ParseForm(); err != nil {
+		log.Errorf(c, "Could not parse form: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	subject := r.Form.Get("subject")
+
+	subjects := getAllSubjects(c, sy)
+	var newSubjects []string
+	for _, s := range subjects {
+		if s != subject {
+			newSubjects = append(newSubjects, s)
+		}
+	}
+
+	if err := saveAllSubjects(c, sy, newSubjects); err != nil {
+		log.Errorf(c, "Could not save subjects: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
 
 	// TODO: message of success
 	http.Redirect(w, r, "/settings", http.StatusFound)

@@ -226,12 +226,7 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	subjects, err := getAllSubjects(c, sy)
-	if err != nil {
-		log.Errorf(c, "Could not get subjects: %s", err)
-		renderError(w, r, http.StatusInternalServerError)
-		return
-	}
+	subjects := getAllSubjects(c, sy)
 
 	classGroups := getClassGroups(c, sy)
 

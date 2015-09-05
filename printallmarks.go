@@ -82,12 +82,7 @@ func printAllHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	allSubjects, err := getAllSubjects(c, sy)
-	if err != nil {
-		log.Errorf(c, "Could not get subjects: %s", err)
-		renderError(w, r, http.StatusInternalServerError)
-		return
-	}
+	allSubjects := getAllSubjects(c, sy)
 
 	prevClass := ""
 	maxLen := 0

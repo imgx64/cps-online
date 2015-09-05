@@ -149,12 +149,7 @@ func assignHandler(w http.ResponseWriter, r *http.Request) {
 
 	classGroups := getClassGroups(c, sy)
 
-	subjects, err := getAllSubjects(c, sy)
-	if err != nil {
-		log.Errorf(c, "Could not get subjects: %s", err)
-		renderError(w, r, http.StatusInternalServerError)
-		return
-	}
+	subjects := getAllSubjects(c, sy)
 
 	data := struct {
 		CG       []classGroup

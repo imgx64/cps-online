@@ -26,8 +26,23 @@ license that can be found in the LICENSE file.
 	</fieldset>
 </form>
 <div class="spacer">
+</div>
+<form  action="/settings/addschoolyear" method="POST" onsubmit="confirm('Are you sure you want to add school year {{.NextSchoolYear}}?')">
+	<fieldset>
+		<legend>Add school year</legend>
+		<div class="form-inline">
+			<div class="form-group">
+				<input type="text" class="form-control" value="{{.NextSchoolYear}}" readonly="readonly">
+			</div>
+			<div class="form-group">
+				<input type="submit" class="btn btn-default" value="Add">
+			</div>
+		</div>
+	</fieldset>
+</form>
+<div class="spacer">
+</div>
 <form  action="/settings/savesections" method="POST">
-	</div>
 	<fieldset>
 		<legend>Classes</legend>
 		<table>
@@ -80,7 +95,8 @@ license that can be found in the LICENSE file.
 	</div>
 </form>
 <div class="spacer">
-<form  action="/settings/addclass" method="POST">
+</div>
+<form action="/settings/addclass" method="POST">
 	<fieldset>
 		<legend>Add class</legend>
 		<div class="form-inline">
@@ -92,23 +108,36 @@ license that can be found in the LICENSE file.
 			</div>
 		</div>
 	</fieldset>
-</div>
 </form>
 <div class="spacer">
-	<form  action="/settings/addschoolyear" method="POST" onsubmit="confirm('Are you sure you want to add school year {{.NextSchoolYear}}?')">
-	<fieldset>
-		<legend>Add school year</legend>
+</div>
+<fieldset>
+	<legend>Subjects</legend>
+	<table>
+	{{range .Subjects}}
+		<tr>
+			<th>{{.}}</th>
+			<td>
+				<form action="/settings/deletesubject" method="POST">
+					<input type="hidden" name="subject" value="{{.}}">
+					<input type="submit" class="btn btn-default btn-sm" value="delete">
+				</form>
+			</td>
+		</tr>
+	{{end}}
+	</table>
+	<br>
+	<form action="/settings/addsubject" method="POST">
 		<div class="form-inline">
 			<div class="form-group">
-				<input type="text" class="form-control" value="{{.NextSchoolYear}}" readonly="readonly">
+				<input type="text" name="subject" class="form-control" placeholder="Subject name" required="required">
 			</div>
 			<div class="form-group">
-				<input type="submit" class="btn btn-default" value="Add">
+				<input type="submit" class="btn btn-default" value="Add subject">
 			</div>
 		</div>
-	</fieldset>
-</div>
-</form>
+	</form>
+</fieldset>
 <div class="spacer">
 </div>
 {{end}}
