@@ -303,11 +303,11 @@ func subjectsSaveHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	class := r.Form.Get("Class")
+	class := r.PostForm.Get("Class")
 
-	if r.Form.Get("submit") == "Delete" {
+	if r.PostForm.Get("submit") == "Delete" {
 
-		subjectname := r.Form.Get("ShortName")
+		subjectname := r.PostForm.Get("ShortName")
 
 		err := deleteSubject(c, sy, class, subjectname)
 		if err != nil {
@@ -325,23 +325,23 @@ func subjectsSaveHandler(w http.ResponseWriter, r *http.Request) {
 
 	var subject Subject
 
-	subject.ShortName = r.Form.Get("ShortName")
-	subject.Description = r.Form.Get("Description")
-	subject.CalculateInAverage = r.Form.Get("CalculateInAverage") == "on"
-	credits, err := strconv.ParseFloat(r.Form.Get("Credits"), 64)
+	subject.ShortName = r.PostForm.Get("ShortName")
+	subject.Description = r.PostForm.Get("Description")
+	subject.CalculateInAverage = r.PostForm.Get("CalculateInAverage") == "on"
+	credits, err := strconv.ParseFloat(r.PostForm.Get("Credits"), 64)
 	if err != nil {
 		renderErrorMsg(w, r, http.StatusBadRequest,
-			fmt.Sprintf("Invalid credits: %s", r.Form.Get("Credits")))
+			fmt.Sprintf("Invalid credits: %s", r.PostForm.Get("Credits")))
 		return
 	}
 	subject.Credits = credits
 
 	for i := 0; ; i++ {
-		typeStr := r.Form.Get(fmt.Sprintf("qgc-type-%d", i))
-		nameStr := r.Form.Get(fmt.Sprintf("qgc-name-%d", i))
-		maxStr := r.Form.Get(fmt.Sprintf("qgc-max-%d", i))
-		numQuizzesStr := r.Form.Get(fmt.Sprintf("qgc-num-quizzes-%d", i))
-		bestQuizzesStr := r.Form.Get(fmt.Sprintf("qgc-best-quizzes-%d", i))
+		typeStr := r.PostForm.Get(fmt.Sprintf("qgc-type-%d", i))
+		nameStr := r.PostForm.Get(fmt.Sprintf("qgc-name-%d", i))
+		maxStr := r.PostForm.Get(fmt.Sprintf("qgc-max-%d", i))
+		numQuizzesStr := r.PostForm.Get(fmt.Sprintf("qgc-num-quizzes-%d", i))
+		bestQuizzesStr := r.PostForm.Get(fmt.Sprintf("qgc-best-quizzes-%d", i))
 
 		typeInt, err := strconv.Atoi(typeStr)
 		if err != nil {
@@ -401,11 +401,11 @@ func subjectsSaveHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for i := 0; ; i++ {
-		typeStr := r.Form.Get(fmt.Sprintf("sgc-type-%d", i))
-		nameStr := r.Form.Get(fmt.Sprintf("sgc-name-%d", i))
-		maxStr := r.Form.Get(fmt.Sprintf("sgc-max-%d", i))
-		numQuizzesStr := r.Form.Get(fmt.Sprintf("sgc-num-quizzes-%d", i))
-		bestQuizzesStr := r.Form.Get(fmt.Sprintf("sgc-bestquizzes-%d", i))
+		typeStr := r.PostForm.Get(fmt.Sprintf("sgc-type-%d", i))
+		nameStr := r.PostForm.Get(fmt.Sprintf("sgc-name-%d", i))
+		maxStr := r.PostForm.Get(fmt.Sprintf("sgc-max-%d", i))
+		numQuizzesStr := r.PostForm.Get(fmt.Sprintf("sgc-num-quizzes-%d", i))
+		bestQuizzesStr := r.PostForm.Get(fmt.Sprintf("sgc-bestquizzes-%d", i))
 
 		typeInt, err := strconv.Atoi(typeStr)
 		if err != nil {

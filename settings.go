@@ -230,7 +230,7 @@ func settingsSaveSchoolYearHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sy := r.Form.Get("sy")
+	sy := r.PostForm.Get("sy")
 	if sy != "" {
 		if err := saveSchoolYear(c, sy); err != nil {
 			log.Errorf(c, "Could not save school year: %s", err)
@@ -256,19 +256,19 @@ func settingsSaveSectionsHandler(w http.ResponseWriter, r *http.Request) {
 
 	settings := getClassSettings(c, sy)
 	for i, classSetting := range settings {
-		section := r.Form.Get("sections-" + classSetting.Class)
+		section := r.PostForm.Get("sections-" + classSetting.Class)
 		if validSection(section) {
 			classSetting.MaxSection = section
 			settings[i] = classSetting
 		}
 
-		ls := r.Form.Get("letter-system-" + classSetting.Class)
+		ls := r.PostForm.Get("letter-system-" + classSetting.Class)
 		if _, ok := letterSystemMap[ls]; ok {
 			classSetting.LetterSystem = ls
 			settings[i] = classSetting
 		}
 
-		qwStr := r.Form.Get("quarter-weight-" + classSetting.Class)
+		qwStr := r.PostForm.Get("quarter-weight-" + classSetting.Class)
 		qw, err := strconv.ParseFloat(qwStr, 64)
 		if err == nil && qw >= 0 && qw <= 50.0 {
 			classSetting.QuarterWeight = qw
@@ -295,7 +295,7 @@ func settingsAddClassHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if class := r.Form.Get("class"); class != "" {
+	if class := r.PostForm.Get("class"); class != "" {
 		sy := getSchoolYear(c)
 		settings := getClassSettings(c, sy)
 
@@ -347,7 +347,7 @@ func settingsAddSubjectHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	subject := r.Form.Get("subject")
+	subject := r.PostForm.Get("subject")
 	if subject == "" {
 		renderErrorMsg(w, r, http.StatusBadRequest, "Empty subject")
 		return
@@ -383,7 +383,7 @@ func settingsDeleteSubjectHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	subject := r.Form.Get("subject")
+	subject := r.PostForm.Get("subject")
 
 	subjects := getAllSubjects(c, sy)
 	var newSubjects []string
