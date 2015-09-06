@@ -140,7 +140,7 @@ func getGradingSystem(c context.Context, sy, class, subjectname string) gradingS
 			continue
 		}
 
-		qWeight := classSetting.QuarterWeight
+		qWeight = classSetting.QuarterWeight
 		if qWeight > 50 {
 			qWeight = 50
 		}

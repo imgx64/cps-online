@@ -53,7 +53,7 @@ license that can be found in the LICENSE file.
 			<label class="col-sm-3 control-label" for="CalculateInAverage">Calculate in average?</label>
 			<div class="col-sm-5">
 				<input type="checkbox" id="CalculateInAverage" name="CalculateInAverage"
-				{{if .Subject.CalculateInAverage}}selected="selected"{{end}}>
+				{{if .Subject.CalculateInAverage}}checked="checked"{{end}}>
 				<span class="help-block">Used in regular reportcards</span>
 			</div>
 		</div>
@@ -110,7 +110,7 @@ license that can be found in the LICENSE file.
 			<td>
 				<input type="number" name="qgc-best-quizzes-{{$i}}"
 					min="0" max="100" step="1"
-			   		class="form-control" value="{{$gc.NumQuizzes}}">
+			   		class="form-control" value="{{$gc.BestQuizzes}}">
 			</td>
 		</tr>
 		{{end}}
@@ -158,7 +158,7 @@ license that can be found in the LICENSE file.
 			<td>
 				<input type="number" name="sgc-best-quizzes-{{$i}}"
 					min="0" max="100" step="1"
-			   		class="form-control" value="{{$gc.NumQuizzes}}">
+			   		class="form-control" value="{{$gc.BestQuizzes}}">
 			</td>
 		</tr>
 		{{end}}

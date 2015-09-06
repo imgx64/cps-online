@@ -365,14 +365,14 @@ func subjectsSaveHandler(w http.ResponseWriter, r *http.Request) {
 		if typ == directGrading {
 			// no special handling
 		} else if typ == quizGrading {
-			numQuizzes, err := strconv.Atoi(numQuizzesStr)
+			numQuizzes, err = strconv.Atoi(numQuizzesStr)
 			if err != nil || numQuizzes < 1 {
 				renderErrorMsg(w, r, http.StatusBadRequest,
 					fmt.Sprintf("Invalid Number of Quizzes for %s: %s", name, numQuizzesStr))
 				return
 			}
 
-			bestQuizzes, err := strconv.Atoi(bestQuizzesStr)
+			bestQuizzes, err = strconv.Atoi(bestQuizzesStr)
 			if err != nil || bestQuizzes < 1 {
 				renderErrorMsg(w, r, http.StatusBadRequest,
 					fmt.Sprintf("Invalid Best Quizzes for %s: %s", name, bestQuizzesStr))

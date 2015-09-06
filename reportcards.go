@@ -131,11 +131,36 @@ func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 		} else if term.Typ == Semester {
 			q2 := term.N * 2
 			q1 := q2 - 1
-			gs := getGradingSystem(c, sy, stu.Class, "English") //TODO: find a better way
+
+			var qWeight, sWeight float64
+			found := false
+			for _, classSetting := range getClassSettings(c, sy) {
+				if classSetting.Class != class {
+					continue
+				}
+
+				qWeight = classSetting.QuarterWeight
+				if qWeight > 50 {
+					qWeight = 50
+				}
+				if qWeight < 0 {
+					qWeight = 0
+				}
+
+				sWeight = 100 - qWeight*2
+
+				found = true
+				break
+			}
+			if !found {
+				log.Errorf(c, "Could not get class settings: %s %s", sy, class)
+				renderError(w, r, http.StatusInternalServerError)
+				return
+			}
 			rc.Cols = []string{
-				fmt.Sprintf("Quarter %d (%.0f%%)", q1, gs.quarterWeight()),
-				fmt.Sprintf("Quarter %d (%.0f%%)", q2, gs.quarterWeight()),
-				fmt.Sprintf("Semester Exam (%.0f%%)", gs.semesterWeight()),
+				fmt.Sprintf("Quarter %d (%.0f%%)", q1, qWeight),
+				fmt.Sprintf("Quarter %d (%.0f%%)", q2, qWeight),
+				fmt.Sprintf("Semester Exam (%.0f%%)", sWeight),
 				"Mark Obtained (100%)",
 			}
 		} else if term.Typ == EndOfYear {

@@ -20,14 +20,14 @@ license that can be found in the LICENSE file.
 				</select>
 			</div>
 			<div class="form-group">
-				<input type="submit" class="btn btn-default" value="Save">
+				<input type="submit" class="btn btn-default are-you-sure" value="Save">
 			</div>
 		</div>
 	</fieldset>
 </form>
 <div class="spacer">
 </div>
-<form  action="/settings/addschoolyear" method="POST" onsubmit="confirm('Are you sure you want to add school year {{.NextSchoolYear}}?')">
+<form  action="/settings/addschoolyear" method="POST">
 	<fieldset>
 		<legend>Add school year</legend>
 		<div class="form-inline">
@@ -35,7 +35,7 @@ license that can be found in the LICENSE file.
 				<input type="text" class="form-control" value="{{.NextSchoolYear}}" readonly="readonly">
 			</div>
 			<div class="form-group">
-				<input type="submit" class="btn btn-default" value="Add">
+				<input type="submit" class="btn btn-default are-you-sure" value="Add">
 			</div>
 		</div>
 	</fieldset>
@@ -104,7 +104,7 @@ license that can be found in the LICENSE file.
 				<input type="text" name="class" class="form-control" placeholder="Class name" required="required">
 			</div>
 			<div class="form-group">
-				<input type="submit" class="btn btn-default" value="Add">
+				<input type="submit" class="btn btn-default are-you-sure" value="Add">
 			</div>
 		</div>
 	</fieldset>
@@ -120,7 +120,7 @@ license that can be found in the LICENSE file.
 			<td>
 				<form action="/settings/deletesubject" method="POST">
 					<input type="hidden" name="subject" value="{{.}}">
-					<input type="submit" class="btn btn-default btn-sm" value="delete">
+					<input type="submit" class="btn btn-default btn-sm are-you-sure" value="delete">
 				</form>
 			</td>
 		</tr>
