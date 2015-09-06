@@ -112,12 +112,67 @@ type gradingSystem interface {
 
 	quarterWeight() float64
 	semesterWeight() float64
+	subjectInAverage() bool
+	displayName() string
 }
 
 type letterType struct {
 	letter      string
 	description string
 	minMark     float64
+}
+
+func getGradingSystem(c context.Context, sy, class, subjectname string) gradingSystem {
+	if subjectname == "Behavior" {
+		return behaviorGradingSystem{}
+	}
+	// TODO: err
+	subject, err := getSubject(c, sy, class, subjectname)
+	if err != nil {
+		log.Errorf(c, "Could not get subject %s %s %s: %s", sy, class, subjectname, err)
+		return nil
+	}
+
+	var qWeight, sWeight float64
+	found := false
+	for _, classSetting := range getClassSettings(c, sy) {
+		if classSetting.Class != class {
+			continue
+		}
+
+		qWeight := classSetting.QuarterWeight
+		if qWeight > 50 {
+			qWeight = 50
+		}
+		if qWeight < 0 {
+			qWeight = 0
+		}
+
+		sWeight = 100 - qWeight*2
+
+		found = true
+		break
+	}
+	if !found {
+		log.Errorf(c, "Could not get class settings: %s %s", sy, class)
+		return nil
+	}
+
+	if qWeight == 0 {
+		sWeight = 100
+	} else if sWeight == 0 {
+		qWeight = 50
+	}
+
+	if sWeight+qWeight*2 != 100 {
+		log.Errorf(c, "Invalid weights for class: %s %s", sy, class)
+		return nil
+	}
+
+	subject.qWeight = qWeight
+	subject.sWeight = sWeight
+
+	return subject
 }
 
 type letterSystem []letterType
@@ -216,11 +271,13 @@ func classWeights(c context.Context, sy, class string) (quarter, semester float6
 type gradingColumnType int
 
 const (
-	directGrading gradingColumnType = iota + 1
+	noGrading gradingColumnType = iota
+	directGrading
 	quizGrading
 )
 
 var gradingColumnTypeStrings = map[gradingColumnType]string{
+	noGrading:     "Unused",
 	directGrading: "Direct",
 	quizGrading:   "Quizzes",
 }
@@ -239,6 +296,7 @@ type Subject struct {
 	ShortName          string
 	Description        string
 	CalculateInAverage bool
+	Credits            float64
 
 	QuarterGradingColumns  []gradingColumn
 	SemesterGradingColumns []gradingColumn
@@ -466,4 +524,116 @@ func (s Subject) quarterWeight() float64 {
 
 func (s Subject) semesterWeight() float64 {
 	return s.sWeight
+}
+
+func (s Subject) subjectInAverage() bool {
+	return s.CalculateInAverage
+}
+
+func (s Subject) displayName() string {
+	return s.Description
+}
+
+// behaviorGradingSystem contains behavrior. There are no calculations to make
+type behaviorGradingSystem struct {
+}
+
+var behaviorDesc = []colDescription{
+	{"Follows school guidelines for safe and appropriate behaviour", 4, true},
+	{"Demonstrates courtesy and respect", 4, true},
+	{"Listens and responds", 4, true},
+	{"Strives for quality work", 4, true},
+	{"Shows initiative / is a self - starter", 4, true},
+	{"Participates enthusiastically in activities", 4, true},
+	{"Uses time efficiently and appropriately", 4, true},
+	{"Completes class work on time ", 4, true},
+	{"Contributes to discussion and group tasks", 4, true},
+	{"Works cooperatively with others", 4, true},
+	{"Works well independently", 4, true},
+	{"Returns complete homework", 4, true},
+	{"Organizes shelf, materials and belongings ", 4, true},
+	{"Asks questions to clarify content", 4, true},
+	{"Clearly communicates to teachers ", 4, true},
+}
+
+func (behaviorGradingSystem) description(term Term) []colDescription {
+	if term.Typ == Quarter {
+		return behaviorDesc
+	} else if term.Typ == Semester || term.Typ == EndOfYear {
+		return nil
+	}
+	panic(fmt.Sprintf("Invalid term type: %d", term.Typ))
+}
+
+func (bgs behaviorGradingSystem) evaluate(term Term, marks studentMarks) (err error) {
+	m := marks[term]
+	desc := bgs.description(term)
+
+	switch {
+	case m == nil: // first time to evaluate it
+		m = make([]float64, len(desc))
+		for i, _ := range desc {
+			m[i] = math.NaN()
+		}
+	case len(m) != len(desc): // sanity check
+		err = invalidNumberOfMarks
+		m = make([]float64, len(desc))
+		for i, _ := range desc {
+			m[i] = math.NaN()
+		}
+	}
+
+	// more sanity checks
+	for i, d := range desc {
+		if m[i] < 0 || m[i] > d.Max {
+			m[i] = math.NaN()
+			if err == nil {
+				err = invalidRangeOfMarks
+			}
+		}
+	}
+
+	// no calculations
+
+	marks[term] = m
+	return
+}
+
+func (bgs behaviorGradingSystem) get100(term Term, marks studentMarks) float64 {
+	if bgs.ready(term, marks) {
+		return 100.0
+	}
+	return math.NaN()
+}
+
+func (bgs behaviorGradingSystem) getExam(term Term, marks studentMarks) float64 {
+	return math.NaN()
+}
+
+func (bgs behaviorGradingSystem) ready(term Term, marks studentMarks) bool {
+	m := marks[term]
+	for _, v := range m {
+		if math.IsNaN(v) {
+			// mark not entered
+			return false
+		}
+	}
+
+	return true
+}
+
+func (bgs behaviorGradingSystem) quarterWeight() float64 {
+	return math.NaN()
+}
+
+func (bgs behaviorGradingSystem) semesterWeight() float64 {
+	return math.NaN()
+}
+
+func (bgs behaviorGradingSystem) displayName() string {
+	return "Behavior"
+}
+
+func (bgs behaviorGradingSystem) subjectInAverage() bool {
+	return false
 }

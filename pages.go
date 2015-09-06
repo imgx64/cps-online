@@ -29,6 +29,11 @@ var access = map[string]roles{
 	"/assign":                  adminRole,
 	"/assign/save":             adminRole,
 
+	"/subjects":         adminRole,
+	"/subjects/details": adminRole,
+	"/subjects/save":    adminRole,
+	"/subjects/delete":  adminRole,
+
 	"/students":         hrRole,
 	"/students/details": hrRole,
 	"/students/save":    hrRole,
@@ -95,6 +100,7 @@ var pages = []link{
 	{Name: "Daily Log", URL: "/dailylog"},
 	{Name: "Print Reportcards", URL: "/reportcards"},
 	{Name: "Settings", URL: "/settings"},
+	{Name: "Subjects", URL: "/subjects"},
 
 	{Name: "Reportcard", URL: "/reportcard"},
 	{Name: "Download Documents", URL: "/documents"},

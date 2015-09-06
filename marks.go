@@ -148,7 +148,7 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 	var cols []colDescription
 	var studentRows []studentRow
 
-	subjectDisplayName := displayName(subject, class, term)
+	var subjectDisplayName string
 
 	if subject != "" {
 		user, err := getUser(c)
@@ -193,6 +193,8 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
+			subjectDisplayName = gs.displayName()
+
 			if subjectDisplayName == "" {
 				students = []studentClass{}
 			}
@@ -207,6 +209,7 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 				studentRows = append(studentRows, studentRow{s.ID, s.Name, m[term], ""})
 			}
 		} else if subject == "Remarks" {
+			subjectDisplayName = "Remarks"
 			cols = []colDescription{{Name: "Remarks"}}
 			students, err := findStudents(c, sy, classSection)
 			if err != nil {
@@ -227,6 +230,7 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	subjects := getAllSubjects(c, sy)
+	subjects = append(subjects, "Behavior", "Remarks")
 
 	classGroups := getClassGroups(c, sy)
 

@@ -82,6 +82,7 @@ func reportcardHandler(w http.ResponseWriter, r *http.Request) {
 			renderError(w, r, http.StatusInternalServerError)
 			return
 		}
+		subjects = append(subjects, "Behavior")
 
 		for _, subject := range subjects {
 			if subject == "Remarks" {
@@ -106,7 +107,7 @@ func reportcardHandler(w http.ResponseWriter, r *http.Request) {
 			mark := gs.get100(term, marks)
 			letter := ls.getLetter(mark)
 			var inAverage bool
-			if subjectInAverage(subject, class) && !math.IsNaN(mark) {
+			if gs.subjectInAverage() && !math.IsNaN(mark) {
 				total += mark
 				numInAverage++
 				inAverage = true

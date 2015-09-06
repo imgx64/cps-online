@@ -113,6 +113,7 @@ func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
+	subjects = append(subjects, "Behavior")
 
 	for _, stu := range students {
 		rc := reportcard{
@@ -157,15 +158,16 @@ func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 
-			subjectDisplayName := displayName(subject, stu.Class, term)
-			if subjectDisplayName == "" {
-				continue
-			}
-
 			gs := getGradingSystem(c, sy, stu.Class, subject)
 			if gs == nil {
 				continue
 			}
+
+			subjectDisplayName := gs.displayName()
+			if subjectDisplayName == "" {
+				continue
+			}
+
 			marks, err := getStudentMarks(c, stu.ID, sy, subject)
 			if err != nil {
 				log.Errorf(c, "Could not get marks: %s", err)
@@ -200,7 +202,7 @@ func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 					gs.get100(term, marks),
 				}
 			}
-			if subjectInAverage(subject, stu.Class) {
+			if gs.subjectInAverage() {
 				if !math.IsNaN(mark) {
 					total += mark
 					totalMax += 100

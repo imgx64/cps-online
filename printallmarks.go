@@ -120,7 +120,7 @@ func printAllHandler(w http.ResponseWriter, r *http.Request) {
 
 				mark := gs.get100(term, marks)
 
-				if subjectInAverage(subject, stu.Class) {
+				if gs.subjectInAverage() {
 					if !math.IsNaN(mark) {
 						total += mark
 						totalMax += 100
@@ -187,7 +187,7 @@ func printAllHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		subjectsData = append(subjectsData, sub)
 	}
-	subjectsData = append(subjectsData, "All")
+	subjectsData = append(subjectsData, "Behavior", "All")
 
 	data := struct {
 		ClassSection string

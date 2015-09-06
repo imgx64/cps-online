@@ -1,0 +1,37 @@
+{{/*
+Copyright 2013 Ibrahim Ghazal. All rights reserved.
+Use of this source code is governed by a BSD-style
+license that can be found in the LICENSE file.
+*/}}
+
+{{define "title"}}Subjects{{end}}
+{{define "content"}}
+{{range .ClassSubjects}}
+<fieldset>
+	<legend>Grade {{.Class}}</legend>
+	<table>
+	<tbody>
+	{{$class := .Class}}
+	{{range .Subjects}}
+	<tr>
+		<th scope="row">
+			{{.}}
+		</th>
+		<td>
+			<a href="/subjects/details?class={{$class}}&subject={{.}}"
+				class="btn btn-default">edit</a>
+		</td>
+	</tr>
+	{{end}}
+	</tbody>
+	</table>
+	<div>
+		<a href="/subjects/details?class={{$class}}"
+			class="btn btn-default">Add</a>
+	</div>
+</fieldset>
+<div class="spacer">
+</div>
+{{end}}
+{{end}}
+

@@ -1,0 +1,180 @@
+{{/*
+Copyright 2013 Ibrahim Ghazal. All rights reserved.
+Use of this source code is governed by a BSD-style
+license that can be found in the LICENSE file.
+*/}}
+
+{{define "title"}}Subjects{{end}}
+{{define "content"}}
+<form action="/subjects/save" method="POST" class="form-horizontal">
+	<fieldset>
+		<legend>Subject details</legend>
+		<div class="form-group">
+			<label class="col-sm-3 control-label" for="Class">Class</label>
+			<div class="col-sm-5">
+				<input type="text" id="Class" name="Class"
+				value="{{.Class}}" class="form-control"
+				required="required" readonly="readonly">
+				<span class="help-block"></span>
+			</div>
+		</div>
+
+		<div class="form-group">
+			<label class="col-sm-3 control-label" for="ShortName">Short Name</label>
+			<div class="col-sm-5">
+				{{if not (equal .Subject.ShortName "")}}
+				<input type="text" id="ShortName" name="ShortName"
+				value="{{.Subject.ShortName}}" class="form-control"
+				required="required" readonly="readonly">
+				{{else}}
+				<select id="ShortName" name="ShortName" class="form-control"
+					required="required">
+					<option></option>
+					{{range .AvailableSubjects}}
+					<option>{{.}}</option>
+					{{end}}
+				</select>
+				{{end}}
+				<span class="help-block">Add from Settings menu. Can't be changed once saved.</span>
+			</div>
+		</div>
+
+		<div class="form-group">
+			<label class="col-sm-3 control-label" for="Description">Description</label>
+			<div class="col-sm-5">
+				<input type="text" id="Description" name="Description"
+				value="{{.Subject.Description}}"
+				class="form-control" required="required">
+				<span class="help-block">Shown on Reportcards</span>
+			</div>
+		</div>
+
+		<div class="form-group">
+			<label class="col-sm-3 control-label" for="CalculateInAverage">Calculate in average?</label>
+			<div class="col-sm-5">
+				<input type="checkbox" id="CalculateInAverage" name="CalculateInAverage"
+				{{if .Subject.CalculateInAverage}}selected="selected"{{end}}>
+				<span class="help-block">Used in regular reportcards</span>
+			</div>
+		</div>
+
+		<div class="form-group">
+			<label class="col-sm-3 control-label" for="Credits">Credits</label>
+			<div class="col-sm-5">
+				<input type="number" id="Credits" name="Credits"
+				value="{{.Subject.Credits}}"
+				class="form-control" required="required"
+				min="0" step="any">
+				<span class="help-block">Used in GPA reportcards</span>
+			</div>
+		</div>
+
+		<legend>Quarter grading columns</legend>
+		<table>
+		<thead>
+			<th scope="col">Type</th>
+			<th scope="col">Name</th>
+			<th scope="col">Max marks</th>
+			<th scope="col">No. of Quizzes</th>
+			<th scope="col">Calculate Best N Quizzes</th>
+		</thead>
+		<tbody>
+		{{range $i, $gc := .Subject.QuarterGradingColumns}}
+		<tr>
+			<td>
+				<select id="qgc-type-{{$i}}"
+					name="qgc-type-{{$i}}" class="form-control">
+					{{$currentType := $gc.Type}}
+					{{range $.GradingColumnChoices}}
+					<option value="{{.Value}}"
+					{{if equal .Value $currentType}}selected="selected"{{end}}>
+						{{.Name}}
+					</option>
+					{{end}}
+				</select>
+			</td> 
+			<td>
+				<input type="text" name="qgc-name-{{$i}}"
+			   		class="form-control" value="{{$gc.Name}}">
+			</td>
+			<td>
+				<input type="number" name="qgc-max-{{$i}}"
+					min="0" max="100" step="any"
+			   		class="form-control" value="{{$gc.Max}}">
+			</td>
+			<td>
+				<input type="number" name="qgc-num-quizzes-{{$i}}"
+					min="0" max="100" step="1"
+			   		class="form-control" value="{{$gc.NumQuizzes}}">
+			</td>
+			<td>
+				<input type="number" name="qgc-best-quizzes-{{$i}}"
+					min="0" max="100" step="1"
+			   		class="form-control" value="{{$gc.NumQuizzes}}">
+			</td>
+		</tr>
+		{{end}}
+		</tbody>
+		</table>
+
+		<legend>Semester grading columns</legend>
+		<table>
+		<thead>
+			<th scope="col">Type</th>
+			<th scope="col">Name</th>
+			<th scope="col">Max marks</th>
+			<th scope="col">No. of Quizzes</th>
+			<th scope="col">Calculate Best N Quizzes</th>
+		</thead>
+		<tbody>
+		{{range $i, $gc := .Subject.SemesterGradingColumns}}
+		<tr>
+			<td>
+				<select id="sgc-type-{{$i}}"
+					name="sgc-type-{{$i}}" class="form-control">
+					{{$currentType := $gc.Type}}
+					{{range $.GradingColumnChoices}}
+					<option value="{{.Value}}"
+					{{if equal .Value $currentType}}selected="selected"{{end}}>
+						{{.Name}}
+					</option>
+					{{end}}
+				</select>
+			</td> 
+			<td>
+				<input type="text" name="sgc-name-{{$i}}"
+			   		class="form-control" value="{{$gc.Name}}">
+			</td>
+			<td>
+				<input type="number" name="sgc-max-{{$i}}"
+					min="0" max="100" step="any"
+			   		class="form-control" value="{{$gc.Max}}">
+			</td>
+			<td>
+				<input type="number" name="sgc-num-quizzes-{{$i}}"
+					min="0" max="100" step="1"
+			   		class="form-control" value="{{$gc.NumQuizzes}}">
+			</td>
+			<td>
+				<input type="number" name="sgc-best-quizzes-{{$i}}"
+					min="0" max="100" step="1"
+			   		class="form-control" value="{{$gc.NumQuizzes}}">
+			</td>
+		</tr>
+		{{end}}
+		</tbody>
+		</table>
+		
+		<legend></legend>
+		<div>
+			<input type="submit" name="submit" class="btn btn-default" value="Save">
+			{{if not (equal .Subject.ShortName "")}}
+			<input type="submit" name="submit" class="btn btn-default btn-danger are-you-sure" value="Delete">
+			{{end}}
+		</div>
+	</fieldset>
+</form>
+<div class="spacer">
+</div>
+{{end}}
+

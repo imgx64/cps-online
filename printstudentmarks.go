@@ -64,6 +64,7 @@ func printStudentMarksHandler(w http.ResponseWriter, r *http.Request) {
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
+	subjects = append(subjects, "Behavior")
 
 	var marksTerms []studentMarksTerm
 	for _, term := range terms {
@@ -99,7 +100,7 @@ func printStudentMarksHandler(w http.ResponseWriter, r *http.Request) {
 
 			mark := gs.get100(term, marks)
 			letter := ls.getLetter(mark)
-			if subjectInAverage(subject, class) && !math.IsNaN(mark) {
+			if gs.subjectInAverage() && !math.IsNaN(mark) {
 				total += mark
 				numInAverage++
 			}

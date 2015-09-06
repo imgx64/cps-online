@@ -215,7 +215,7 @@ func settingsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := render(w, r, "settings", data); err != nil {
-		log.Errorf(c, "Could not render template upload: %s", err)
+		log.Errorf(c, "Could not render template settings: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
