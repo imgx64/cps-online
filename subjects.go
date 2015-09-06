@@ -21,7 +21,6 @@ func init() {
 	http.HandleFunc("/subjects", accessHandler(subjectsHandler))
 	http.HandleFunc("/subjects/details", accessHandler(subjectsDetailsHandler))
 	http.HandleFunc("/subjects/save", accessHandler(subjectsSaveHandler))
-	http.HandleFunc("/subjectsdelete", accessHandler(subjectsDeleteHandler))
 }
 
 type subjectSetting struct {
@@ -306,6 +305,22 @@ func subjectsSaveHandler(w http.ResponseWriter, r *http.Request) {
 
 	class := r.Form.Get("Class")
 
+	if r.Form.Get("submit") == "Delete" {
+
+		subjectname := r.Form.Get("ShortName")
+
+		err := deleteSubject(c, sy, class, subjectname)
+		if err != nil {
+			log.Errorf(c, "could not delete subject %s %s %s: %s", sy, class, subjectname, err)
+			renderErrorMsg(w, r, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		// TODO: message of success
+		http.Redirect(w, r, "/subjects", http.StatusFound)
+		return
+	}
+
 	// TODO: check class exists
 
 	var subject Subject
@@ -447,32 +462,6 @@ func subjectsSaveHandler(w http.ResponseWriter, r *http.Request) {
 	err = saveSubject(c, sy, class, subject)
 	if err != nil {
 		log.Errorf(c, "could not save subject %s %s %v: %s", sy, class, subject, err)
-		renderErrorMsg(w, r, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	// TODO: message of success
-	http.Redirect(w, r, "/subjects", http.StatusFound)
-}
-
-func subjectsDeleteHandler(w http.ResponseWriter, r *http.Request) {
-	c := appengine.NewContext(r)
-
-	sy := getSchoolYear(c)
-
-	if err := r.ParseForm(); err != nil {
-		log.Errorf(c, "Could not parse form: %s", err)
-		renderError(w, r, http.StatusInternalServerError)
-		return
-	}
-
-	class := r.Form.Get("Class")
-
-	subjectname := r.Form.Get("ShortName")
-
-	err := deleteSubject(c, sy, class, subjectname)
-	if err != nil {
-		log.Errorf(c, "could not delete subject %s %s %s: %s", sy, class, subjectname, err)
 		renderErrorMsg(w, r, http.StatusBadRequest, err.Error())
 		return
 	}

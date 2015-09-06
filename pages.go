@@ -25,7 +25,6 @@ var access = map[string]roles{
 	"/settings/addclass":       adminRole,
 	"/settings/addschoolyear":  adminRole,
 	"/settings/addsubject":     adminRole,
-	"/settings/deletesubject":  adminRole,
 	"/assign":                  adminRole,
 	"/assign/save":             adminRole,
 
