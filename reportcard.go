@@ -5,6 +5,7 @@
 package main
 
 import (
+	"golang.org/x/net/context"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/log"
 
@@ -164,4 +165,9 @@ func reportcardHandler(w http.ResponseWriter, r *http.Request) {
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
+}
+
+func published(c context.Context, term Term) bool {
+	studentAccess := getStudentAccess(c)
+	return studentAccess[term]
 }

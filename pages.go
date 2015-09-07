@@ -26,8 +26,10 @@ var access = map[string]roles{
 	"/settings/addschoolyear":  adminRole,
 	"/settings/addsubject":     adminRole,
 	"/settings/deletesubject":  adminRole,
-	"/assign":                  adminRole,
-	"/assign/save":             adminRole,
+	"/settings/access":         adminRole,
+
+	"/assign":      adminRole,
+	"/assign/save": adminRole,
 
 	"/subjects":         adminRole,
 	"/subjects/details": adminRole,
@@ -79,6 +81,15 @@ func accessHandler(f func(w http.ResponseWriter, r *http.Request)) func(w http.R
 			renderError(w, r, http.StatusInternalServerError)
 			return
 		}
+
+if !user.Roles.Admin {
+	staffAccess := getStaffAccess(c)
+	if !staffAccess {
+			renderErrorMsg(w, r, http.StatusForbidden, "The system is currently in Maintenance. Please try again later.")
+			return
+	}
+}
+
 		if !canAccess(user.Roles, r.URL.Path) {
 			renderError(w, r, http.StatusForbidden)
 			return

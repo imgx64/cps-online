@@ -25,6 +25,7 @@ func init() {
 	http.HandleFunc("/settings/addschoolyear", accessHandler(settingsAddSYHandler))
 	http.HandleFunc("/settings/addsubject", accessHandler(settingsAddSubjectHandler))
 	http.HandleFunc("/settings/deletesubject", accessHandler(settingsDeleteSubjectHandler))
+	http.HandleFunc("/settings/access", accessHandler(settingsAccessHandler))
 }
 
 const startYear = 2013
@@ -168,6 +169,85 @@ func saveAllSubjects(c context.Context, sy string, subjects []string) error {
 	return nil
 }
 
+type staffAccessSetting struct {
+	Value bool
+}
+
+func getStaffAccess(c context.Context) bool {
+
+	key := datastore.NewKey(c, "settings", "staff_access", 0, nil)
+
+	setting := staffAccessSetting{}
+	err := nds.Get(c, key, &setting)
+	var access bool
+	if err == nil {
+		access = setting.Value
+	} else {
+		log.Warningf(c, "Could not get staff access: %s\nUsing defaults instead", err)
+		access = false
+	}
+
+	return access
+}
+
+func saveStaffAccess(c context.Context, access bool) error {
+
+	key := datastore.NewKey(c, "settings", "staff_access", 0, nil)
+
+	_, err := nds.Put(c, key, &staffAccessSetting{access})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type studentAccessValue struct {
+	Term   Term
+	Access bool
+}
+
+type studentAccessSetting struct {
+	Value []studentAccessValue
+}
+
+func getStudentAccess(c context.Context) map[Term]bool {
+
+	key := datastore.NewKey(c, "settings", "student_access", 0, nil)
+
+	setting := studentAccessSetting{}
+	err := nds.Get(c, key, &setting)
+	var access []studentAccessValue
+	if err == nil {
+		access = setting.Value
+	} else {
+		log.Warningf(c, "Could not get student access: %s\nUsing defaults instead", err)
+		access = nil
+	}
+
+	result := make(map[Term]bool)
+	for _, sav := range access {
+		result[sav.Term] = sav.Access
+	}
+
+	return result
+}
+
+func saveStudentAccess(c context.Context, access map[Term]bool) error {
+
+	key := datastore.NewKey(c, "settings", "student_access", 0, nil)
+
+	var savs []studentAccessValue
+	for k, v := range access {
+		savs = append(savs, studentAccessValue{k, v})
+	}
+
+	_, err := nds.Put(c, key, &studentAccessSetting{savs})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func settingsHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 
@@ -181,6 +261,9 @@ func settingsHandler(w http.ResponseWriter, r *http.Request) {
 	schoolYears := getSchoolYears(c)
 	sy := getSchoolYear(c)
 
+	staffAccess := getStaffAccess(c)
+	studentAccess := getStudentAccess(c)
+
 	settings := getClassSettings(c, sy)
 
 	maxSchoolYear := getMaxSchoolYear(c)
@@ -191,6 +274,10 @@ func settingsHandler(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		SectionChoices      []string
 		LetterSystemChoices []string
+		Terms               []Term
+
+		StaffAccess   bool
+		StudentAccess map[Term]bool
 
 		SchoolYears []string
 		SY          string
@@ -203,6 +290,10 @@ func settingsHandler(w http.ResponseWriter, r *http.Request) {
 	}{
 		sectionChoices,
 		letterSystemChoices,
+		terms,
+
+		staffAccess,
+		studentAccess,
 
 		schoolYears,
 		sy,
@@ -431,4 +522,37 @@ func sectionsUntil(end string) []string {
 	}
 
 	return sections
+}
+
+func settingsAccessHandler(w http.ResponseWriter, r *http.Request) {
+	c := appengine.NewContext(r)
+
+	if err := r.ParseForm(); err != nil {
+		log.Errorf(c, "Could not parse form: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	staffAccess := r.PostForm.Get("staff-access") == "on"
+
+	if err := saveStaffAccess(c, staffAccess); err != nil {
+		log.Errorf(c, "Could not save staff access: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	studentAccess := make(map[Term]bool)
+	for _, term := range terms {
+		access := r.PostForm.Get("student-access-"+term.Value()) == "on"
+		studentAccess[term] = access
+	}
+
+	if err := saveStudentAccess(c, studentAccess); err != nil {
+		log.Errorf(c, "Could not save student access: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	// TODO: message of success
+	http.Redirect(w, r, "/settings", http.StatusFound)
 }

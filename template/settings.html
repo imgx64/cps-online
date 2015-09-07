@@ -6,6 +6,52 @@ license that can be found in the LICENSE file.
 
 {{define "title"}}Settings{{end}}
 {{define "content"}}
+<form  action="/settings/access" method="POST">
+	<fieldset>
+		<legend>Access</legend>
+		<div class="form-inline">
+			<div class="form-group">
+				<label>Access to staff</label>
+			</div>
+			<table class="table table-bordered">
+				<tr>
+					<th>Full access (unchecked = Maintenance mode)</th>
+				</tr>
+				<tr>
+					<td>
+						<input type="checkbox" name="staff-access"
+							{{if .StaffAccess}}checked="checked"{{end}}>
+					</td>
+				</tr>
+			</table>
+		</div>
+		<div class="form-inline">
+			<div class="form-group">
+				<label>Access to students</label>
+			</div>
+			<table class="table table-bordered">
+				<tr>
+					{{range .Terms}}
+					<th scope="col">{{.}}</th>
+					{{end}}
+				</tr>
+				<tr>
+					{{range .Terms}}
+					<td>
+						<input type="checkbox" name="student-access-{{.Value}}"
+							{{if index $.StudentAccess .}}checked="checked"{{end}}>
+					</td>
+					{{end}}
+				</tr>
+			</table>
+		</div>
+		<div>
+			<input type="submit" class="btn btn-default" value="Save">
+		</div>
+	</fieldset>
+</form>
+<div class="spacer">
+</div>
 <form  action="/settings/saveschoolyear" method="POST">
 	<fieldset>
 		<legend>School Year</legend>
