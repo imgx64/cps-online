@@ -328,13 +328,21 @@ func subjectsSaveHandler(w http.ResponseWriter, r *http.Request) {
 	subject.ShortName = r.PostForm.Get("ShortName")
 	subject.Description = r.PostForm.Get("Description")
 	subject.CalculateInAverage = r.PostForm.Get("CalculateInAverage") == "on"
-	credits, err := strconv.ParseFloat(r.PostForm.Get("Credits"), 64)
+	s1credits, err := strconv.ParseFloat(r.PostForm.Get("S1Credits"), 64)
 	if err != nil {
 		renderErrorMsg(w, r, http.StatusBadRequest,
-			fmt.Sprintf("Invalid credits: %s", r.PostForm.Get("Credits")))
+			fmt.Sprintf("Invalid Semester 1 credits: %s", r.PostForm.Get("S1Credits")))
 		return
 	}
-	subject.Credits = credits
+	subject.S1Credits = s1credits
+
+	s2credits, err := strconv.ParseFloat(r.PostForm.Get("S2Credits"), 64)
+	if err != nil {
+		renderErrorMsg(w, r, http.StatusBadRequest,
+			fmt.Sprintf("Invalid Semester 2 credits: %s", r.PostForm.Get("S2Credits")))
+		return
+	}
+	subject.S2Credits = s2credits
 
 	for i := 0; ; i++ {
 		typeStr := r.PostForm.Get(fmt.Sprintf("qgc-type-%d", i))

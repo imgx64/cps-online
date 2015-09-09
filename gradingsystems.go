@@ -296,7 +296,8 @@ type Subject struct {
 	ShortName          string
 	Description        string
 	CalculateInAverage bool
-	Credits            float64
+	S1Credits          float64
+	S2Credits          float64
 
 	QuarterGradingColumns  []gradingColumn
 	SemesterGradingColumns []gradingColumn

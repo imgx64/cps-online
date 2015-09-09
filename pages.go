@@ -82,13 +82,13 @@ func accessHandler(f func(w http.ResponseWriter, r *http.Request)) func(w http.R
 			return
 		}
 
-if !user.Roles.Admin {
-	staffAccess := getStaffAccess(c)
-	if !staffAccess {
-			renderErrorMsg(w, r, http.StatusForbidden, "The system is currently in Maintenance. Please try again later.")
-			return
-	}
-}
+		if !user.Roles.Admin {
+			staffAccess := getStaffAccess(c)
+			if !staffAccess {
+				renderErrorMsg(w, r, http.StatusForbidden, "The system is currently in Maintenance. Please try again later.")
+				return
+			}
+		}
 
 		if !canAccess(user.Roles, r.URL.Path) {
 			renderError(w, r, http.StatusForbidden)
