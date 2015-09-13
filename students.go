@@ -76,8 +76,8 @@ func getStudentMulti(c context.Context, ids []string) ([]studentType, error) {
 		keys = append(keys, datastore.NewKey(c, "student", id, 0, akey))
 	}
 
-	var stus []studentType
-	err = nds.GetMulti(c, keys, &stus)
+	stus := make([]studentType, len(keys))
+	err = nds.GetMulti(c, keys, stus)
 	if err != nil {
 		return nil, err
 	}
@@ -602,6 +602,7 @@ var studentFields = []string{
 	"Section",
 	"DateOfBirth",
 	"Nationality",
+	"Stream",
 	"CPR",
 	"Passport",
 	"ParentInfo",
@@ -613,15 +614,15 @@ var studentFields = []string{
 // used for CSV
 var studentFieldsDesc = []string{
 	"Created Automatically",
-	"True or False",
 	"Required",
 	"",
 	"M or F",
-	"Required",
-	"Required",
+	"",
+	"",
 	"YYYY-MM-DD",
 	"",
-	"Required",
+	"",
+	"",
 	"",
 	"",
 	"",
@@ -639,6 +640,15 @@ func studentsImportHandler(w http.ResponseWriter, r *http.Request) {
 	message := struct {
 		Msg string
 	}{}
+
+	if r.Method != "POST" {
+		if err := render(w, r, "studentsimport", message); err != nil {
+			log.Errorf(c, "Could not render template studentsimport: %s", err)
+			renderError(w, r, http.StatusInternalServerError)
+			return
+		}
+		return
+	}
 
 	err := r.ParseMultipartForm(1e6)
 	if err != nil || r.MultipartForm == nil || len(r.MultipartForm.File["csvfile"]) != 1 {
@@ -693,18 +703,19 @@ func studentsImportHandler(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		dob, err := time.Parse("2006-01-02", record[7])
+		dob, err := time.Parse("2006-01-02", record[6])
 		if err != nil {
 			errors = append(errors, fmt.Errorf("Error in row %d: %s", i, err))
 			continue
 		}
 		stu := studentType{
 			ID:             record[0],
-			Name:           record[2],
-			ArabicName:     record[3],
-			Gender:         record[4],
+			Name:           record[1],
+			ArabicName:     record[2],
+			Gender:         record[3],
 			DateOfBirth:    dob,
-			Nationality:    record[8],
+			Nationality:    record[7],
+			Stream:         record[8],
 			CPR:            record[9],
 			Passport:       record[10],
 			ParentInfo:     record[11],
@@ -725,8 +736,8 @@ func studentsImportHandler(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		class := record[5]
-		section := record[6]
+		class := record[4]
+		section := record[5]
 		err = saveStudentClass(c, stu.ID, stu.Name, sy, class, section)
 		if err != nil {
 			errors = append(errors, fmt.Errorf("Error in row %d: %s", i, err))
@@ -816,6 +827,7 @@ func studentsExportHandler(w http.ResponseWriter, r *http.Request) {
 		row = append(row, stuClass.Section)
 		row = append(row, stu.DateOfBirth.Format("2006-01-02"))
 		row = append(row, stu.Nationality)
+		row = append(row, stu.Stream)
 		row = append(row, stu.CPR)
 		row = append(row, stu.Passport)
 		row = append(row, stu.ParentInfo)
