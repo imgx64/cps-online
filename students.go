@@ -34,6 +34,7 @@ type studentType struct {
 	Gender         string
 	DateOfBirth    time.Time
 	Nationality    string
+	Stream         string
 	CPR            string
 	Passport       string
 	ParentInfo     string
@@ -337,7 +338,9 @@ func getStudentClass(c context.Context, id, sy string) (class, section string, e
 
 	var sc studentClass
 	err = nds.Get(c, key, &sc)
-	if err != nil {
+	if err == datastore.ErrNoSuchEntity {
+		return "", "", nil
+	} else if err != nil {
 		return "", "", err
 	}
 
@@ -545,6 +548,7 @@ func studentsSaveHandler(w http.ResponseWriter, r *http.Request) {
 		Gender:         f.Get("Gender"),
 		DateOfBirth:    dateOfBirth,
 		Nationality:    f.Get("Nationality"),
+		Stream:         f.Get("Stream"),
 		CPR:            f.Get("CPR"),
 		Passport:       f.Get("Passport"),
 		ParentInfo:     f.Get("ParentInfo"),

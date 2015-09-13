@@ -44,7 +44,9 @@ func getStudentMarks(c context.Context, id, sy, subject string) (studentMarks, e
 	q = q.Filter("Subject =", subject)
 	var rows []marksRow
 	_, err := q.GetAll(c, &rows)
-	if err != nil {
+	if err == datastore.ErrNoSuchEntity {
+		return make(studentMarks), nil
+	} else if err != nil {
 		return nil, err
 	}
 

@@ -53,6 +53,7 @@ var access = map[string]roles{
 	"/printstudentmarks": hrRole,
 	"/reportcards":       hrRole,
 	"/reportcards/print": hrRole,
+	"/gpareportcard":     hrRole,
 
 	"/marks":            teacherRole,
 	"/marks/save":       teacherRole,
