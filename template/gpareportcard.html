@@ -13,10 +13,284 @@ license that can be found in the LICENSE file.
 
 		<!-- Styles -->
 		<link href="/static/css/html5-doctor-reset-stylesheet.min.css" rel="stylesheet">
-		<link href="/static/css/reportcards.css" rel="stylesheet">
+		<link href="/static/css/gpa-reportcards.css" rel="stylesheet">
 	</head>
 
 	<body>
+	<div class="gpa-reportcard">
+		<div class="gpa-reportcard-header">
+			<img src="/static/img/cps-logo-100.png" alt="CPS Logo" class="gpa-reportcard-cps-logo">
+			<img src="/static/img/advanced_logo.png" alt="AdvancED Logo" class="gpa-reportcard-advanced-logo">
+			<img src="/static/img/cambridge_logo.jpg" alt="Cambridge Associate School Logo" class="gpa-reportcard-cambridge-logo">
 
+			<p class="gpa-reportcard-kob">Kingdom of Bahrain</p>
+			<p class="gpa-reportcard-cps">Creativity Private School</p>
+			<p class="gpa-reportcard-ot">Official Transcript</p>
+		</div>
+
+		<table class="gpa-student-info">
+			<tr>
+				<th class="gpa-info-col-1">Name:</th>
+				<td class="gpa-info-col-2">{{.Name}}</td>
+				<th class="gpa-info-col-3">Sex:</th>
+				<td class="gpa-info-col-4">{{.Sex}}</td>
+				<th class="gpa-info-col-5">Nationality:</th>
+				<td class="gpa-info-col-6">{{.Nationality}}</td>
+				<th class="gpa-info-col-7">D.O.B:</th>
+				<td class="gpa-info-col-8">{{.DOB}}</td>
+			</tr>
+			<tr>
+				<th>ID Number:</th>
+				<td>{{.ID}}</td>
+				<th>Stream:</th>
+				<td>{{.Stream}}</td>
+				<th>CPR:</th>
+				<td>{{.CPR}}</td>
+				<th>Requirement Attained:</th>
+				<td>(Minimum / Distinguished)</td>
+			</tr>
+		</table>
+
+		<table class="gpa-years">
+			<tr class="gpa-years-subjects">
+			{{range .Years}}
+			<td>
+				<table class="gpa-years-subjects-year">
+				<thead>
+					<tr>
+						<th>Grade {{.Class}}</th>
+						<th colspan="8">{{.SY}}</th>
+					</tr>
+					<tr>
+						<td rowspan="2"></td>
+						<th scope="col" colspan="4">Semester 1</th>
+						<th scope="col" colspan="4">Semester 2</th>
+					</tr>
+					<tr>
+						<th scope="col" class="gpa-small-col">CA</th>
+						<th scope="col" class="gpa-small-col">CE</th>
+						<th scope="col" class="gpa-small-col">AV</th>
+						<th scope="col" class="gpa-small-col">WGP</th>
+						<th scope="col" class="gpa-small-col">CA</th>
+						<th scope="col" class="gpa-small-col">CE</th>
+						<th scope="col" class="gpa-small-col">AV</th>
+						<th scope="col" class="gpa-small-col">WGP</th>
+					</tr>
+				</thead>
+				<tbody>
+				{{range .Rows}}
+					<tr>
+						<th scope="row" class="gpa-subjects-subject">{{.Subject}}</th>
+
+						{{if .S1Available}}
+						<td class="gpa-small-col">{{.S1CA | mark}}</td>
+						<td class="gpa-small-col">{{.S1CE | mark}}</td>
+						<td class="gpa-small-col">{{.S1AV}}</td>
+						<td class="gpa-small-col">{{.S1WGP | mark}}</td>
+						{{else}}
+						<td colspan="4" class="gpa-na-col">N/A</td>
+						{{end}}
+
+						{{if .S2Available}}
+						<td class="gpa-small-col">{{.S2CA | mark}}</td>
+						<td class="gpa-small-col">{{.S2CE | mark}}</td>
+						<td class="gpa-small-col">{{.S2AV}}</td>
+						<td class="gpa-small-col">{{.S2WGP | mark}}</td>
+						{{else}}
+						<td colspan="4" class="gpa-na-col">N/A</td>
+						{{end}}
+					</tr>
+				{{end}}
+				</tbody>
+				</table>
+			</td>
+			{{end}}
+			</tr>
+			<tr class="gpa-years-summary">
+			{{range .Years}}
+			<td>
+				<table class="gpa-summary-table">
+					<tr>
+						<th scope="row">Credits Earned:</th>
+						<td>{{.CreditsEarned}}</td>
+					</tr>
+					<tr>
+						<th scope="row">Year Average:</th>
+						<td>{{.YearAverage}}</td>
+					</tr>
+					<tr>
+						<th scope="row">GPA:</th>
+						<td>{{.GPA | mark}}</td>
+					</tr>
+				</table>
+			</td>
+			{{end}}
+			</tr>
+		</table>
+
+		<table class="gpa-description">
+			<tr>
+				<td class="gpa-acronyms">
+					<div class="gpa-acronyms-inner">
+						<b>CA:</b> Credit Attempted <br>
+						<b>CE:</b> Credit Earned <br>
+						<b>AV:</b> Annual Average <br>
+						<b>WGP:</b> Grade Point <br>
+						<br>
+						One credit is granted to a minimum of 120 hours of instruction 
+					</div>
+				</td>
+				<td class="gpa-abc-system">
+				<table class="gpa-abc-table">
+					<thead>
+						<tr>
+							<th scope="col" class="gpa-abc-percent">Percentage</th>
+							<th scope="col" class="gpa-abc-gp">Grade Point</th>
+							<th scope="col" class="gpa-abc-letter">Letter Grade</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<th scope="row">97 - 100</th>
+							<td>4</td>
+							<td>A+</td>
+						</tr>
+						<tr>
+							<th scope="row">93 - 96</th>
+							<td>4</td>
+							<td>A</td>
+						</tr>
+						<tr>
+							<th scope="row">90 - 92</th>
+							<td>3.7</td>
+							<td>A-</td>
+						</tr>
+						<tr>
+							<th scope="row">87 - 89</th>
+							<td>3.3</td>
+							<td>B+</td>
+						</tr>
+						<tr>
+							<th scope="row">83 - 86	</th>
+							<td>3</td>
+							<td>B</td>
+						</tr>
+						<tr>
+							<th scope="row">80 - 82</th>
+							<td>2.7</td>
+							<td>B-</td>
+						</tr>
+						<tr>
+							<th scope="row">77 - 79</th>
+							<td>2.3</td>
+							<td>C+</td>
+						</tr>
+					</tbody>
+				</table>
+				</td>
+				<td class="gpa-abc-system">
+				<table class="gpa-abc-table">
+					<thead>
+						<tr>
+							<th scope="col" class="gpa-abc-percent">Percentage</th>
+							<th scope="col" class="gpa-abc-gp">Grade Point</th>
+							<th scope="col" class="gpa-abc-letter">Letter Grade</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<th scope="row">73 - 76</th>
+							<td>2</td>
+							<td>C</td>
+						</tr>
+						<tr>
+							<th scope="row">70 - 72</th>
+							<td>1.7</td>
+							<td>C-</td>
+						</tr>
+						<tr>
+							<th scope="row">67 - 69</th>
+							<td>1.3</td>
+							<td>D+</td>
+						</tr>
+						<tr>
+							<th scope="row">63 - 66</th>
+							<td>1</td>
+							<td>D</td>
+						</tr>
+						<tr>
+							<th scope="row">60 - 62</th>
+							<td>1</td>
+							<td>D-</td>
+						</tr>
+						<tr>
+							<th scope="row">59 and below</th>
+							<td>0</td>
+							<td>F</td>
+						</tr>
+					</tbody>
+				</table>
+				</td>
+				<td class="gpa-total-summary">
+				<table class="gpa-summary-table">
+					<tr>
+						<th scope="row" class="gpa-summary-table-title">Credits to Date:</th>
+						<td class="gpa-summary-table-value">{{.TotalCredits | mark}}</td>
+					</tr>
+					<tr>
+						<th scope="row">Cumulative GPA:</th>
+						<td>{{.CumulativeGPA | mark}}</td>
+					</tr>
+					<tr>
+						<th scope="row">Cumulative Average:</th>
+						<td>{{.CumulativeAvg}}</td>
+					</tr>
+					<tr>
+						<th scope="row">&nbsp;</th>
+						<td>&nbsp;</td>
+					</tr>
+					<tr>
+						<th scope="row">Passed and Graduated:</th>
+						<td></td>
+					</tr>
+				</table>
+				</td>
+			</tr>
+		</table>
+
+		<table class="gpa-footer">
+			<tr>
+				<td class="gpa-footer-requirements">
+					<b><u>Minimum Requirement</u></b>
+					- achieved the minimum credits required<br>
+					<b><u>Distinguished Requirement</u></b>
+					- achieved higher than minimum credits required<br>
+					<br>
+					<br>
+					<div class="gpa-principal-signature">Principal's Signature</div>
+				</td>
+
+				<td class="gpa-footer-school">
+					Creativity Private School<br>
+					Accredited by AdvancED International<br>
+					A Cambridge Associate School for Cambridge International Examinations<br>
+					P.O. Box 24173, Muharraq, Kingdom of Bahrain<br>
+					Tel: Salmaniya (+973) 17243855|17252636; Janabiya (+973) 17600255|17600244<br>
+					Fax (+973) 17243844 | Website: www.cps-bh.com | Email: cps.bh@hotmail.com<br>
+				</td>
+
+				<td class="gpa-footer-completion">
+					<div class="gpa-footer-completion-text">
+						Upon successful completion of the courses in Grade 12,
+						a student will earn the school's diploma which is
+						recognized by the Bahrain Ministry of Education
+					</div>
+					<br>
+					<b>Date Issued:</b>
+				</td>
+			</tr>
+		</table>
+
+	</div>
 	</body>
 </html>

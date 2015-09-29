@@ -12,6 +12,7 @@ import (
 	"math"
 	"net/http"
 	"path/filepath"
+	"time"
 )
 
 func init() {
@@ -118,7 +119,7 @@ func gpaReportcardHandler(w http.ResponseWriter, r *http.Request) {
 			}
 
 			gpaRow := GPARow{
-				Subject: subject,
+				Subject: gs.displayName(),
 
 				S1Available: false,
 				S1CA:        math.NaN(),
@@ -132,7 +133,6 @@ func gpaReportcardHandler(w http.ResponseWriter, r *http.Request) {
 				S2AV:        "",
 				S2WGP:       math.NaN(),
 			}
-			gpaRow.Subject = subject
 
 			if sub.S1Credits > 0 {
 				gpaRow.S1Available = true
@@ -177,6 +177,8 @@ func gpaReportcardHandler(w http.ResponseWriter, r *http.Request) {
 					yearWeightedTotal += gpaRow.S2CE * s2Mark
 				}
 			}
+
+			gpaRows = append(gpaRows, gpaRow)
 		}
 
 		if len(gpaRows) == 0 {
@@ -206,6 +208,11 @@ func gpaReportcardHandler(w http.ResponseWriter, r *http.Request) {
 
 	cumulativeAvg, cumulativeGPA := gpaAvWgp(totalWeightedTotal / totalCredits)
 
+	dob := ""
+	if stu.DateOfBirth.After(time.Date(1990, 1, 1, 0, 0, 0, 0, time.UTC)) {
+		dob = stu.DateOfBirth.Format("2006-01-02")
+	}
+
 	data := struct {
 		Name        string
 		Sex         string
@@ -224,7 +231,7 @@ func gpaReportcardHandler(w http.ResponseWriter, r *http.Request) {
 		stu.Name,
 		stu.Gender,
 		stu.Nationality,
-		stu.DateOfBirth.Format("2006-01-02"),
+		dob,
 		stu.ID,
 		stu.Stream,
 		stu.CPR,

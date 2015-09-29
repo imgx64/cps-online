@@ -1,0 +1,259 @@
+@page {
+	size: A4 landscape;
+	margin-top: 0.4cm;
+	margin-bottom: 0.4cm;
+	margin-left: 0.5cm;
+	margin-right: 0.5cm;
+}
+
+.gpa-reportcard:first-child {
+	page-break-before: auto;
+}
+
+.gpa-reportcard {
+	background-image: url("/static/img/cps-logo-10.png") !important;
+	background-repeat: no-repeat !important;
+	background-position: 50% 50% !important;
+	background-size: contain !important;
+
+	page-break-before: always;
+	clear: both;
+
+	width: 100%;
+}
+
+@media print {
+	.gpa-reportcard {
+		min-height: 18.5cm;
+	}
+}
+
+.gpa-reportcard .gpa-reportcard-expand {
+	height: 100%;
+}
+
+.gpa-reportcard .gpa-reportcard-expand .gpa-reportcard-expand-spacer {
+	height: 10%;
+}
+
+.gpa-reportcard-header {
+	text-align: center;
+	position: relative;
+}
+
+.gpa-reportcard-cps-logo {
+	height: 60px;
+}
+
+.gpa-reportcard-advanced-logo {
+	width: 120px;
+	position: absolute;
+	float: left;
+	left: 5%;
+	top: 5mm;
+}
+
+.gpa-reportcard-cambridge-logo {
+	width: 140px;
+	position: absolute;
+	float: right;
+	right: 5%;
+	top: 7mm;
+}
+
+p.gpa-reportcard-kob,
+p.gpa-reportcard-cps,
+p.gpa-reportcard-ot {
+	font-family: serif;
+	font-size: medium;
+}
+
+.gpa-student-info {
+	width: 100%;
+}
+
+.gpa-student-info th,
+.gpa-student-info td {
+	font-size: small;
+	padding: 1mm;
+}
+
+.gpa-student-info th {
+	text-align: right;
+}
+
+.gpa-student-info .gpa-info-col-1,
+.gpa-student-info .gpa-info-col-3,
+.gpa-student-info .gpa-info-col-5 {
+	width: 7%;
+}
+
+.gpa-student-info .gpa-info-col-2 {
+	width: 30%;
+}
+
+.gpa-student-info .gpa-info-col-4 {
+	width: 8%;
+}
+
+.gpa-student-info .gpa-info-col-6 {
+	width: 11%;
+}
+
+.gpa-student-info .gpa-info-col-7 {
+	width: 15%;
+}
+
+.gpa-student-info .gpa-info-col-8 {
+	width: 15%;
+}
+
+.gpa-years,
+.gpa-years .gpa-years-subjects,
+.gpa-years .gpa-years-summary {
+	width: 100%;
+}
+
+table.gpa-years {
+	table-layout: fixed;
+}
+
+.gpa-years > tbody > tr > td, 
+.gpa-years > tbody > tr > th {
+	border: solid 3px black;
+}
+
+.gpa-years .gpa-years-subjects .gpa-years-subjects-year {
+	width: 100%;
+}
+
+.gpa-years .gpa-years-subjects-year td,
+.gpa-years .gpa-years-subjects-year th {
+	border-bottom: solid 1px black;
+	border-right: solid 1px black;
+}
+
+.gpa-years .gpa-years-subjects-year td:last-child,
+.gpa-years .gpa-years-subjects-year th:last-child {
+	border-right: none;
+}
+
+.gpa-years-subjects-year .gpa-subjects-subject {
+	font-size: small;
+}
+ 
+.gpa-years-subjects-year .gpa-small-col {
+	width: 7%;
+	font-size: x-small;
+	text-align: center;
+	font-family: sans-serif;
+	vertical-align: middle;
+}
+
+.gpa-years-subjects-year .gpa-na-col {
+	text-align: center;
+	font-size: x-small;
+	background: #dddddd;
+	vertical-align: middle;
+}
+
+.gpa-years-summary .gpa-summary-table {
+	width: 100%;
+}
+
+.gpa-summary-table td,
+.gpa-summary-table th {
+	font-size: small;
+	padding: 1mm;
+}
+
+.gpa-description {
+	width: 100%;
+}
+
+.gpa-description .gpa-acronyms,
+.gpa-description .gpa-abc-system,
+.gpa-description .gpa-total-summary {
+	width: 25%;
+	padding: 1mm;
+}
+
+.gpa-description .gpa-acronyms .gpa-acronyms-inner {
+	font-size: small;
+	border: solid 2px black;
+}
+
+.gpa-abc-table {
+	width: 98%;
+}
+
+.gpa-abc-table td,
+.gpa-abc-table th {
+	border: solid 1px black;
+}
+
+.gpa-abc-table .gpa-abc-percent {
+	width: 31%;
+}
+
+.gpa-abc-table .gpa-abc-gp {
+	width: 33%;
+}
+
+.gpa-abc-table .gpa-abc-letter {
+	width: 35%;
+}
+
+.gpa-abc-table td,
+.gpa-abc-table th {
+	text-align: center;
+	vertical-align: middle;
+	font-size: small;
+}
+
+.gpa-total-summary .gpa-summary-table {
+	width: 100%;
+	border: solid 2px black;
+}
+
+.gpa-total-summary .gpa-summary-table .gpa-summary-table-title {
+	width: 65%;
+}
+
+.gpa-total-summary .gpa-summary-table .gpa-summary-table-value {
+	width: 35%;
+}
+
+.gpa-footer {
+	position: relative;
+	bottom: 0;
+	width: 100%;
+}
+
+.gpa-footer td {
+	font-size: small;
+	padding: 2mm;
+}
+
+.gpa-footer .gpa-footer-requirements {
+	width: 25%;
+}
+
+.gpa-footer-requirements .gpa-principal-signature {
+	text-align: center;
+	border-top: solid 1px black;
+}
+
+.gpa-footer .gpa-footer-school {
+	width: 50%;
+	text-align: center;
+	vertical-align: bottom;
+}
+
+.gpa-footer .gpa-footer-completion {
+	width: 25%;
+}
+
+.gpa-footer-completion .gpa-footer-completion-text {
+	text-align: center;
+}
