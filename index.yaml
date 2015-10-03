@@ -27,6 +27,14 @@ indexes:
   - name: Enabled
   - name: Type
 
+- kind: homework
+  properties:
+  - name: Class
+  - name: SY
+  - name: Section
+  - name: Subject
+  - name: Date
+
 - kind: student
   ancestor: yes
   properties:

@@ -55,10 +55,15 @@ var access = map[string]roles{
 	"/reportcards/print": hrRole,
 	"/gpareportcard":     hrRole,
 
-	"/marks":            teacherRole,
-	"/marks/save":       teacherRole,
-	"/marks/import":     teacherRole,
-	"/marks/export":     teacherRole,
+	"/marks":        teacherRole,
+	"/marks/save":   teacherRole,
+	"/marks/import": teacherRole,
+	"/marks/export": teacherRole,
+
+	"/homework":        teacherRole,
+	"/homework/save":   teacherRole,
+	"/homework/delete": teacherRole,
+
 	"/upload":           teacherRole,
 	"/upload/file":      teacherRole,
 	"/upload/link":      teacherRole,
@@ -108,6 +113,7 @@ var pages = []link{
 	{Name: "Print All Marks", URL: "/printallmarks"},
 
 	{Name: "Enter Marks", URL: "/marks"},
+	{Name: "Homework", URL: "/homework"},
 	{Name: "Upload documents", URL: "/upload"},
 	{Name: "Daily Log", URL: "/dailylog"},
 	{Name: "Print Reportcards", URL: "/reportcards"},

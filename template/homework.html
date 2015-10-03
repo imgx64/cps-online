@@ -1,0 +1,113 @@
+{{/*
+Copyright 2013 Ibrahim Ghazal. All rights reserved.
+Use of this source code is governed by a BSD-style
+license that can be found in the LICENSE file.
+*/}}
+
+{{define "title"}}Homework{{end}}
+{{define "content"}}
+<form class="form-inline" action="/homework">
+	<div class="form-group">
+		<select id="classSection" name="ClassSection" class="form-control">
+			{{$sclass := .Class}}
+			{{$ssection := .Section}}
+			{{range .CG}}
+			{{$class := .Class}}
+			<optgroup label="{{.Class}}">
+				{{range .Sections}}
+				<option value="{{$class}}|{{.}}"
+				{{if equal $class $sclass | and (equal . $ssection)}} selected="selected"{{end}}
+				>{{$class}}{{.}}</option>
+				{{end}}
+			</optgroup>
+			{{end}}
+		</select>
+	</div>
+	<div class="form-group">
+		<select id="Subject" name="Subject" class="form-control">
+			{{$subject := .Subject}}
+			{{range .Subjects}}
+			<option {{if equal . $subject}}selected="selected"{{end}}
+			value="{{.}}">{{.}}</option>
+			{{end}}
+		</select>
+	</div>
+	<div class="form-group">
+		<input type="submit" class="btn btn-default hidden-print" value="Go">
+	</div>
+</form>
+{{if .Subject}}
+{{$subject := .Subject}}
+<p class="spacer"></p>
+<div>
+	<h2>Homework for {{.Class}}{{.Section}} {{.Subject}}</h2>
+	<table class="table table-bordered table-condensed">
+		<thead>
+			<tr>
+				<th scope="col">Date</th>
+				<th scope="col">Teacher</th>
+				<th scope="col">Homework</th>
+				<th scope="col"></th>
+			</tr>
+		</thead>
+		<tbody>
+		{{range .Homeworks}}
+			<tr>
+				<td>
+					{{.Date | formatDate}}
+				</td>
+				<td>
+					{{.Teacher}}
+				</td>
+				<td>
+					{{range .HomeworkMultiline}}
+					{{.}}<br>
+					{{end}}
+				</td>
+				<td>
+					<form action="/homework/delete" method="POST">
+					<input type="hidden" name="HomeworkID" value="{{.ID}}">
+					<input type="hidden" name="ClassSection" value="{{.Class}}|{{.Section}}">
+					<input type="hidden" name="Subject" value="{{.Subject}}">
+					<input type="submit"
+					class="btn btn-default btn-sm hidden-print are-you-sure" value="Delete">
+					</form>
+				</td>
+			</tr>
+		{{else}}
+			<tr class="info">
+				<td colspan="4">
+					<p class="text-center">No homework</p>
+				</td>
+			</tr>
+		{{end}}
+		</tbody>
+	</table>
+</div>
+<form class="form-horizontal" action="/homework/save" method="POST">
+	<fieldset>
+		<legend>Add homework for {{.Class}}{{.Section}} {{.Subject}}</legend>
+		<input type="hidden" name="ClassSection" value="{{.Class}}|{{.Section}}">
+		<input type="hidden" name="Subject" value="{{.Subject}}">
+		<div class="form-group">
+			<label class="col-sm-2 control-label" for="Date">Date</label>
+			<div class="col-sm-5">
+				<input type="date" id="Date" name="Date" class="form-control" required>
+				<span class="help-block"></span>
+			</div>
+		</div>
+		<div class="form-group">
+			<label class="col-sm-2 control-label" for="Homework">Homework</label>
+			<div class="col-sm-5">
+				<textarea id="Homework" name="Homework" rows="5" class="form-control" required></textarea>
+				<span class="help-block"></span>
+			</div>
+		</div>
+		<div class="form-actions">
+			<input type="submit" name="submit" class="btn btn-default btn-primary" value="Add">
+		</div>
+	</fieldset>
+</form>
+
+{{end}}
+{{end}}
