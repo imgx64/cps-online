@@ -23,6 +23,7 @@ func init() {
 	http.HandleFunc("/homework", accessHandler(homeworkHandler))
 	http.HandleFunc("/homework/save", accessHandler(homeworkSaveHandler))
 	http.HandleFunc("/homework/delete", accessHandler(homeworkDeleteHandler))
+	http.HandleFunc("/homeworks", accessHandler(homeworkStudentHandler))
 }
 
 // Homework will be stored in the datastore
@@ -352,4 +353,73 @@ func homeworkDeleteHandler(w http.ResponseWriter, r *http.Request) {
 
 	// TODO: message of success/fail
 	http.Redirect(w, r, redirectURL, http.StatusFound)
+}
+
+type subjectHomework struct {
+	Class   string
+	Section string
+	Subject string
+
+	Homeworks []Homework
+}
+
+func homeworkStudentHandler(w http.ResponseWriter, r *http.Request) {
+	c := appengine.NewContext(r)
+
+	sy := getSchoolYear(c)
+
+	user, err := getUser(c)
+	if err != nil {
+		log.Errorf(c, "Could not get user: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+	if user.Student == nil {
+		log.Errorf(c, "User is not a student: %s", user.Email)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+	stu := *user.Student
+
+	class, section, err := getStudentClass(c, stu.ID, sy)
+	if err != nil {
+		log.Errorf(c, "Could not get student class: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	subjects, err := getSubjects(c, sy, class)
+	if err != nil {
+		log.Errorf(c, "Could not get subjects: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	var subjectHomeworks []subjectHomework
+
+	for _, subject := range subjects {
+
+		hws, err := getHomework(c, sy, class, section, subject)
+		if err != nil {
+			log.Errorf(c, "Could not get homework: %s", err)
+			renderError(w, r, http.StatusInternalServerError)
+			return
+		}
+
+		subjectHomeworks = append(subjectHomeworks, subjectHomework{
+			class, section, subject, hws,
+		})
+	}
+
+	data := struct {
+		Homeworks []subjectHomework
+	}{
+		Homeworks: subjectHomeworks,
+	}
+
+	if err := render(w, r, "homeworkstudent", data); err != nil {
+		log.Errorf(c, "Could not render template homeworkstudent: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
 }

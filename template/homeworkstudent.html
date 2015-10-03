@@ -1,0 +1,47 @@
+{{/*
+Copyright 2013 Ibrahim Ghazal. All rights reserved.
+Use of this source code is governed by a BSD-style
+license that can be found in the LICENSE file.
+*/}}
+
+{{define "title"}}Homework{{end}}
+{{define "content"}}
+{{range .Homeworks}}
+<p class="spacer"></p>
+<div>
+	<h2>Homework for {{.Class}}{{.Section}} {{.Subject}}</h2>
+	<table class="table table-bordered table-condensed">
+		<thead>
+			<tr>
+				<th scope="col">Date</th>
+				<th scope="col">Teacher</th>
+				<th scope="col">Homework</th>
+			</tr>
+		</thead>
+		<tbody>
+		{{range .Homeworks}}
+			<tr>
+				<td>
+					{{.Date | formatDate}}
+				</td>
+				<td>
+					{{.Teacher}}
+				</td>
+				<td>
+					{{range .HomeworkMultiline}}
+					{{.}}<br>
+					{{end}}
+				</td>
+			</tr>
+		{{else}}
+			<tr class="info">
+				<td colspan="3">
+					<p class="text-center">No homework</p>
+				</td>
+			</tr>
+		{{end}}
+		</tbody>
+	</table>
+</div>
+{{end}}
+{{end}}
