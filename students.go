@@ -150,7 +150,6 @@ func getUnassignedStudents(c context.Context, sy string) ([]studentClass, error)
 
 	assignedStudentIds := make(map[string]bool)
 	for _, stu := range assignedStudents {
-		log.Infof(c, "student: %v", stu)
 		assignedStudentIds[stu.ID] = true
 	}
 
