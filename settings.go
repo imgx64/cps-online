@@ -28,7 +28,7 @@ func init() {
 	http.HandleFunc("/settings/access", accessHandler(settingsAccessHandler))
 }
 
-const startYear = 2013
+const startYear = 2012
 
 type maxSchoolYearSetting struct {
 	Value int
