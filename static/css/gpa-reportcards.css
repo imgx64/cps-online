@@ -171,17 +171,48 @@ table.gpa-years {
 	width: 100%;
 }
 
-.gpa-description .gpa-acronyms,
-.gpa-description .gpa-abc-system,
-.gpa-description .gpa-total-summary {
+.gpa-description .gpa-abc-system {
 	width: 25%;
 	padding: 1mm;
+	font-size: small;
 }
 
-.gpa-description .gpa-acronyms .gpa-acronyms-inner {
+.gpa-description .gpa-description-center {
+	width: 45%;
+	padding: 1mm;
+	text-align: center;
 	font-size: small;
-	border: solid 2px black;
 }
+
+.gpa-description .gpa-total-summary {
+	width: 30%;
+	padding: 1mm;
+	text-align: center;
+	font-size: small;
+}
+
+.gpa-description .gpa-acronyms-inner {
+	margin-right: auto;
+	margin-left: auto;
+	border: solid 2px black;
+	width: 65%;
+}
+
+.gpa-description .gpa-acronyms-inner table {
+	width: 98%;
+	text-align: left;
+}
+
+.gpa-description .gpa-acronyms-inner p {
+	text-align: center;
+}
+
+.gpa-description .gpa-footer-school {
+	margin-top: 17mm;
+	text-align: center;
+	vertical-align: bottom;
+}
+
 
 .gpa-abc-table {
 	width: 98%;
@@ -208,12 +239,21 @@ table.gpa-years {
 .gpa-abc-table th {
 	text-align: center;
 	vertical-align: middle;
-	font-size: small;
+	font-size: x-small;
+}
+
+.gpa-total-summary .gpa-summary-included-classes {
+	font-size: x-small;
 }
 
 .gpa-total-summary .gpa-summary-table {
 	width: 100%;
 	border: solid 2px black;
+}
+
+.gpa-total-summary .gpa-summary-table th,
+.gpa-total-summary .gpa-summary-table td {
+	padding: 0mm;
 }
 
 .gpa-total-summary .gpa-summary-table .gpa-summary-table-title {
@@ -224,36 +264,16 @@ table.gpa-years {
 	width: 35%;
 }
 
-.gpa-footer {
-	position: relative;
-	bottom: 0;
-	width: 100%;
+.gpa-total-summary .gpa-footer-requirements {
+	text-align: left;
+	border: solid 2px black;
 }
 
-.gpa-footer td {
-	font-size: small;
-	padding: 2mm;
+.gpa-total-summary .gpa-principal-signature {
+	width: 98%;
 }
 
-.gpa-footer .gpa-footer-requirements {
-	width: 25%;
-}
-
-.gpa-footer-requirements .gpa-principal-signature {
-	text-align: center;
-	border-top: solid 1px black;
-}
-
-.gpa-footer .gpa-footer-school {
-	width: 50%;
-	text-align: center;
-	vertical-align: bottom;
-}
-
-.gpa-footer .gpa-footer-completion {
-	width: 25%;
-}
-
-.gpa-footer-completion .gpa-footer-completion-text {
-	text-align: center;
+.gpa-total-summary .gpa-principal-signature .signature-line {
+	border-bottom: solid 1px black;
+	width: 55%;
 }

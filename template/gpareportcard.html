@@ -34,20 +34,16 @@ license that can be found in the LICENSE file.
 				<td class="gpa-info-col-2">{{.Name}}</td>
 				<th class="gpa-info-col-3">Sex:</th>
 				<td class="gpa-info-col-4">{{.Sex}}</td>
-				<th class="gpa-info-col-5">Nationality:</th>
-				<td class="gpa-info-col-6">{{.Nationality}}</td>
-				<th class="gpa-info-col-7">D.O.B:</th>
-				<td class="gpa-info-col-8">{{.DOB}}</td>
+				<th class="gpa-info-col-5">CPR:</th>
+				<td class="gpa-info-col-6">{{.CPR}}</td>
 			</tr>
 			<tr>
-				<th>ID Number:</th>
-				<td>{{.ID}}</td>
+				<th>Nationality:</th>
+				<td>{{.Nationality}}</td>
+				<th>Date of Birth:</th>
+				<td>{{.DOB}}</td>
 				<th>Stream:</th>
 				<td>{{.Stream}}</td>
-				<th>CPR:</th>
-				<td>{{.CPR}}</td>
-				<th>Requirement Attained:</th>
-				<td>(Minimum / Distinguished)</td>
 			</tr>
 		</table>
 
@@ -130,16 +126,6 @@ license that can be found in the LICENSE file.
 
 		<table class="gpa-description">
 			<tr>
-				<td class="gpa-acronyms">
-					<div class="gpa-acronyms-inner">
-						<b>CA:</b> Credit Attempted <br>
-						<b>CE:</b> Credit Earned <br>
-						<b>AV:</b> Annual Average <br>
-						<b>WGP:</b> Grade Point <br>
-						<br>
-						One credit is granted to a minimum of 120 hours of instruction 
-					</div>
-				</td>
 				<td class="gpa-abc-system">
 				<table class="gpa-abc-table">
 					<thead>
@@ -185,19 +171,6 @@ license that can be found in the LICENSE file.
 							<td>2.3</td>
 							<td>C+</td>
 						</tr>
-					</tbody>
-				</table>
-				</td>
-				<td class="gpa-abc-system">
-				<table class="gpa-abc-table">
-					<thead>
-						<tr>
-							<th scope="col" class="gpa-abc-percent">Percentage</th>
-							<th scope="col" class="gpa-abc-gp">Grade Point</th>
-							<th scope="col" class="gpa-abc-letter">Letter Grade</th>
-						</tr>
-					</thead>
-					<tbody>
 						<tr>
 							<th scope="row">73 - 76</th>
 							<td>2</td>
@@ -230,9 +203,49 @@ license that can be found in the LICENSE file.
 						</tr>
 					</tbody>
 				</table>
+				<br>
+				<b>Date Issued:</b>
 				</td>
+				<td class="gpa-description-center">
+					<div class="gpa-acronyms-inner">
+						<table>
+							<tr>
+								<td><b>CA:</b> Credit Attempted</td>
+								<td><b>CE:</b> Credit Earned</td>
+							</tr>
+							<tr>
+								<td><b>AV:</b> Annual Average</td>
+								<td><b>WGP:</b> Grade Point</td>
+							</tr>
+						</table>
+						<p>
+							One credit is granted to a minimum of 120 hours of instruction
+							or 5 periods per week
+						</p>
+					</div>  
+					Note: Practical Courses Enrichment is from Ministry of Education
+
+					<div class="gpa-footer-school">
+						Creativity Private School<br>
+						Accredited by AdvancED International<br>
+						A Cambridge Associate School for Cambridge International Examinations<br>
+						P.O. Box 24173, Muharraq, Kingdom of Bahrain<br>
+						Tel: Salmaniya (+973) 17243855|17252636; Janabiya (+973) 17600255|17600244<br>
+						Fax (+973) 17243844 | Website: www.cps-bh.com | Email: cps.bh@hotmail.com<br>
+					</div>
+				</td>
+
 				<td class="gpa-total-summary">
 				<table class="gpa-summary-table">
+					<tr>
+						<td class="gpa-summary-included-classes" colspan="2">
+						<i>(Credits and GPA are calculated based on Grade
+						{{range $i, $class := .IncludedClasses}}{{if $i}},
+						{{if eq (increment $i) (len $.IncludedClasses)}} and {{end}}
+						{{end}}
+						{{$class}}{{end}} only)</i>
+						</td>
+					</tr>
 					<tr>
 						<th scope="row" class="gpa-summary-table-title">Credits to Date:</th>
 						<td class="gpa-summary-table-value">{{.TotalCredits | mark}}</td>
@@ -246,58 +259,37 @@ license that can be found in the LICENSE file.
 						<td>{{.CumulativeAvg}}</td>
 					</tr>
 					<tr>
-						<th scope="row">&nbsp;</th>
-						<td>&nbsp;</td>
+						<th scope="row">Requirement Attained:</th>
+						<td>(Minimum/Distinguished)*</td>
 					</tr>
 					<tr>
 						<th scope="row">Passed and Graduated:</th>
 						<td></td>
 					</tr>
 				</table>
-				</td>
-			</tr>
-		</table>
 
-		<table class="gpa-footer">
-			<tr>
-				<td class="gpa-footer-requirements">
+				<div>
+					Upon successful completion of the courses in Grade 12,
+					a student will earn the school's diploma which is
+					recognized by the Bahrain Ministry of Education
+				</div>
+				<br>
+				<div class="gpa-footer-requirements">
 					<b><u>Minimum Requirement</u></b>
 					- achieved the minimum credits required<br>
 					<b><u>Distinguished Requirement</u></b>
 					- achieved higher than minimum credits required<br>
-					<br>
-					<br>
-					<div class="gpa-principal-signature">Principal's Signature</div>
-				</td>
-
-				<td class="gpa-footer-school">
-					Creativity Private School<br>
-					Accredited by AdvancED International<br>
-					A Cambridge Associate School for Cambridge International Examinations<br>
-					P.O. Box 24173, Muharraq, Kingdom of Bahrain<br>
-					Tel: Salmaniya (+973) 17243855|17252636; Janabiya (+973) 17600255|17600244<br>
-					Fax (+973) 17243844 | Website: www.cps-bh.com | Email: cps.bh@hotmail.com<br>
-				</td>
-
-				<td class="gpa-footer-completion">
-					<div class="gpa-footer-completion-text">
-						(Credits and GPA are calculated based on Grade
-						{{range $i, $class := .IncludedClasses}}{{if $i}},{{end}}
-							{{if eq (increment $i) (len $.IncludedClasses)}} and {{end}}
-							{{$class}}{{end}}
-						only)
-					</div>
-					<div class="gpa-footer-completion-text">
-						Upon successful completion of the courses in Grade 12,
-						a student will earn the school's diploma which is
-						recognized by the Bahrain Ministry of Education
-					</div>
-					<br>
-					<b>Date Issued:</b>
+				</div>
+				<br>
+				<table class="gpa-principal-signature">
+					<tr>
+						<th>Principal's Signature </th>
+						<td class="signature-line"></td>
+					</tr>
+				</table>
 				</td>
 			</tr>
 		</table>
-
 	</div>
 	</body>
 </html>
