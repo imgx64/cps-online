@@ -97,6 +97,7 @@ license that can be found in the LICENSE file.
 			<th scope="col">Sections up to</th>
 			<th scope="col">Letter system</th>
 			<th scope="col">Quarter weight</th>
+			<th scope="col">Ignore in Total GPA</th>
 		</thead>
 		<tbody>
 		{{range .ClassSettings}}
@@ -130,6 +131,10 @@ license that can be found in the LICENSE file.
 				<input type="number" name="quarter-weight-{{.Class}}"
 			   		class="form-control" required="required"
 					min="0" max="50" step="any" value="{{.QuarterWeight}}">
+			</td>
+			<td style="text-align:center">
+				<input type="checkbox" name="ignore-in-total-gpa-{{.Class}}"
+				{{if .IgnoreInTotalGPA}}checked="checked"{{end}}>
 			</td>
 		</tr>
 		{{end}}

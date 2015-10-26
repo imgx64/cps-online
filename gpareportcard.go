@@ -66,6 +66,7 @@ func gpaReportcardHandler(w http.ResponseWriter, r *http.Request) {
 
 	var gpaYears []GPAYear
 
+	var includedClasses []string
 	totalCredits := 0.0
 	totalCreditsEarned := 0.0
 	totalWeightedTotal := 0.0
@@ -82,6 +83,14 @@ func gpaReportcardHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		if class == "" {
 			continue
+		}
+
+		var classSetting classSetting
+		for _, cs := range getClassSettings(c, sy) {
+			if cs.Class == class {
+				classSetting = cs
+				break
+			}
 		}
 
 		yearCredits := 0.0
@@ -187,9 +196,12 @@ func gpaReportcardHandler(w http.ResponseWriter, r *http.Request) {
 
 		yearAv, yearGpa := gpaAvWgp(yearWeightedTotal / yearCredits)
 
-		totalCredits += yearCredits
-		totalCreditsEarned += yearCreditsEarned
-		totalWeightedTotal += yearWeightedTotal
+		if !classSetting.IgnoreInTotalGPA {
+			includedClasses = append(includedClasses, class)
+			totalCredits += yearCredits
+			totalCreditsEarned += yearCreditsEarned
+			totalWeightedTotal += yearWeightedTotal
+		}
 
 		gpaYear := GPAYear{
 			Class: class,
@@ -227,6 +239,8 @@ func gpaReportcardHandler(w http.ResponseWriter, r *http.Request) {
 		TotalCredits  float64
 		CumulativeGPA float64
 		CumulativeAvg string
+
+		IncludedClasses []string
 	}{
 		stu.Name,
 		stu.Gender,
@@ -241,6 +255,8 @@ func gpaReportcardHandler(w http.ResponseWriter, r *http.Request) {
 		totalCredits,
 		cumulativeGPA,
 		cumulativeAvg,
+
+		includedClasses,
 	}
 
 	// Note: not using render() because we don't want the base template

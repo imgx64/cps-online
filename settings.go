@@ -111,10 +111,11 @@ func saveSchoolYear(c context.Context, sy string) error {
 }
 
 type classSetting struct {
-	Class         string
-	MaxSection    string
-	LetterSystem  string
-	QuarterWeight float64
+	Class            string
+	MaxSection       string
+	LetterSystem     string
+	QuarterWeight    float64
+	IgnoreInTotalGPA bool
 }
 
 type classSettings struct {
@@ -365,6 +366,10 @@ func settingsSaveSectionsHandler(w http.ResponseWriter, r *http.Request) {
 			classSetting.QuarterWeight = qw
 			settings[i] = classSetting
 		}
+
+		ignoreStr := r.PostForm.Get("ignore-in-total-gpa-" + classSetting.Class)
+		classSetting.IgnoreInTotalGPA = ignoreStr == "on"
+		settings[i] = classSetting
 	}
 
 	if err := saveClassSettings(c, settings); err != nil {

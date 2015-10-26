@@ -281,6 +281,13 @@ license that can be found in the LICENSE file.
 
 				<td class="gpa-footer-completion">
 					<div class="gpa-footer-completion-text">
+						(Credits and GPA are calculated based on Grade
+						{{range $i, $class := .IncludedClasses}}{{if $i}},{{end}}
+							{{if eq (increment $i) (len $.IncludedClasses)}} and {{end}}
+							{{$class}}{{end}}
+						only)
+					</div>
+					<div class="gpa-footer-completion-text">
 						Upon successful completion of the courses in Grade 12,
 						a student will earn the school's diploma which is
 						recognized by the Bahrain Ministry of Education
