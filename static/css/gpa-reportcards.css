@@ -75,7 +75,7 @@ p.gpa-reportcard-ot {
 .gpa-student-info th,
 .gpa-student-info td {
 	font-size: small;
-	padding: 1mm;
+	padding: 0.5mm;
 }
 
 .gpa-student-info th {
@@ -120,7 +120,7 @@ table.gpa-years {
 
 .gpa-years > tbody > tr > td, 
 .gpa-years > tbody > tr > th {
-	border: solid 3px black;
+	border: solid 1px black;
 }
 
 .gpa-years .gpa-years-subjects .gpa-years-subjects-year {
@@ -172,21 +172,24 @@ table.gpa-years {
 }
 
 .gpa-description .gpa-abc-system {
-	width: 25%;
+	width: 20%;
 	padding: 1mm;
+	padding-bottom: 0;
 	font-size: small;
 }
 
 .gpa-description .gpa-description-center {
 	width: 45%;
 	padding: 1mm;
+	padding-bottom: 0;
 	text-align: center;
 	font-size: small;
 }
 
 .gpa-description .gpa-total-summary {
-	width: 30%;
+	width: 35%;
 	padding: 1mm;
+	padding-bottom: 0;
 	text-align: center;
 	font-size: small;
 }
@@ -208,7 +211,6 @@ table.gpa-years {
 }
 
 .gpa-description .gpa-footer-school {
-	margin-top: 17mm;
 	text-align: center;
 	vertical-align: bottom;
 }
@@ -239,7 +241,7 @@ table.gpa-years {
 .gpa-abc-table th {
 	text-align: center;
 	vertical-align: middle;
-	font-size: x-small;
+	font-size: 9px;
 }
 
 .gpa-total-summary .gpa-summary-included-classes {
@@ -264,9 +266,14 @@ table.gpa-years {
 	width: 35%;
 }
 
+.gpa-total-summary .gpa-summary-upon {
+	font-size: x-small;
+}
+
 .gpa-total-summary .gpa-footer-requirements {
 	text-align: left;
 	border: solid 2px black;
+	font-size: x-small;
 }
 
 .gpa-total-summary .gpa-principal-signature {
