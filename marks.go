@@ -186,7 +186,25 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 
 		sorted := r.Form.Get("sort") == "true"
 
-		if gs := getGradingSystem(c, sy, class, subject); gs != nil {
+		if subject == "Remarks" {
+			subjectDisplayName = "Remarks"
+			cols = []colDescription{{Name: "Remarks"}}
+			students, err := findStudents(c, sy, classSection)
+			if err != nil {
+				log.Errorf(c, "Could not get students: %s", err)
+				renderError(w, r, http.StatusInternalServerError)
+				return
+			}
+
+			for _, s := range students {
+				rem, err := getStudentRemark(c, s.ID, sy, term)
+				if err != nil {
+					// TODO: report error
+					continue
+				}
+				studentRows = append(studentRows, studentRow{s.ID, s.Name, nil, rem})
+			}
+		} else if gs := getGradingSystem(c, sy, class, subject); gs != nil {
 			cols = gs.description(term)
 			students, err := findStudentsSorted(c, sy, classSection, sorted)
 			if err != nil {
@@ -209,24 +227,6 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 				}
 				gs.evaluate(term, m) // TODO: check error
 				studentRows = append(studentRows, studentRow{s.ID, s.Name, m[term], ""})
-			}
-		} else if subject == "Remarks" {
-			subjectDisplayName = "Remarks"
-			cols = []colDescription{{Name: "Remarks"}}
-			students, err := findStudents(c, sy, classSection)
-			if err != nil {
-				log.Errorf(c, "Could not get students: %s", err)
-				renderError(w, r, http.StatusInternalServerError)
-				return
-			}
-
-			for _, s := range students {
-				rem, err := getStudentRemark(c, s.ID, sy, term)
-				if err != nil {
-					// TODO: report error
-					continue
-				}
-				studentRows = append(studentRows, studentRow{s.ID, s.Name, nil, rem})
 			}
 		}
 	}
@@ -305,7 +305,31 @@ func marksSaveHandler(w http.ResponseWriter, r *http.Request) {
 	redirectURL := fmt.Sprintf("/marks?%s", urlValues.Encode())
 
 	nComplete := 0
-	if gs := getGradingSystem(c, sy, class, subject); gs != nil {
+	if subject == "Remarks" {
+		students, err := findStudents(c, sy, classSection)
+		if err != nil {
+			log.Errorf(c, "Could not get students: %s", err)
+			renderError(w, r, http.StatusInternalServerError)
+			return
+		}
+
+		for _, s := range students {
+			remarksName := fmt.Sprintf("%s|0", s.ID)
+			remark := f.Get(remarksName)
+			if remark == "" {
+				// no remark to update
+				continue
+			}
+
+			err := storeRemark(c, s.ID, sy, term, remark)
+			if err != nil {
+				log.Errorf(c, "Could not store remark: %s", err)
+				renderError(w, r, http.StatusInternalServerError)
+				return
+			}
+			nComplete++
+		}
+	} else if gs := getGradingSystem(c, sy, class, subject); gs != nil {
 		cols := gs.description(term)
 		hasEditable := false
 		for _, col := range cols {
@@ -359,30 +383,6 @@ func marksSaveHandler(w http.ResponseWriter, r *http.Request) {
 				nComplete++
 			}
 		}
-	} else if subject == "Remarks" {
-		students, err := findStudents(c, sy, classSection)
-		if err != nil {
-			log.Errorf(c, "Could not get students: %s", err)
-			renderError(w, r, http.StatusInternalServerError)
-			return
-		}
-
-		for _, s := range students {
-			remarksName := fmt.Sprintf("%s|0", s.ID)
-			remark := f.Get(remarksName)
-			if remark == "" {
-				// no remark to update
-				continue
-			}
-
-			err := storeRemark(c, s.ID, sy, term, remark)
-			if err != nil {
-				log.Errorf(c, "Could not store remark: %s", err)
-				renderError(w, r, http.StatusInternalServerError)
-				return
-			}
-			nComplete++
-		}
 	}
 
 	err := storeCompletion(c, classSection, term, subject, nComplete)
@@ -421,7 +421,24 @@ func marksExportHandler(w http.ResponseWriter, r *http.Request) {
 	var cols []colDescription
 	var studentRows []studentRow
 
-	if gs := getGradingSystem(c, sy, class, subject); gs != nil {
+	if subject == "Remarks" {
+		cols = []colDescription{{Name: "Remarks"}}
+		students, err := findStudents(c, sy, classSection)
+		if err != nil {
+			log.Errorf(c, "Could not get students: %s", err)
+			renderError(w, r, http.StatusInternalServerError)
+			return
+		}
+
+		for _, s := range students {
+			rem, err := getStudentRemark(c, s.ID, sy, term)
+			if err != nil {
+				// TODO: report error
+				continue
+			}
+			studentRows = append(studentRows, studentRow{s.ID, s.Name, nil, rem})
+		}
+	} else if gs := getGradingSystem(c, sy, class, subject); gs != nil {
 		cols = gs.description(term)
 		students, err := findStudents(c, sy, classSection)
 		if err != nil {
@@ -438,23 +455,6 @@ func marksExportHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			gs.evaluate(term, m) // TODO: check error
 			studentRows = append(studentRows, studentRow{s.ID, s.Name, m[term], ""})
-		}
-	} else if subject == "Remarks" {
-		cols = []colDescription{{Name: "Remarks"}}
-		students, err := findStudents(c, sy, classSection)
-		if err != nil {
-			log.Errorf(c, "Could not get students: %s", err)
-			renderError(w, r, http.StatusInternalServerError)
-			return
-		}
-
-		for _, s := range students {
-			rem, err := getStudentRemark(c, s.ID, sy, term)
-			if err != nil {
-				// TODO: report error
-				continue
-			}
-			studentRows = append(studentRows, studentRow{s.ID, s.Name, nil, rem})
 		}
 	}
 
