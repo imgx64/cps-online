@@ -269,7 +269,7 @@ func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 
 		rc.Total = totalRow
 
-		remark, err := getStudentRemark(c, stu.ID, sy, term)
+		remark, err := getStudentRemark(c, sy, stu.ID, term)
 		if err != nil {
 			log.Errorf(c, "Could not get remark: %s", err)
 			renderError(w, r, http.StatusInternalServerError)

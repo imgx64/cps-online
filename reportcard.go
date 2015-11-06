@@ -118,7 +118,7 @@ func reportcardHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		average = total / float64(numInAverage)
 
-		remark, err = getStudentRemark(c, stu.ID, sy, term)
+		remark, err = getStudentRemark(c, sy, stu.ID, term)
 		if err != nil {
 			log.Errorf(c, "Could not get remark: %s", err)
 			renderError(w, r, http.StatusInternalServerError)

@@ -118,7 +118,7 @@ func printStudentMarksHandler(w http.ResponseWriter, r *http.Request) {
 		studentMarksRows = append(studentMarksRows, studentMarksRow{
 			"All", subjectsCols, subjectsMarks, ""})
 
-		remark, err = getStudentRemark(c, stu.ID, sy, term)
+		remark, err = getStudentRemark(c, sy, stu.ID, term)
 		if err != nil {
 			log.Errorf(c, "Could not get remark: %s", err)
 			renderError(w, r, http.StatusInternalServerError)

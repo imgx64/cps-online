@@ -197,7 +197,7 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 			}
 
 			for _, s := range students {
-				rem, err := getStudentRemark(c, s.ID, sy, term)
+				rem, err := getStudentRemark(c, sy, s.ID, term)
 				if err != nil {
 					// TODO: report error
 					continue
@@ -431,7 +431,7 @@ func marksExportHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		for _, s := range students {
-			rem, err := getStudentRemark(c, s.ID, sy, term)
+			rem, err := getStudentRemark(c, sy, s.ID, term)
 			if err != nil {
 				// TODO: report error
 				continue
