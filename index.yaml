@@ -87,6 +87,13 @@ indexes:
 - kind: studentclass
   properties:
   - name: Class
+  - name: SY
+  - name: Section
+  - name: Name
+
+- kind: studentclass
+  properties:
+  - name: Class
   - name: Section
   - name: ID
 
