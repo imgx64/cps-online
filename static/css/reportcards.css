@@ -149,12 +149,17 @@ p.cps-reportcard-qsf {
 	padding: 1mm;
 }
 
+.cps-reportcard-marks td:first-child {
+    font-size: 12px;
+}
+
 .cps-reportcard-marks td {
 	border-width: thin;
 	border-style: solid;
 	text-align: center;
 	vertical-align: middle;
-	padding: 1.1mm;
+	padding: 0.7mm;
+	font-size: 15px;
 }
 
 .cps-reportcard-total td,
