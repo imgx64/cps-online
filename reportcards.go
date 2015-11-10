@@ -175,8 +175,8 @@ func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		total := math.NaN()
-		totalMax := math.NaN()
+		total := 0.0
+		totalMax := 0.0
 		numInAverage := 0
 		for _, subject := range subjects {
 			if subject == "Remarks" {
@@ -243,7 +243,13 @@ func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 				rc.Other = append(rc.Other, rcRow)
 			}
 		}
-		average := total / float64(numInAverage)
+		average := math.NaN()
+		if numInAverage > 0 {
+			average = total / float64(numInAverage)
+		} else {
+			total = math.NaN()
+			totalMax = math.NaN()
+		}
 		totalRow := reportcardsRow{}
 		if !calculateAll {
 			totalRow.Name = "Total"
