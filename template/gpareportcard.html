@@ -19,13 +19,29 @@ license that can be found in the LICENSE file.
 	<body>
 	<div class="gpa-reportcard">
 		<div class="gpa-reportcard-header">
-			<img src="/static/img/cps-logo-100.png" alt="CPS Logo" class="gpa-reportcard-cps-logo">
-			<img src="/static/img/advanced_logo.png" alt="AdvancED Logo" class="gpa-reportcard-advanced-logo">
-			<img src="/static/img/cambridge_logo.jpg" alt="Cambridge Associate School Logo" class="gpa-reportcard-cambridge-logo">
-
-			<p class="gpa-reportcard-kob">Kingdom of Bahrain</p>
-			<p class="gpa-reportcard-cps">Creativity Private School</p>
-			<p class="gpa-reportcard-ot">Official Transcript</p>
+			<table class="gpa-reportcard-header-table">
+				<tr>
+					<td>
+						<img src="/static/img/advanced_logo.png" alt="AdvancED Logo" class="gpa-reportcard-advanced-logo">
+					</td>
+					<td>
+						<p class="gpa-reportcard-kob">Kingdom of Bahrain</p>
+						<p class="gpa-reportcard-cps">Creativity Private School</p>
+						<p class="gpa-reportcard-ot">Official Transcript</p>
+					</td>
+					<td>
+						<img src="/static/img/cps-logo-100.png" alt="CPS Logo" class="gpa-reportcard-cps-logo">
+					</td>
+					<td>
+						<p class="gpa-reportcard-kob-ar"> مملكة البحرين </p>
+						<p class="gpa-reportcard-cps-ar"> مدرسة الإبداع الخاصة </p>
+						<p class="gpa-reportcard-ot-ar"> كشف الدرجات </p>
+					</td>
+					<td>
+					<img src="/static/img/cambridge_logo.jpg" alt="Cambridge Associate School Logo" class="gpa-reportcard-cambridge-logo">
+					</td>
+				</tr>
+			</table>
 		</div>
 
 		<table class="gpa-student-info">
@@ -205,18 +221,14 @@ license that can be found in the LICENSE file.
 				</table>
 				</td>
 				<td class="gpa-description-center">
-					<div class="gpa-description-note">
-						Note: Practical Courses Enrichment is from Ministry of Education
-					</div>
-
 					<div class="gpa-acronyms-inner">
 						<table>
 							<tr>
 								<td><b>CA:</b> Credit Attempted</td>
-								<td><b>CE:</b> Credit Earned</td>
+								<td><b>AV:</b> Annual Average</td>
 							</tr>
 							<tr>
-								<td><b>AV:</b> Annual Average</td>
+								<td><b>CE:</b> Credit Earned</td>
 								<td><b>WGP:</b> Grade Point</td>
 							</tr>
 						</table>
@@ -225,6 +237,7 @@ license that can be found in the LICENSE file.
 							or 5 periods per week
 						</p>
 					</div>  
+					<br>
 					<div class="gpa-footer-school">
 						Creativity Private School<br>
 						Accredited by AdvancED International<br>
@@ -259,10 +272,6 @@ license that can be found in the LICENSE file.
 						<td>{{.CumulativeAvg}}</td>
 					</tr>
 					<tr>
-						<th scope="row">Requirement Attained:</th>
-						<td>(Minimum/Distinguished)*</td>
-					</tr>
-					<tr>
 						<th scope="row">Passed and Graduated:</th>
 						<td></td>
 					</tr>
@@ -273,16 +282,17 @@ license that can be found in the LICENSE file.
 					a student will earn the school's diploma which is
 					recognized by the Bahrain Ministry of Education
 				</div>
-				<div class="gpa-footer-requirements">
-					<b><u>Minimum Requirement</u></b>
-					- achieved the minimum credits required<br>
-					<b><u>Distinguished Requirement</u></b>
-					- achieved higher than minimum credits required<br>
-				</div>
+
+				<br>
+
 				<table class="gpa-principal-signature">
 					<tr>
 						<th>Principal's Signature </th>
 						<td class="signature-line"></td>
+					</tr>
+					<tr>
+						<td><br></td>
+						<td></td>
 					</tr>
 					<tr>
 						<th>Date Issued </th>

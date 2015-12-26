@@ -36,9 +36,14 @@
 	height: 10%;
 }
 
-.gpa-reportcard-header {
+.gpa-reportcard-header .gpa-reportcard-header-table {
+	width: 100%;
+	table-layout: fixed;
+}
+
+.gpa-reportcard-header .gpa-reportcard-header-table td {
 	text-align: center;
-	position: relative;
+	vertical-align: middle;
 }
 
 .gpa-reportcard-cps-logo {
@@ -47,25 +52,26 @@
 
 .gpa-reportcard-advanced-logo {
 	width: 120px;
-	position: absolute;
-	float: left;
-	left: 5%;
 	top: 5mm;
 }
 
 .gpa-reportcard-cambridge-logo {
 	width: 140px;
-	position: absolute;
-	float: right;
-	right: 5%;
 	top: 7mm;
 }
 
 p.gpa-reportcard-kob,
-p.gpa-reportcard-cps,
-p.gpa-reportcard-ot {
+p.gpa-reportcard-ot,
+p.gpa-reportcard-kob-ar,
+p.gpa-reportcard-ot-ar {
 	font-family: serif;
 	font-size: medium;
+}
+
+p.gpa-reportcard-cps,
+p.gpa-reportcard-cps-ar {
+	font-family: serif;
+	font-size: large;
 }
 
 .gpa-student-info {
