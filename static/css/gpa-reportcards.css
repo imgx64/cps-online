@@ -20,11 +20,13 @@
 	clear: both;
 
 	width: 100%;
+
+	font-family: "Times New Roman", Serif;
 }
 
 @media print {
 	.gpa-reportcard {
-		min-height: 18.5cm;
+		min-height: 184mm;
 	}
 }
 
@@ -39,6 +41,7 @@
 .gpa-reportcard-header .gpa-reportcard-header-table {
 	width: 100%;
 	table-layout: fixed;
+	height: 33mm
 }
 
 .gpa-reportcard-header .gpa-reportcard-header-table td {
@@ -47,7 +50,7 @@
 }
 
 .gpa-reportcard-cps-logo {
-	height: 60px;
+	height: 94px;
 }
 
 .gpa-reportcard-advanced-logo {
@@ -64,13 +67,11 @@ p.gpa-reportcard-kob,
 p.gpa-reportcard-ot,
 p.gpa-reportcard-kob-ar,
 p.gpa-reportcard-ot-ar {
-	font-family: serif;
 	font-size: medium;
 }
 
 p.gpa-reportcard-cps,
 p.gpa-reportcard-cps-ar {
-	font-family: serif;
 	font-size: large;
 }
 
@@ -114,6 +115,10 @@ p.gpa-reportcard-cps-ar {
 	width: 15%;
 }
 
+.gpa-years {
+	height: 98mm;
+}
+
 .gpa-years,
 .gpa-years .gpa-years-subjects,
 .gpa-years .gpa-years-summary {
@@ -124,35 +129,41 @@ table.gpa-years {
 	table-layout: fixed;
 }
 
-.gpa-years > tbody > tr > td, 
-.gpa-years > tbody > tr > th {
+.gpa-years-summary .gpa-summary-table {
 	border: solid 1px black;
+	border-top: none;
+}
+
+.gpa-years-subjects > td,
+.gpa-years-summary > td {
+	padding-right: 1mm;
+	padding-left: 1mm;
 }
 
 .gpa-years .gpa-years-subjects .gpa-years-subjects-year {
 	width: 100%;
+	height: 85mm;
+}
+
+.gpa-years .gpa-years-subjects {
+	font-size: 11px;
 }
 
 .gpa-years .gpa-years-subjects-year td,
 .gpa-years .gpa-years-subjects-year th {
-	border-bottom: solid 1px black;
-	border-right: solid 1px black;
+	border: solid 1px black;
 }
 
-.gpa-years .gpa-years-subjects-year td:last-child,
-.gpa-years .gpa-years-subjects-year th:last-child {
-	border-right: none;
-}
 
 .gpa-years-subjects-year .gpa-subjects-subject {
-	font-size: small;
+	text-align: left;
+	vertical-align: middle;
+	padding-left: 1mm;
 }
  
 .gpa-years-subjects-year .gpa-small-col {
 	width: 7%;
-	font-size: x-small;
 	text-align: center;
-	font-family: sans-serif;
 	vertical-align: middle;
 }
 
@@ -163,29 +174,57 @@ table.gpa-years {
 	vertical-align: middle;
 }
 
+.gpa-years .gpa-years-summary {
+	height: 14mm;
+}
+
 .gpa-years-summary .gpa-summary-table {
 	width: 100%;
 }
 
+.gpa-summary-table tr:first-child td {
+	padding-top: 1mm;
+}
+
 .gpa-summary-table td,
 .gpa-summary-table th {
+	text-align: left;
 	font-size: small;
-	padding: 1mm;
+	padding: 0mm;
+	padding-left: 1mm;
 }
+
+.gpa-summary-table th {
+	width: 0%;
+}
+
+.gpa-total-summary .gpa-summary-table {
+	width: 100%;
+	border: solid 2px black;
+}
+
+.gpa-total-summary .gpa-summary-table .gpa-summary-table-title {
+	width: 65%;
+}
+
+.gpa-total-summary .gpa-summary-table .gpa-summary-table-value {
+	width: 35%;
+}
+
 
 .gpa-description {
 	width: 100%;
 }
 
 .gpa-description .gpa-abc-system {
-	width: 20%;
+	width: 25%;
 	padding: 1mm;
 	padding-bottom: 0;
 	font-size: small;
 }
 
 .gpa-description .gpa-description-center {
-	width: 45%;
+	width: 50%;
 	padding: 1mm;
 	padding-bottom: 0;
 	text-align: center;
@@ -193,7 +232,7 @@ table.gpa-years {
 }
 
 .gpa-description .gpa-total-summary {
-	width: 35%;
+	width: 25%;
 	padding: 1mm;
 	padding-bottom: 0;
 	text-align: center;
@@ -210,6 +249,14 @@ table.gpa-years {
 .gpa-description .gpa-acronyms-inner table {
 	width: 98%;
 	text-align: left;
+}
+
+.gpa-description .gpa-acronyms-inner table tr:first-child td {
+	padding-top: 1mm;
+}
+
+.gpa-description .gpa-acronyms-inner table td {
+	padding-left: 1mm
 }
 
 .gpa-description .gpa-acronyms-inner p {
@@ -254,24 +301,6 @@ table.gpa-years {
 	font-size: x-small;
 }
 
-.gpa-total-summary .gpa-summary-table {
-	width: 100%;
-	border: solid 2px black;
-}
-
-.gpa-total-summary .gpa-summary-table th,
-.gpa-total-summary .gpa-summary-table td {
-	padding: 0mm;
-}
-
-.gpa-total-summary .gpa-summary-table .gpa-summary-table-title {
-	width: 65%;
-}
-
-.gpa-total-summary .gpa-summary-table .gpa-summary-table-value {
-	width: 35%;
-}
-
 .gpa-total-summary .gpa-summary-upon {
 	font-size: x-small;
 }
@@ -283,7 +312,9 @@ table.gpa-years {
 }
 
 .gpa-total-summary .gpa-principal-signature {
+	margin-top: 2mm;
 	width: 98%;
+	font-size: x-small;
 }
 
 .gpa-total-summary .gpa-principal-signature .signature-line {
