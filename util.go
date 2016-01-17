@@ -100,6 +100,10 @@ var funcMap = htmltemplate.FuncMap{
 		return reflect.DeepEqual(item1, item2)
 	},
 	"mark": formatMark,
+	"markTrim": func(mark float64) string {
+		markStr := formatMark(mark)
+		return strings.Trim(markStr, "0")
+	},
 	"cut": func(s string) string {
 		if len(s) < 20 {
 			return s

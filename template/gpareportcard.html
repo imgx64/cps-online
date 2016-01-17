@@ -65,11 +65,12 @@ license that can be found in the LICENSE file.
 
 		<table class="gpa-years">
 			<tr class="gpa-years-subjects">
-			{{range .Years}}
+			{{range $index, $year := .Years}}
+			{{with $year}}
 			<td>
 				<table class="gpa-years-subjects-year">
 				<thead>
-					<tr>
+					<tr class="gpa-years-subjects-year-{{$index}}">
 						<th>Grade {{.Class}}</th>
 						<th colspan="8">{{.SY}}</th>
 					</tr>
@@ -81,12 +82,12 @@ license that can be found in the LICENSE file.
 					<tr>
 						<th scope="col" class="gpa-small-col">CA</th>
 						<th scope="col" class="gpa-small-col">CE</th>
-						<th scope="col" class="gpa-small-col">AV</th>
-						<th scope="col" class="gpa-small-col">WGP</th>
+						<th scope="col" class="gpa-small-col gpa-dark">AV</th>
+						<th scope="col" class="gpa-small-col gpa-dark">WGP</th>
 						<th scope="col" class="gpa-small-col">CA</th>
 						<th scope="col" class="gpa-small-col">CE</th>
-						<th scope="col" class="gpa-small-col">AV</th>
-						<th scope="col" class="gpa-small-col">WGP</th>
+						<th scope="col" class="gpa-small-col gpa-dark">AV</th>
+						<th scope="col" class="gpa-small-col gpa-dark">WGP</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -95,19 +96,19 @@ license that can be found in the LICENSE file.
 						<th scope="row" class="gpa-subjects-subject">{{.Subject}}</th>
 
 						{{if .S1Available}}
-						<td class="gpa-small-col">{{.S1CA | mark}}</td>
-						<td class="gpa-small-col">{{.S1CE | mark}}</td>
-						<td class="gpa-small-col">{{.S1AV}}</td>
-						<td class="gpa-small-col">{{.S1WGP | mark}}</td>
+						<td class="gpa-small-col">{{.S1CA | markTrim}}</td>
+						<td class="gpa-small-col">{{.S1CE | markTrim}}</td>
+						<td class="gpa-small-col gpa-dark">{{.S1AV}}</td>
+						<td class="gpa-small-col gpa-dark">{{.S1WGP | mark}}</td>
 						{{else}}
 						<td colspan="4" class="gpa-na-col">N/A</td>
 						{{end}}
 
 						{{if .S2Available}}
-						<td class="gpa-small-col">{{.S2CA | mark}}</td>
-						<td class="gpa-small-col">{{.S2CE | mark}}</td>
-						<td class="gpa-small-col">{{.S2AV}}</td>
-						<td class="gpa-small-col">{{.S2WGP | mark}}</td>
+						<td class="gpa-small-col">{{.S2CA | markTrim}}</td>
+						<td class="gpa-small-col">{{.S2CE | markTrim}}</td>
+						<td class="gpa-small-col gpa-dark">{{.S2AV}}</td>
+						<td class="gpa-small-col gpa-dark">{{.S2WGP | mark}}</td>
 						{{else}}
 						<td colspan="4" class="gpa-na-col">N/A</td>
 						{{end}}
@@ -116,6 +117,7 @@ license that can be found in the LICENSE file.
 				</tbody>
 				</table>
 			</td>
+			{{end}}
 			{{end}}
 			</tr>
 			<tr class="gpa-years-summary">
@@ -237,7 +239,6 @@ license that can be found in the LICENSE file.
 							or 5 periods per week
 						</p>
 					</div>  
-					<br>
 					<div class="gpa-footer-school">
 						Creativity Private School<br>
 						Accredited by AdvancED International<br>
@@ -251,29 +252,28 @@ license that can be found in the LICENSE file.
 				<td class="gpa-total-summary">
 				<table class="gpa-summary-table">
 					<tr>
-						<td class="gpa-summary-included-classes" colspan="2">
-						<i>(Credits and GPA are calculated based on Grade
-						{{range $i, $class := .IncludedClasses}}{{if $i}},
-						{{if eq (increment $i) (len $.IncludedClasses)}} and {{end}}
-						{{end}}
-						{{$class}}{{end}} only)</i>
-						</td>
+						<th class="gpa-summary-table-title"></th>
+						<th class="gpa-summary-table-value">Grade {{.IncludedClassesAll}}</th>
+						<th class="gpa-summary-table-value">Grade {{.IncludedClassesSome}}</th>
 					</tr>
 					<tr>
 						<th scope="row" class="gpa-summary-table-title">Credits to Date:</th>
-						<td class="gpa-summary-table-value">{{.TotalCredits | mark}}</td>
+						<td class="gpa-summary-table-value">{{.TotalCreditsAll | mark}}</td>
+						<td class="gpa-summary-table-value">{{.TotalCreditsSome | mark}}</td>
 					</tr>
 					<tr>
-						<th scope="row">Cumulative GPA:</th>
-						<td>{{.CumulativeGPA | mark}}</td>
+						<th scope="row" class="gpa-summary-table-title">Cumulative GPA:</th>
+						<td class="gpa-summary-table-value">{{.CumulativeGpaAll | mark}}</td>
+						<td class="gpa-summary-table-value">{{.CumulativeGpaSome | mark}}</td>
 					</tr>
 					<tr>
-						<th scope="row">Cumulative Average:</th>
-						<td>{{.CumulativeAvg}}</td>
+						<th scope="row" class="gpa-summary-table-title">Cumulative Average:</th>
+						<td class="gpa-summary-table-value">{{.CumulativeAvgAll}}</td>
+						<td class="gpa-summary-table-value">{{.CumulativeAvgSome}}</td>
 					</tr>
 					<tr>
-						<th scope="row">Passed and Graduated:</th>
-						<td></td>
+						<th scope="row" class="gpa-summary-table-title">Passed and Graduated:</th>
+						<td class="gpa-summary-table-value" colspan="2"></td>
 					</tr>
 				</table>
 

@@ -66,10 +66,15 @@ func gpaReportcardHandler(w http.ResponseWriter, r *http.Request) {
 
 	var gpaYears []GPAYear
 
-	var includedClasses []string
-	totalCredits := 0.0
-	totalCreditsEarned := 0.0
-	totalWeightedTotal := 0.0
+	var includedClassesSome [][]string
+	var includedClassesLast = false
+	var includedClassesAll []string
+	totalCreditsSome := 0.0
+	totalCreditsAll := 0.0
+	totalCreditsEarnedSome := 0.0
+	totalCreditsEarnedAll := 0.0
+	totalWeightedTotalSome := 0.0
+	totalWeightedTotalAll := 0.0
 
 	s1Term := Term{Semester, 1}
 	s2Term := Term{Semester, 2}
@@ -197,11 +202,26 @@ func gpaReportcardHandler(w http.ResponseWriter, r *http.Request) {
 		yearAv, yearGpa := gpaAvWgp(yearWeightedTotal / yearCredits)
 
 		if !classSetting.IgnoreInTotalGPA {
-			includedClasses = append(includedClasses, class)
-			totalCredits += yearCredits
-			totalCreditsEarned += yearCreditsEarned
-			totalWeightedTotal += yearWeightedTotal
+			if includedClassesLast {
+				n := len(includedClassesSome) - 1
+				lastClasses := includedClassesSome[n]
+				lastClasses = append(lastClasses, class)
+				includedClassesSome[n] = lastClasses
+			} else {
+				includedClassesLast = true
+				includedClassesSome = append(includedClassesSome, []string{class})
+			}
+			totalCreditsSome += yearCredits
+			totalCreditsEarnedSome += yearCreditsEarned
+			totalWeightedTotalSome += yearWeightedTotal
+		} else {
+			includedClassesLast = false
 		}
+
+		includedClassesAll = append(includedClassesAll, class)
+		totalCreditsAll += yearCredits
+		totalCreditsEarnedAll += yearCreditsEarned
+		totalWeightedTotalAll += yearWeightedTotal
 
 		gpaYear := GPAYear{
 			Class: class,
@@ -218,7 +238,8 @@ func gpaReportcardHandler(w http.ResponseWriter, r *http.Request) {
 
 	}
 
-	cumulativeAvg, cumulativeGPA := gpaAvWgp(totalWeightedTotal / totalCredits)
+	cumulateAvgSome, cumulativeGpaSome := gpaAvWgp(totalWeightedTotalSome / totalCreditsSome)
+	cumulateAvgAll, cumulativeGpaAll := gpaAvWgp(totalWeightedTotalAll / totalCreditsAll)
 
 	dob := ""
 	if stu.DateOfBirth.After(time.Date(1990, 1, 1, 0, 0, 0, 0, time.UTC)) {
@@ -236,11 +257,15 @@ func gpaReportcardHandler(w http.ResponseWriter, r *http.Request) {
 
 		Years []GPAYear
 
-		TotalCredits  float64
-		CumulativeGPA float64
-		CumulativeAvg string
+		IncludedClassesSome string
+		TotalCreditsSome    float64
+		CumulativeGpaSome   float64
+		CumulativeAvgSome   string
 
-		IncludedClasses []string
+		IncludedClassesAll string
+		TotalCreditsAll    float64
+		CumulativeGpaAll   float64
+		CumulativeAvgAll   string
 	}{
 		stu.Name,
 		stu.Gender,
@@ -252,11 +277,15 @@ func gpaReportcardHandler(w http.ResponseWriter, r *http.Request) {
 
 		gpaYears,
 
-		totalCredits,
-		cumulativeGPA,
-		cumulativeAvg,
+		multiGradesStr(includedClassesSome),
+		totalCreditsSome,
+		cumulativeGpaSome,
+		cumulateAvgSome,
 
-		includedClasses,
+		gradesStr(includedClassesAll),
+		totalCreditsAll,
+		cumulativeGpaAll,
+		cumulateAvgAll,
 	}
 
 	// Note: not using render() because we don't want the base template
@@ -308,4 +337,33 @@ func gpaAvWgp(mark float64) (string, float64) {
 	}
 
 	return "N/A", math.NaN()
+}
+
+func multiGradesStr(multiGrades [][]string) string {
+	s := ""
+
+	for i, grades := range multiGrades {
+		if len(grades) == 0 {
+			continue
+		}
+		if i != 0 {
+			s += ", "
+		}
+		s += gradesStr(grades)
+	}
+
+	return s
+}
+
+func gradesStr(grades []string) string {
+	switch len(grades) {
+	case 0:
+		return ""
+	case 1:
+		return grades[0]
+	case 2:
+		return grades[0] + ", " + grades[1]
+	default:
+		return grades[0] + " - " + grades[len(grades)-1]
+	}
 }
