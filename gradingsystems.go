@@ -415,6 +415,10 @@ func (s Subject) evaluate(term Term, marks studentMarks) error {
 			}
 		}
 
+		if len(s.QuarterGradingColumns) == 0 {
+			total100 = math.NaN()
+		}
+
 		// Quarter mark
 		m[nextMark] = total100
 		nextMark++
@@ -448,14 +452,20 @@ func (s Subject) evaluate(term Term, marks studentMarks) error {
 		q1 := q2 - 1
 
 		s.evaluate(Term{Quarter, q1}, marks)
-		q1Marks := marks[Term{Quarter, q1}]
-		q1Mark := q1Marks[len(q1Marks)-1]
-
 		s.evaluate(Term{Quarter, q2}, marks)
-		q2Marks := marks[Term{Quarter, q2}]
-		q2Mark := q2Marks[len(q2Marks)-1]
 
-		m[nextMark] = sumMarks(m[nextMark-1], q1Mark, q2Mark)
+		if len(s.QuarterGradingColumns) == 0 {
+			m[nextMark] = total100
+		} else {
+			q1Marks := marks[Term{Quarter, q1}]
+			q1Mark := q1Marks[len(q1Marks)-1]
+
+			q2Marks := marks[Term{Quarter, q2}]
+			q2Mark := q2Marks[len(q2Marks)-1]
+
+			m[nextMark] = sumMarks(m[nextMark-1], q1Mark, q2Mark)
+		}
+
 	} else if term.Typ == EndOfYear {
 		s.evaluate(Term{Semester, 1}, marks)
 		s.evaluate(Term{Semester, 2}, marks)
