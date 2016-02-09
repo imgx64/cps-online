@@ -56,6 +56,8 @@ func reportcardHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	stu := *user.Student
 
+	calculateAll := true
+
 	class, section, err := getStudentClass(c, stu.ID, sy)
 	if err != nil {
 		log.Errorf(c, "Could not get user: %s", err)
@@ -108,7 +110,10 @@ func reportcardHandler(w http.ResponseWriter, r *http.Request) {
 			mark := gs.get100(term, marks)
 			letter := ls.getLetter(mark)
 			var inAverage bool
-			if gs.subjectInAverage() && !math.IsNaN(mark) {
+			if (calculateAll || gs.subjectInAverage()) && !math.IsNaN(mark) {
+				if math.IsNaN(total) {
+					total = 0.0
+				}
 				total += mark
 				numInAverage++
 				inAverage = true
