@@ -49,6 +49,7 @@ func (pars printAllRowSorter) Swap(i, j int) {
 }
 
 func printAllHandler(w http.ResponseWriter, r *http.Request) {
+	var err error
 	c := appengine.NewContext(r)
 
 	sy := getSchoolYear(c)
@@ -69,6 +70,8 @@ func printAllHandler(w http.ResponseWriter, r *http.Request) {
 		term = Term{}
 	}
 
+	calculateAll := true
+
 	subject := r.Form.Get("Subject")
 	doSort := r.Form.Get("Sort") != ""
 
@@ -84,11 +87,31 @@ func printAllHandler(w http.ResponseWriter, r *http.Request) {
 
 	allSubjects := getAllSubjects(c, sy)
 
-	prevClass := ""
 	maxLen := 0
 	var maxCols []colDescription
 	if subject == "All" {
-		for _, sub := range allSubjects {
+		var subjects []string
+		if classSection == "all" {
+			subjects = allSubjects
+		} else {
+			var class string
+			if classSection != "all" {
+				class, _, err = parseClassSection(classSection)
+				if err != nil {
+					log.Errorf(c, "Could not parse class %s: %s", classSection, err)
+					renderError(w, r, http.StatusInternalServerError)
+					return
+				}
+			}
+
+			subjects, err = getSubjects(c, sy, class)
+			if err != nil {
+				log.Errorf(c, "Could not subjects of class %s: %s", class, err)
+				renderError(w, r, http.StatusInternalServerError)
+				return
+			}
+		}
+		for _, sub := range subjects {
 			if sub == "Remarks" || sub == "Behavior" {
 				continue
 			}
@@ -97,10 +120,9 @@ func printAllHandler(w http.ResponseWriter, r *http.Request) {
 		maxCols = append(maxCols, colDescription{"Average", 100, false})
 		for _, stu := range students {
 			total := math.NaN()
-			totalMax := math.NaN()
 			numInAverage := 0
 			var studentMarks []float64
-			for _, subject := range allSubjects {
+			for _, subject := range subjects {
 				if subject == "Remarks" || subject == "Behavior" {
 					continue
 				}
@@ -120,12 +142,12 @@ func printAllHandler(w http.ResponseWriter, r *http.Request) {
 
 				mark := gs.get100(term, marks)
 
-				if gs.subjectInAverage() {
-					if !math.IsNaN(mark) {
-						total += mark
-						totalMax += 100
-						numInAverage++
+				if (calculateAll || gs.subjectInAverage()) && !math.IsNaN(mark) {
+					if math.IsNaN(total) {
+						total = 0
 					}
+					total += mark
+					numInAverage++
 				}
 				studentMarks = append(studentMarks, mark)
 			}
@@ -141,6 +163,7 @@ func printAllHandler(w http.ResponseWriter, r *http.Request) {
 			studentRows[classSection] = append(studentRows[classSection], row)
 		}
 	} else {
+		prevClass := ""
 		for _, stu := range students {
 			if gs := getGradingSystem(c, sy, stu.Class, subject); gs != nil {
 				if stu.Class != prevClass {
