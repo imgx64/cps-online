@@ -118,6 +118,9 @@ var funcMap = htmltemplate.FuncMap{
 	"increment": func(i int) int {
 		return i + 1
 	},
+	"decrement": func(i int) int {
+		return i - 1
+	},
 	"classSection": func(classSection string) (string, error) {
 		class, section, err := parseClassSection(classSection)
 		if err != nil {

@@ -77,7 +77,7 @@ license that can be found in the LICENSE file.
 							<td>{{.Name}}</td>
 							<td>
 								{{if $CalculateAll}}
-									{{mark (index .Marks 1)}}
+									{{mark (index .Marks (decrement (len .Marks)))}}
 								({{end}}{{.Letter}}{{if $CalculateAll}}){{end}}
 							</td>
 						</tr>
