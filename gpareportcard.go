@@ -164,7 +164,8 @@ func gpaReportcardHandler(w http.ResponseWriter, r *http.Request) {
 					} else {
 						gpaRow.S1CE = 0
 					}
-					gpaRow.S1AV, gpaRow.S1WGP = gpaAvWgp(s1Mark)
+					_, gpaRow.S1WGP = gpaAvWgp(s1Mark)
+					gpaRow.S1AV = formatMarkTrim(s1Mark)
 
 					yearWeightedTotal += gpaRow.S1CE * s1Mark
 				}
@@ -186,7 +187,8 @@ func gpaReportcardHandler(w http.ResponseWriter, r *http.Request) {
 					} else {
 						gpaRow.S2CE = 0
 					}
-					gpaRow.S2AV, gpaRow.S2WGP = gpaAvWgp(s2Mark)
+					_, gpaRow.S2WGP = gpaAvWgp(s2Mark)
+					gpaRow.S2AV = formatMarkTrim(s2Mark)
 
 					yearWeightedTotal += gpaRow.S2CE * s2Mark
 				}
@@ -199,7 +201,8 @@ func gpaReportcardHandler(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		yearAv, yearGpa := gpaAvWgp(yearWeightedTotal / yearCredits)
+		_, yearGpa := gpaAvWgp(yearWeightedTotal / yearCredits)
+		yearAv := formatMarkTrim(yearWeightedTotal / yearCredits)
 
 		if !classSetting.IgnoreInTotalGPA {
 			if includedClassesLast {
@@ -238,8 +241,10 @@ func gpaReportcardHandler(w http.ResponseWriter, r *http.Request) {
 
 	}
 
-	cumulateAvgSome, cumulativeGpaSome := gpaAvWgp(totalWeightedTotalSome / totalCreditsSome)
-	cumulateAvgAll, cumulativeGpaAll := gpaAvWgp(totalWeightedTotalAll / totalCreditsAll)
+	_, cumulativeGpaSome := gpaAvWgp(totalWeightedTotalSome / totalCreditsSome)
+	cumulateAvgSome := formatMarkTrim(totalWeightedTotalSome / totalCreditsSome)
+	_, cumulativeGpaAll := gpaAvWgp(totalWeightedTotalAll / totalCreditsAll)
+	cumulateAvgAll := formatMarkTrim(totalWeightedTotalAll / totalCreditsAll)
 
 	dob := ""
 	if stu.DateOfBirth.After(time.Date(1990, 1, 1, 0, 0, 0, 0, time.UTC)) {

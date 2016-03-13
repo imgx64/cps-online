@@ -99,11 +99,8 @@ var funcMap = htmltemplate.FuncMap{
 	"equal": func(item1, item2 interface{}) bool {
 		return reflect.DeepEqual(item1, item2)
 	},
-	"mark": formatMark,
-	"markTrim": func(mark float64) string {
-		markStr := formatMark(mark)
-		return strings.Trim(markStr, "0")
-	},
+	"mark":     formatMark,
+	"markTrim": formatMarkTrim,
 	"cut": func(s string) string {
 		if len(s) < 20 {
 			return s
@@ -138,6 +135,12 @@ func formatMark(mark float64) string {
 		return ""
 	}
 	return fmt.Sprintf("%.2f", mark)
+}
+
+func formatMarkTrim(mark float64) string {
+	markStr := formatMark(mark)
+	markStr = strings.Trim(markStr, "0")
+	return strings.Trim(markStr, ".")
 }
 
 var countries = []string{
