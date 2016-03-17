@@ -184,6 +184,13 @@ table.gpa-years {
 	vertical-align: middle;
 }
 
+.gpa-years-subjects-year .gpa-xsmall-col {
+	width: 7%;
+	text-align: center;
+	vertical-align: middle;
+	font-size: 9px;
+}
+
 .gpa-years-subjects-year .gpa-na-col {
 	text-align: center;
 	font-size: x-small;
