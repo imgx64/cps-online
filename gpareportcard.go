@@ -12,6 +12,7 @@ import (
 	"math"
 	"net/http"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -208,11 +209,11 @@ func gpaReportcardHandler(w http.ResponseWriter, r *http.Request) {
 			if includedClassesLast {
 				n := len(includedClassesSome) - 1
 				lastClasses := includedClassesSome[n]
-				lastClasses = append(lastClasses, class)
+				lastClasses = append(lastClasses, trimStream(class))
 				includedClassesSome[n] = lastClasses
 			} else {
 				includedClassesLast = true
-				includedClassesSome = append(includedClassesSome, []string{class})
+				includedClassesSome = append(includedClassesSome, []string{trimStream(class)})
 			}
 			totalCreditsSome += yearCredits
 			totalCreditsEarnedSome += yearCreditsEarned
@@ -221,13 +222,13 @@ func gpaReportcardHandler(w http.ResponseWriter, r *http.Request) {
 			includedClassesLast = false
 		}
 
-		includedClassesAll = append(includedClassesAll, class)
+		includedClassesAll = append(includedClassesAll, trimStream(class))
 		totalCreditsAll += yearCredits
 		totalCreditsEarnedAll += yearCreditsEarned
 		totalWeightedTotalAll += yearWeightedTotal
 
 		gpaYear := GPAYear{
-			Class: class,
+			Class: trimStream(class),
 			SY:    sy,
 
 			Rows: gpaRows,
@@ -371,4 +372,15 @@ func gradesStr(grades []string) string {
 	default:
 		return grades[0] + " - " + grades[len(grades)-1]
 	}
+}
+
+func notDigit(r rune) bool {
+	if r < '0' || r > '9' {
+		return true
+	}
+	return false
+}
+
+func trimStream(class string) string {
+	return strings.TrimRightFunc(class, notDigit)
 }
