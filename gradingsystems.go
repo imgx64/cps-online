@@ -336,8 +336,8 @@ func (s Subject) description(term Term) []colDescription {
 
 	} else if term.Typ == EndOfYear {
 		return []colDescription{
-			{"Semester 1 %", 50, false},
-			{"Semester 2 %", 50, false},
+			{"Semester 1 %", 100, false},
+			{"Semester 2 %", 100, false},
 			{"Final mark", 100, false},
 		}
 	} else {
@@ -469,10 +469,10 @@ func (s Subject) evaluate(term Term, marks studentMarks) error {
 	} else if term.Typ == EndOfYear {
 		s.evaluate(Term{Semester, 1}, marks)
 		s.evaluate(Term{Semester, 2}, marks)
-		m[0] = s.get100(Term{Semester, 1}, marks) / 2.0
-		m[1] = s.get100(Term{Semester, 2}, marks) / 2.0
+		m[0] = s.get100(Term{Semester, 1}, marks)
+		m[1] = s.get100(Term{Semester, 2}, marks)
 
-		m[2] = sumMarks(m[0], m[1])
+		m[2] = sumMarks(m[0], m[1]) / 2.0
 	} else {
 		return fmt.Errorf("Invalid term type: %d", term.Typ)
 	}

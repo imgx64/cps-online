@@ -165,8 +165,8 @@ func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		} else if term.Typ == EndOfYear {
 			rc.Cols = []string{
-				"Semester 1 (50%)",
-				"Semester 2 (50%)",
+				"Semester 1",
+				"Semester 2",
 				"Mark Obtained (100%)",
 			}
 		} else {
@@ -221,12 +221,9 @@ func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 					gs.get100(term, marks),
 				}
 			} else if term.Typ == EndOfYear {
-				rcRow.Marks = []float64{
-					gs.get100(Term{Semester, 1}, marks) * 50.0 / 100.0,
-					gs.get100(Term{Semester, 2}, marks) * 50.0 / 100.0,
-					gs.get100(term, marks),
-				}
+				rcRow.Marks = marks[term]
 			}
+
 			if gs.subjectInAverage() {
 				if !math.IsNaN(mark) {
 					total += mark
