@@ -139,6 +139,9 @@ func formatMark(mark float64) string {
 }
 
 func formatMarkTrim(mark float64) string {
+	if mark == 0 {
+		return "0"
+	}
 	markStr := formatMark(mark)
 	markStr = strings.Trim(markStr, "0")
 	return strings.TrimRight(markStr, ".")
@@ -147,6 +150,9 @@ func formatMarkTrim(mark float64) string {
 func formatMarkTrim3(mark float64) string {
 	if math.IsNaN(mark) {
 		return ""
+	}
+	if mark == 0 {
+		return "0"
 	}
 	markStr := fmt.Sprintf("%.3f", mark)
 	markStr = strings.Trim(markStr, "0")
