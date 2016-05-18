@@ -36,6 +36,16 @@ type reportcard struct {
 	CalculateAll bool
 }
 
+type eoyGpaReportcard struct {
+	Student studentType
+
+	Rows []GPARow
+
+	CreditsEarned float64
+	YearAverage   string
+	GPA           float64
+}
+
 type reportcardsRow struct {
 	Name   string
 	Marks  []float64
@@ -54,11 +64,13 @@ func reportcardsHandler(w http.ResponseWriter, r *http.Request) {
 
 	classGroups := getClassGroups(c, sy)
 
+	termsWithGpa := append(terms, Term{EndOfYearGpa, 0})
+
 	data := struct {
 		Terms []Term
 		CG    []classGroup
 	}{
-		Terms: terms,
+		Terms: termsWithGpa,
 		CG:    classGroups,
 	}
 
@@ -72,8 +84,6 @@ func reportcardsHandler(w http.ResponseWriter, r *http.Request) {
 func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 
-	sy := getSchoolYear(c)
-
 	if err := r.ParseForm(); err != nil {
 		log.Errorf(c, "Could not parse form: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
@@ -86,6 +96,14 @@ func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
+
+	if term.Typ == EndOfYearGpa {
+		reportcardsGpaTermHandler(w, r)
+		return
+	}
+
+	sy := getSchoolYear(c)
+
 	// TODO: Check if published
 
 	classSection := r.Form.Get("ClassSection")
@@ -300,6 +318,216 @@ func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := tmpl.Execute(w, data); err != nil {
 		log.Errorf(c, "Could not execute template reportcardsprint: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+}
+
+func reportcardsGpaTermHandler(w http.ResponseWriter, r *http.Request) {
+	c := appengine.NewContext(r)
+
+	sy := getSchoolYear(c)
+
+	if err := r.ParseForm(); err != nil {
+		log.Errorf(c, "Could not parse form: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	classSection := r.Form.Get("ClassSection")
+
+	students, err := findStudents(c, sy, classSection)
+	if err != nil {
+		log.Errorf(c, "Could not retrieve students: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	class, _, err := parseClassSection(classSection)
+	if err != nil {
+		log.Errorf(c, "Could not parse classSection %s: %s", classSection, err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	subjects, err := getSubjects(c, sy, class)
+	if err != nil {
+		log.Errorf(c, "Could not get subjects: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	var reportcards []eoyGpaReportcard
+
+	s1Term := Term{Semester, 1}
+	s2Term := Term{Semester, 2}
+
+	for _, stu := range students {
+
+		stuType, err := getStudent(c, stu.ID)
+		if err != nil {
+			// TODO
+			log.Errorf(c, "Could not get student: %s", err)
+			continue
+		}
+
+		if stuType.Gender == "M" {
+			stuType.Gender = "Male"
+		} else if stuType.Gender == "F" {
+			stuType.Gender = "Female"
+		}
+
+		var gpaRows []GPARow
+
+		yearCredits := 0.0
+		yearCreditsEarned := 0.0
+		yearWeightedTotal := 0.0
+
+		for _, subject := range subjects {
+
+			gs := getGradingSystem(c, sy, class, subject)
+			if gs == nil {
+				continue
+			}
+
+			// TODO: add credits to gradingsystem instead of this
+			sub, ok := gs.(Subject)
+			if !ok {
+				continue
+			}
+
+			if sub.S1Credits <= 0 && sub.S2Credits <= 0 {
+				continue
+			}
+
+			marks, err := getStudentMarks(c, stu.ID, sy, subject)
+			if err != nil {
+				log.Errorf(c, "Could not get student marks: %s", err)
+				renderError(w, r, http.StatusInternalServerError)
+				return
+			}
+
+			gpaRow := GPARow{
+				Subject: gs.displayName(),
+
+				S1Available: false,
+				S1CA:        math.NaN(),
+				S1CE:        math.NaN(),
+				S1AV:        "",
+				S1WGP:       math.NaN(),
+
+				S2Available: false,
+				S2CA:        math.NaN(),
+				S2CE:        math.NaN(),
+				S2AV:        "",
+				S2WGP:       math.NaN(),
+
+				FinalMark: math.NaN(),
+			}
+
+			var s1Mark, s2Mark float64
+
+			if sub.S1Credits > 0 {
+				gpaRow.S1Available = true
+				gs.evaluate(s1Term, marks)
+
+				s1Mark = gs.get100(s1Term, marks)
+
+				if !math.IsNaN(s1Mark) {
+					gpaRow.S1CA = sub.S1Credits
+					yearCredits += gpaRow.S1CA
+
+					if s1Mark >= 60 {
+						gpaRow.S1CE = gpaRow.S1CA
+						yearCreditsEarned += gpaRow.S1CE
+					} else {
+						gpaRow.S1CE = 0
+					}
+					_, gpaRow.S1WGP = gpaAvWgp(s1Mark)
+					gpaRow.S1AV = formatMarkTrim(s1Mark)
+
+					yearWeightedTotal += gpaRow.S1CE * s1Mark
+				} else {
+					s1Mark = 0
+				}
+			}
+
+			if sub.S2Credits > 0 {
+				gpaRow.S2Available = true
+				gs.evaluate(s2Term, marks)
+
+				s2Mark = gs.get100(s2Term, marks)
+
+				if !math.IsNaN(s2Mark) {
+					gpaRow.S2CA = sub.S2Credits
+					yearCredits += gpaRow.S2CA
+
+					if s2Mark >= 60 {
+						gpaRow.S2CE = gpaRow.S2CA
+						yearCreditsEarned += gpaRow.S2CE
+					} else {
+						gpaRow.S2CE = 0
+					}
+					_, gpaRow.S2WGP = gpaAvWgp(s2Mark)
+					gpaRow.S2AV = formatMarkTrim(s2Mark)
+
+					yearWeightedTotal += gpaRow.S2CE * s2Mark
+				} else {
+					s2Mark = 0
+				}
+			}
+
+			if !math.IsNaN(gpaRow.S1CE) && !math.IsNaN(gpaRow.S2CE) {
+				gpaRow.FinalMark =
+					(s1Mark*gpaRow.S1CE + s2Mark*gpaRow.S2CE) /
+						(gpaRow.S1CA + gpaRow.S2CA)
+			} else if !math.IsNaN(gpaRow.S1CE) {
+				gpaRow.FinalMark = s1Mark
+			} else if !math.IsNaN(gpaRow.S2CE) {
+				gpaRow.FinalMark = s2Mark
+			}
+
+			gpaRows = append(gpaRows, gpaRow)
+		}
+
+		_, yearGpa := gpaAvWgp(yearWeightedTotal / yearCredits)
+		yearAv := formatMarkTrim(yearWeightedTotal / yearCredits)
+
+		reportcard := eoyGpaReportcard{
+			Student: stuType,
+			Rows:    gpaRows,
+
+			CreditsEarned: yearCredits,
+			YearAverage:   yearAv,
+			GPA:           yearGpa,
+		}
+
+		reportcards = append(reportcards, reportcard)
+
+	}
+
+	data := struct {
+		SY          string
+		Class       string
+		Reportcards []eoyGpaReportcard
+	}{
+		SY:          sy,
+		Class:       class,
+		Reportcards: reportcards,
+	}
+
+	// Note: not using render() because we don't want the base template
+	templateFile := filepath.Join("template", "reportcardsEoyGpa.html")
+	tmpl, err := htmltemplate.New("reportcardsEoyGpa.html").Funcs(funcMap).
+		ParseFiles(templateFile)
+	if err != nil {
+		log.Errorf(c, "Could not parse template gpareportcard: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+	if err := tmpl.Execute(w, data); err != nil {
+		log.Errorf(c, "Could not execute template gpareportcard: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}

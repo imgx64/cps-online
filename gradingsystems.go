@@ -27,12 +27,14 @@ const (
 	Quarter termType = iota + 1
 	Semester
 	EndOfYear
+	EndOfYearGpa
 )
 
 var termStrings = map[termType]string{
-	Quarter:   "Quarter",
-	Semester:  "Semester",
-	EndOfYear: "End of Year",
+	Quarter:      "Quarter",
+	Semester:     "Semester",
+	EndOfYear:    "End of Year",
+	EndOfYearGpa: "End of Year (GPA)",
 }
 
 type Term struct {

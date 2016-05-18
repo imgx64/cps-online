@@ -1,0 +1,156 @@
+{{/*
+Copyright 2013 Ibrahim Ghazal. All rights reserved.
+Use of this source code is governed by a BSD-style
+license that can be found in the LICENSE file.
+*/}}
+
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<title>Print Reportcards | Creativity Private School</title>
+
+		<!-- Styles -->
+		<link href="/static/css/html5-doctor-reset-stylesheet.min.css" rel="stylesheet">
+		<link href="/static/css/reportcards.css" rel="stylesheet">
+		<link href="/static/css/gpa-reportcards.css" rel="stylesheet">
+
+		<style>
+@page {
+	size: A4 landscape;
+	margin-top: 0.4cm;
+	margin-bottom: 0.4cm;
+	margin-left: 2cm;
+	margin-right: 2cm;
+}
+		</style>
+	</head>
+
+	<body>
+	{{range .Reportcards}}
+		<div class="cps-reportcard">
+			<div class="cps-reportcard-main cps-reportcard-one">
+				<div class="cps-reportcard-header">
+					<img src="/static/img/cps-logo-100.png" alt="CPS Logo" class="cps-reportcard-cps-logo">
+					<img src="/static/img/advanced_logo.png" alt="AdvancED Logo" class="cps-reportcard-advanced-logo">
+					<img src="/static/img/cambridge_logo.jpg" alt="Cambridge Associate School Logo" class="cps-reportcard-cambridge-logo">
+					<p class="cps-reportcard-kob">Kingdom of Bahrain</p>
+					<p class="cps-reportcard-cps">Creativity Private School</p>
+					<p class="cps-reportcard-ltlt">"Learners Today, Leaders Tomorrow"</p>
+					<p class="cps-reportcard-sy">School Year {{$.SY}}</p>
+					<p class="cps-reportcard-qsf">Report Card</p>
+				</div>
+
+				<table class="gpa-student-info">
+					<tr>
+						<th style="width: 10%">Student's Name:</th>
+						<td style="width: 20%">{{.Student.Name}}</td>
+						<th style="width: 10%"></th>
+						<td style="width: 10%"></td>
+						<th style="width: 15%">Student Number:</th>
+						<td style="width: 15%">{{.Student.ID}}</td>
+					</tr>
+					<tr>
+						<th>Personal Number:</th>
+						<td>{{.Student.CPR}}</td>
+						<th></th>
+						<td></td>
+						<th>Sex:</th>
+						<td>{{.Student.Gender}}</td>
+					</tr>
+				</table>
+
+		<table class="gpa-years">
+			<tr class="gpa-years-subjects">
+			<td>
+				<table class="gpa-years-subjects-year">
+				<thead>
+					<tr class="gpa-years-subjects-year-0" style="background-color: #ffffff;">
+						<th>Grade {{$.Class}}</th>
+						<th colspan="9">{{$.SY}}</th>
+					</tr>
+					<tr>
+						<td rowspan="2"></td>
+						<th scope="col" colspan="4">Semester 1</th>
+						<th scope="col" colspan="4">Semester 2</th>
+						<th scope="col" rowspan="2" class="gpa-medium-col">Final Mark</th>
+					</tr>
+					<tr>
+						<th scope="col" class="gpa-medium-col">Credit Attempted</th>
+						<th scope="col" class="gpa-medium-col">Credit Earned</th>
+						<th scope="col" class="gpa-medium-col">Percentage</th>
+						<th scope="col" class="gpa-medium-col">Weighted Grade Point</th>
+						<th scope="col" class="gpa-medium-col">Credit Attempted</th>
+						<th scope="col" class="gpa-medium-col">Credit Earned</th>
+						<th scope="col" class="gpa-medium-col">Percentage</th>
+						<th scope="col" class="gpa-medium-col">Weighted Grade Point</th>
+
+					</tr>
+				</thead>
+				<tbody>
+				{{range .Rows}}
+					<tr>
+						<th scope="row" class="gpa-subjects-subject">{{.Subject}}</th>
+
+						{{if .S1Available}}
+						<td class="gpa-medium-col">{{.S1CA | markTrim3}}</td>
+						<td class="gpa-medium-col">{{.S1CE | markTrim3}}</td>
+						<td class="gpa-medium-col">{{.S1AV}}</td>
+						<td class="gpa-medium-col">{{.S1WGP | mark}}</td>
+						{{else}}
+						<td colspan="4" class="gpa-na-col">N/A</td>
+						{{end}}
+
+						{{if .S2Available}}
+						<td class="gpa-medium-col">{{.S2CA | markTrim3}}</td>
+						<td class="gpa-medium-col">{{.S2CE | markTrim3}}</td>
+						<td class="gpa-medium-col">{{.S2AV}}</td>
+						<td class="gpa-medium-col">{{.S2WGP | mark}}</td>
+						{{else}}
+						<td colspan="4" class="gpa-na-col">N/A</td>
+						{{end}}
+
+						<td class="gpa-medium-col">{{.FinalMark | mark}}</td>
+					</tr>
+				{{end}}
+				</tbody>
+				</table>
+			</td>
+			</tr>
+			<tr class="gpa-years-summary">
+			<td>
+				<table class="gpa-summary-table">
+					<tr>
+						<th scope="row">Credits Earned:</th>
+						<td>{{.CreditsEarned}}</td>
+					</tr>
+					<tr>
+						<th scope="row">&nbsp;</th>
+						<td></td>
+					</tr>
+					<tr>
+						<th scope="row">Year Average:</th>
+						<td>{{.YearAverage}} %</td>
+					</tr>
+				</table>
+			</tr>
+		</table>
+			</div>
+			<div class="cps-reportcard-footer">
+				<div class="cps-reportcard-signature">Principal's Signature: ....................</div>
+				<div class="cps-reportcard-signature"></div>
+				<div class="cps-reportcard-signature">Date Issued : ....................</div>
+			</div>
+			<div>&nbsp;</div>
+			<div style="padding-left: 1cm;">Please note: absence of official school stamp on the photocopy and erasures or correction of any form will make this document null and void.</div>
+		</div>
+		{{end}}
+
+		<!-- JavaScript -->
+		<!-- Placed at the end of the document so the pages load faster -->
+		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+		<script src="/static/js/cps.js"></script>
+
+	</body>
+</html>

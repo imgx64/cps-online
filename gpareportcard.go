@@ -45,6 +45,8 @@ type GPARow struct {
 	S2CE        float64
 	S2AV        string
 	S2WGP       float64
+
+	FinalMark float64
 }
 
 func gpaReportcardHandler(w http.ResponseWriter, r *http.Request) {
