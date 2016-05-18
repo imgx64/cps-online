@@ -385,6 +385,7 @@ func reportcardsGpaTermHandler(w http.ResponseWriter, r *http.Request) {
 		yearWeightedTotal := 0.0
 		yearSubjectCount := 0.0
 		yearMarksTotal := 0.0
+		yearGpTotal := 0.0
 
 		for _, subject := range subjects {
 
@@ -426,6 +427,7 @@ func reportcardsGpaTermHandler(w http.ResponseWriter, r *http.Request) {
 				S2WGP:       math.NaN(),
 
 				FinalMark: math.NaN(),
+				FinalGpa:  math.NaN(),
 			}
 
 			var s1Mark, s2Mark float64
@@ -484,19 +486,26 @@ func reportcardsGpaTermHandler(w http.ResponseWriter, r *http.Request) {
 				gpaRow.FinalMark =
 					(s1Mark*gpaRow.S1CE + s2Mark*gpaRow.S2CE) /
 						(gpaRow.S1CA + gpaRow.S2CA)
+				gpaRow.FinalGpa = (gpaRow.S1WGP + gpaRow.S2WGP) / 2
 			} else if !math.IsNaN(gpaRow.S1CE) {
 				gpaRow.FinalMark = s1Mark
+				gpaRow.FinalGpa = gpaRow.S1WGP
 			} else if !math.IsNaN(gpaRow.S2CE) {
 				gpaRow.FinalMark = s2Mark
+				gpaRow.FinalGpa = gpaRow.S2WGP
 			}
 
 			yearSubjectCount += 1
 			yearMarksTotal += gpaRow.FinalMark
+			yearGpTotal += gpaRow.FinalGpa
 
 			gpaRows = append(gpaRows, gpaRow)
 		}
 
 		_, yearGpa := gpaAvWgp(yearWeightedTotal / yearCredits)
+		_ = yearGpa
+		yearFinalGpa := yearGpTotal / yearSubjectCount
+
 		yearAv := formatMarkTrim(yearWeightedTotal / yearCredits)
 		// Weighted average, ignored because of ministry
 		_ = yearAv
@@ -509,7 +518,7 @@ func reportcardsGpaTermHandler(w http.ResponseWriter, r *http.Request) {
 
 			CreditsEarned: yearCredits,
 			YearAverage:   yearAverage,
-			GPA:           yearGpa,
+			GPA:           yearFinalGpa,
 		}
 
 		reportcards = append(reportcards, reportcard)

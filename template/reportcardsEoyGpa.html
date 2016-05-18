@@ -39,7 +39,7 @@ license that can be found in the LICENSE file.
 					<p class="cps-reportcard-cps">Creativity Private School</p>
 					<p class="cps-reportcard-ltlt">"Learners Today, Leaders Tomorrow"</p>
 					<p class="cps-reportcard-sy">School Year {{$.SY}}</p>
-					<p class="cps-reportcard-qsf">Report Card</p>
+					<p class="cps-reportcard-qsf">Final Report Card</p>
 				</div>
 
 				<table class="gpa-student-info">
@@ -68,23 +68,24 @@ license that can be found in the LICENSE file.
 				<thead>
 					<tr class="gpa-years-subjects-year-0" style="background-color: #ffffff;">
 						<th>Grade {{$.Class}}</th>
-						<th colspan="9">{{$.SY}}</th>
+						<th colspan="10">{{$.SY}}</th>
 					</tr>
 					<tr>
 						<td rowspan="2"></td>
 						<th scope="col" colspan="4">Semester 1</th>
 						<th scope="col" colspan="4">Semester 2</th>
 						<th scope="col" rowspan="2" class="gpa-medium-col">Final Mark</th>
+						<th scope="col" rowspan="2" class="gpa-medium-col">Final Grade Point</th>
 					</tr>
 					<tr>
 						<th scope="col" class="gpa-medium-col">Credit Attempted</th>
 						<th scope="col" class="gpa-medium-col">Credit Earned</th>
 						<th scope="col" class="gpa-medium-col">Percentage</th>
-						<th scope="col" class="gpa-medium-col">Weighted Grade Point</th>
+						<th scope="col" class="gpa-medium-col">Grade Point</th>
 						<th scope="col" class="gpa-medium-col">Credit Attempted</th>
 						<th scope="col" class="gpa-medium-col">Credit Earned</th>
 						<th scope="col" class="gpa-medium-col">Percentage</th>
-						<th scope="col" class="gpa-medium-col">Weighted Grade Point</th>
+						<th scope="col" class="gpa-medium-col">Grade Point</th>
 
 					</tr>
 				</thead>
@@ -112,6 +113,7 @@ license that can be found in the LICENSE file.
 						{{end}}
 
 						<td class="gpa-medium-col">{{.FinalMark | mark}}</td>
+						<td class="gpa-medium-col">{{.FinalGpa | mark}}</td>
 					</tr>
 				{{end}}
 				</tbody>
@@ -126,12 +128,12 @@ license that can be found in the LICENSE file.
 						<td>{{.CreditsEarned}}</td>
 					</tr>
 					<tr>
-						<th scope="row">&nbsp;</th>
-						<td></td>
-					</tr>
-					<tr>
 						<th scope="row">Year Average:</th>
 						<td>{{.YearAverage}} %</td>
+					</tr>
+					<tr>
+						<th scope="row">GPA</th>
+						<td>{{.GPA}} %</td>
 					</tr>
 				</table>
 			</tr>
