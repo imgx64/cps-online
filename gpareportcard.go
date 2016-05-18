@@ -213,15 +213,15 @@ func gpaReportcardHandler(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 
-			if !math.IsNaN(gpaRow.S1CE) && !math.IsNaN(gpaRow.S2CE) {
+			if gpaRow.S1Available && gpaRow.S2Available {
 				gpaRow.FinalMark =
 					(s1Mark*gpaRow.S1CE + s2Mark*gpaRow.S2CE) /
 						(gpaRow.S1CA + gpaRow.S2CA)
 				gpaRow.FinalGpa = (gpaRow.S1WGP + gpaRow.S2WGP) / 2
-			} else if !math.IsNaN(gpaRow.S1CE) {
+			} else if gpaRow.S1Available {
 				gpaRow.FinalMark = s1Mark
 				gpaRow.FinalGpa = gpaRow.S1WGP
-			} else if !math.IsNaN(gpaRow.S2CE) {
+			} else if gpaRow.S2Available {
 				gpaRow.FinalMark = s2Mark
 				gpaRow.FinalGpa = gpaRow.S2WGP
 			}
@@ -260,9 +260,11 @@ func gpaReportcardHandler(w http.ResponseWriter, r *http.Request) {
 			totalCreditsEarnedSome += yearCreditsEarned
 			totalWeightedTotalSome += yearWeightedTotal
 
-			totalYearsSome += 1
-			totalFinalGpaSome += yearFinalGpa
-			totalFinalAverageSome += yearAverage
+			if !math.IsNaN(yearFinalGpa) {
+				totalYearsSome += 1
+				totalFinalGpaSome += yearFinalGpa
+				totalFinalAverageSome += yearAverage
+			}
 
 		} else {
 			includedClassesLast = false
@@ -273,9 +275,11 @@ func gpaReportcardHandler(w http.ResponseWriter, r *http.Request) {
 		totalCreditsEarnedAll += yearCreditsEarned
 		totalWeightedTotalAll += yearWeightedTotal
 
-		totalYearsAll += 1
-		totalFinalGpaAll += yearFinalGpa
-		totalFinalAverageAll += yearAverage
+		if !math.IsNaN(yearFinalGpa) {
+			totalYearsAll += 1
+			totalFinalGpaAll += yearFinalGpa
+			totalFinalAverageAll += yearAverage
+		}
 
 		gpaYear := GPAYear{
 			Class: trimStream(class),

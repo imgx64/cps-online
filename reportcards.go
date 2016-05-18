@@ -482,15 +482,15 @@ func reportcardsGpaTermHandler(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 
-			if !math.IsNaN(gpaRow.S1CE) && !math.IsNaN(gpaRow.S2CE) {
+			if gpaRow.S1Available && gpaRow.S2Available {
 				gpaRow.FinalMark =
 					(s1Mark*gpaRow.S1CE + s2Mark*gpaRow.S2CE) /
 						(gpaRow.S1CA + gpaRow.S2CA)
 				gpaRow.FinalGpa = (gpaRow.S1WGP + gpaRow.S2WGP) / 2
-			} else if !math.IsNaN(gpaRow.S1CE) {
+			} else if gpaRow.S1Available {
 				gpaRow.FinalMark = s1Mark
 				gpaRow.FinalGpa = gpaRow.S1WGP
-			} else if !math.IsNaN(gpaRow.S2CE) {
+			} else if gpaRow.S2Available {
 				gpaRow.FinalMark = s2Mark
 				gpaRow.FinalGpa = gpaRow.S2WGP
 			}
