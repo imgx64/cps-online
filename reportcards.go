@@ -383,6 +383,8 @@ func reportcardsGpaTermHandler(w http.ResponseWriter, r *http.Request) {
 		yearCredits := 0.0
 		yearCreditsEarned := 0.0
 		yearWeightedTotal := 0.0
+		yearSubjectCount := 0.0
+		yearMarksTotal := 0.0
 
 		for _, subject := range subjects {
 
@@ -488,18 +490,25 @@ func reportcardsGpaTermHandler(w http.ResponseWriter, r *http.Request) {
 				gpaRow.FinalMark = s2Mark
 			}
 
+			yearSubjectCount += 1
+			yearMarksTotal += gpaRow.FinalMark
+
 			gpaRows = append(gpaRows, gpaRow)
 		}
 
 		_, yearGpa := gpaAvWgp(yearWeightedTotal / yearCredits)
 		yearAv := formatMarkTrim(yearWeightedTotal / yearCredits)
+		// Weighted average, ignored because of ministry
+		_ = yearAv
+
+		yearAverage := formatMarkTrim(yearMarksTotal / yearSubjectCount)
 
 		reportcard := eoyGpaReportcard{
 			Student: stuType,
 			Rows:    gpaRows,
 
 			CreditsEarned: yearCredits,
-			YearAverage:   yearAv,
+			YearAverage:   yearAverage,
 			GPA:           yearGpa,
 		}
 

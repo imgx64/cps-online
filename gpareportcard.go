@@ -104,6 +104,8 @@ func gpaReportcardHandler(w http.ResponseWriter, r *http.Request) {
 		yearCredits := 0.0
 		yearCreditsEarned := 0.0
 		yearWeightedTotal := 0.0
+		yearSubjectCount := 0.0
+		yearMarksTotal := 0.0
 
 		subjects, err := getSubjects(c, sy, class)
 		if err != nil {
@@ -211,6 +213,9 @@ func gpaReportcardHandler(w http.ResponseWriter, r *http.Request) {
 				gpaRow.FinalMark = s2Mark
 			}
 
+			yearSubjectCount += 1
+			yearMarksTotal += gpaRow.FinalMark
+
 			gpaRows = append(gpaRows, gpaRow)
 		}
 
@@ -220,6 +225,10 @@ func gpaReportcardHandler(w http.ResponseWriter, r *http.Request) {
 
 		_, yearGpa := gpaAvWgp(yearWeightedTotal / yearCredits)
 		yearAv := formatMarkTrim(yearWeightedTotal / yearCredits)
+		// Weighted average, ignored because of ministry
+		_ = yearAv
+
+		yearAverage := formatMarkTrim(yearMarksTotal / yearSubjectCount)
 
 		if !classSetting.IgnoreInTotalGPA {
 			if includedClassesLast {
@@ -250,7 +259,7 @@ func gpaReportcardHandler(w http.ResponseWriter, r *http.Request) {
 			Rows: gpaRows,
 
 			CreditsEarned: yearCreditsEarned,
-			YearAverage:   yearAv,
+			YearAverage:   yearAverage,
 			GPA:           yearGpa,
 		}
 
