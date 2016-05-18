@@ -80,6 +80,13 @@ func gpaReportcardHandler(w http.ResponseWriter, r *http.Request) {
 	totalWeightedTotalSome := 0.0
 	totalWeightedTotalAll := 0.0
 
+	totalYearsSome := 0.0
+	totalYearsAll := 0.0
+	totalFinalGpaSome := 0.0
+	totalFinalGpaAll := 0.0
+	totalFinalAverageSome := 0.0
+	totalFinalAverageAll := 0.0
+
 	s1Term := Term{Semester, 1}
 	s2Term := Term{Semester, 2}
 
@@ -237,7 +244,7 @@ func gpaReportcardHandler(w http.ResponseWriter, r *http.Request) {
 		yearAv := formatMarkTrim(yearWeightedTotal / yearCredits)
 		// Weighted average, ignored because of ministry
 		_ = yearAv
-		yearAverage := formatMarkTrim(yearMarksTotal / yearSubjectCount)
+		yearAverage := yearMarksTotal / yearSubjectCount
 
 		if !classSetting.IgnoreInTotalGPA {
 			if includedClassesLast {
@@ -252,6 +259,11 @@ func gpaReportcardHandler(w http.ResponseWriter, r *http.Request) {
 			totalCreditsSome += yearCredits
 			totalCreditsEarnedSome += yearCreditsEarned
 			totalWeightedTotalSome += yearWeightedTotal
+
+			totalYearsSome += 1
+			totalFinalGpaSome += yearFinalGpa
+			totalFinalAverageSome += yearAverage
+
 		} else {
 			includedClassesLast = false
 		}
@@ -261,6 +273,10 @@ func gpaReportcardHandler(w http.ResponseWriter, r *http.Request) {
 		totalCreditsEarnedAll += yearCreditsEarned
 		totalWeightedTotalAll += yearWeightedTotal
 
+		totalYearsAll += 1
+		totalFinalGpaAll += yearFinalGpa
+		totalFinalAverageAll += yearAverage
+
 		gpaYear := GPAYear{
 			Class: trimStream(class),
 			SY:    sy,
@@ -268,7 +284,7 @@ func gpaReportcardHandler(w http.ResponseWriter, r *http.Request) {
 			Rows: gpaRows,
 
 			CreditsEarned: yearCreditsEarned,
-			YearAverage:   yearAverage,
+			YearAverage:   formatMarkTrim(yearAverage),
 			GPA:           yearFinalGpa,
 		}
 
@@ -276,10 +292,16 @@ func gpaReportcardHandler(w http.ResponseWriter, r *http.Request) {
 
 	}
 
+	// Ignored
 	_, cumulativeGpaSome := gpaAvWgp(totalWeightedTotalSome / totalCreditsSome)
 	cumulateAvgSome := formatMarkTrim(totalWeightedTotalSome / totalCreditsSome)
 	_, cumulativeGpaAll := gpaAvWgp(totalWeightedTotalAll / totalCreditsAll)
 	cumulateAvgAll := formatMarkTrim(totalWeightedTotalAll / totalCreditsAll)
+
+	cumulativeGpaSome = totalFinalGpaSome / totalYearsSome
+	cumulateAvgSome = formatMarkTrim(totalFinalAverageSome / totalYearsSome)
+	cumulativeGpaAll = totalFinalGpaAll / totalYearsAll
+	cumulateAvgAll = formatMarkTrim(totalFinalAverageAll / totalYearsAll)
 
 	dob := ""
 	if stu.DateOfBirth.After(time.Date(1990, 1, 1, 0, 0, 0, 0, time.UTC)) {
