@@ -149,13 +149,17 @@ func gpaReportcardHandler(w http.ResponseWriter, r *http.Request) {
 				S2CE:        math.NaN(),
 				S2AV:        "",
 				S2WGP:       math.NaN(),
+
+				FinalMark: math.NaN(),
 			}
+
+			var s1Mark, s2Mark float64
 
 			if sub.S1Credits > 0 {
 				gpaRow.S1Available = true
 				gs.evaluate(s1Term, marks)
 
-				s1Mark := gs.get100(s1Term, marks)
+				s1Mark = gs.get100(s1Term, marks)
 
 				if !math.IsNaN(s1Mark) {
 					gpaRow.S1CA = sub.S1Credits
@@ -178,7 +182,7 @@ func gpaReportcardHandler(w http.ResponseWriter, r *http.Request) {
 				gpaRow.S2Available = true
 				gs.evaluate(s2Term, marks)
 
-				s2Mark := gs.get100(s2Term, marks)
+				s2Mark = gs.get100(s2Term, marks)
 
 				if !math.IsNaN(s2Mark) {
 					gpaRow.S2CA = sub.S2Credits
@@ -195,6 +199,16 @@ func gpaReportcardHandler(w http.ResponseWriter, r *http.Request) {
 
 					yearWeightedTotal += gpaRow.S2CE * s2Mark
 				}
+			}
+
+			if !math.IsNaN(gpaRow.S1CE) && !math.IsNaN(gpaRow.S2CE) {
+				gpaRow.FinalMark =
+					(s1Mark*gpaRow.S1CE + s2Mark*gpaRow.S2CE) /
+						(gpaRow.S1CA + gpaRow.S2CA)
+			} else if !math.IsNaN(gpaRow.S1CE) {
+				gpaRow.FinalMark = s1Mark
+			} else if !math.IsNaN(gpaRow.S2CE) {
+				gpaRow.FinalMark = s2Mark
 			}
 
 			gpaRows = append(gpaRows, gpaRow)
