@@ -125,7 +125,7 @@ license that can be found in the LICENSE file.
 				<table class="gpa-summary-table">
 					<tr>
 						<th scope="row">Credits Earned:</th>
-						<td>{{.CreditsEarned}}</td>
+						<td>{{.CreditsEarned | markTrim3}}</td>
 					</tr>
 					<tr>
 						<th scope="row">Year Average:</th>
@@ -133,7 +133,7 @@ license that can be found in the LICENSE file.
 					</tr>
 					<tr>
 						<th scope="row">GPA</th>
-						<td>{{.GPA}} %</td>
+						<td>{{.GPA | mark}}</td>
 					</tr>
 				</table>
 			</tr>
@@ -141,8 +141,8 @@ license that can be found in the LICENSE file.
 			</div>
 			<div class="cps-reportcard-footer">
 				<div class="cps-reportcard-signature">Principal's Signature: ....................</div>
-				<div class="cps-reportcard-signature"></div>
-				<div class="cps-reportcard-signature">Date Issued : ....................</div>
+				<div class="cps-reportcard-signature">Class Teacher: ....................</div>
+				<div class="cps-reportcard-signature">Parent's Signature: ....................</div>
 			</div>
 			<div>&nbsp;</div>
 			<div style="padding-left: 1cm;">Please note: absence of official school stamp on the photocopy and erasures or correction of any form will make this document null and void.</div>

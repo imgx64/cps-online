@@ -76,18 +76,21 @@ license that can be found in the LICENSE file.
 					</tr>
 					<tr>
 						<td rowspan="2"></td>
-						<th scope="col" colspan="4">Semester 1</th>
-						<th scope="col" colspan="4">Semester 2</th>
+						<th scope="col" colspan="3">Semester 1</th>
+						<th scope="col" colspan="3">Semester 2</th>
+
+						<th scope="col" rowspan="2" class="gpa-small-col">FM</th>
+						<th scope="col" rowspan="2" class="gpa-small-col">FGP</th>
 					</tr>
 					<tr>
-						<th scope="col" class="gpa-small-col">CA</th>
 						<th scope="col" class="gpa-small-col">CE</th>
-						<th scope="col" class="gpa-small-col gpa-dark">AV</th>
-						<th scope="col" class="gpa-small-col gpa-dark">WGP</th>
-						<th scope="col" class="gpa-small-col">CA</th>
+						<th scope="col" class="gpa-small-col">AV</th>
+						<th scope="col" class="gpa-small-col">GP</th>
+
 						<th scope="col" class="gpa-small-col">CE</th>
-						<th scope="col" class="gpa-small-col gpa-dark">AV</th>
-						<th scope="col" class="gpa-small-col gpa-dark">WGP</th>
+						<th scope="col" class="gpa-small-col">AV</th>
+						<th scope="col" class="gpa-small-col">GP</th>
+
 					</tr>
 				</thead>
 				<tbody>
@@ -96,22 +99,23 @@ license that can be found in the LICENSE file.
 						<th scope="row" class="gpa-subjects-subject">{{.Subject}}</th>
 
 						{{if .S1Available}}
-						<td class="gpa-xsmall-col">{{.S1CA | markTrim3}}</td>
 						<td class="gpa-xsmall-col">{{.S1CE | markTrim3}}</td>
-						<td class="gpa-small-col gpa-dark">{{.S1AV}}</td>
-						<td class="gpa-small-col gpa-dark">{{.S1WGP | mark}}</td>
+						<td class="gpa-small-col">{{.S1AV}}</td>
+						<td class="gpa-small-col">{{.S1WGP | mark}}</td>
 						{{else}}
-						<td colspan="4" class="gpa-na-col">N/A</td>
+						<td colspan="3" class="gpa-na-col">N/A</td>
 						{{end}}
 
 						{{if .S2Available}}
-						<td class="gpa-xsmall-col">{{.S2CA | markTrim3}}</td>
 						<td class="gpa-xsmall-col">{{.S2CE | markTrim3}}</td>
-						<td class="gpa-small-col gpa-dark">{{.S2AV}}</td>
-						<td class="gpa-small-col gpa-dark">{{.S2WGP | mark}}</td>
+						<td class="gpa-small-col">{{.S2AV}}</td>
+						<td class="gpa-small-col">{{.S2WGP | mark}}</td>
 						{{else}}
-						<td colspan="4" class="gpa-na-col">N/A</td>
+						<td colspan="3" class="gpa-na-col">N/A</td>
 						{{end}}
+
+						<td class="gpa-small-col">{{.FinalMark | mark}}</td>
+						<td class="gpa-small-col">{{.FinalGpa | mark}}</td>
 					</tr>
 				{{end}}
 				</tbody>
@@ -126,7 +130,7 @@ license that can be found in the LICENSE file.
 				<table class="gpa-summary-table">
 					<tr>
 						<th scope="row">Credits Earned:</th>
-						<td>{{.CreditsEarned}}</td>
+						<td>{{.CreditsEarned | markTrim3}}</td>
 					</tr>
 					<tr>
 						<th scope="row">Year Average:</th>
@@ -226,12 +230,15 @@ license that can be found in the LICENSE file.
 					<div class="gpa-acronyms-inner">
 						<table>
 							<tr>
-								<td><b>CA:</b> Credit Attempted</td>
-								<td><b>AV:</b> Annual Average</td>
+								<td><b>CE:</b> Credit Earned</td>
+								<td><b>FM:</b> Final Mark</td>
 							</tr>
 							<tr>
-								<td><b>CE:</b> Credit Earned</td>
-								<td><b>WGP:</b> Grade Point</td>
+								<td><b>AV:</b> Annual Average</td>
+								<td><b>FGP:</b> Final Grade Point</td>
+							</tr>
+							<tr>
+								<td><b>GP:</b> Grade Point</td>
 							</tr>
 						</table>
 						<p>
