@@ -76,8 +76,8 @@ license that can be found in the LICENSE file.
 					</tr>
 					<tr>
 						<td rowspan="2"></td>
-						<th scope="col" colspan="3">Semester 1</th>
-						<th scope="col" colspan="3">Semester 2</th>
+						<th scope="col" colspan="3" class="gpa-xsmall-col">Semester 1</th>
+						<th scope="col" colspan="3" class="gpa-xsmall-col">Semester 2</th>
 
 						<th scope="col" rowspan="2" class="gpa-small-col">FM</th>
 						<th scope="col" rowspan="2" class="gpa-small-col">FGP</th>
@@ -100,22 +100,22 @@ license that can be found in the LICENSE file.
 
 						{{if .S1Available}}
 						<td class="gpa-xsmall-col">{{.S1CE | markTrim3}}</td>
-						<td class="gpa-small-col {{if lt .S1AV 60.0}}gpa-red{{end}}">{{.S1AV | markTrim}}</td>
-						<td class="gpa-small-col">{{.S1WGP | mark}}</td>
+						<td class="gpa-xsmall-col {{if lt .S1AV 60.0}}gpa-red{{end}}">{{.S1AV | markTrim}}</td>
+						<td class="gpa-xsmall-col">{{.S1WGP | mark}}</td>
 						{{else}}
 						<td colspan="3" class="gpa-na-col">N/A</td>
 						{{end}}
 
 						{{if .S2Available}}
 						<td class="gpa-xsmall-col">{{.S2CE | markTrim3}}</td>
-						<td class="gpa-small-col {{if lt .S2AV 60.0}}gpa-red{{end}}">{{.S2AV | markTrim}}</td>
-						<td class="gpa-small-col">{{.S2WGP | mark}}</td>
+						<td class="gpa-xsmall-col {{if lt .S2AV 60.0}}gpa-red{{end}}">{{.S2AV | markTrim}}</td>
+						<td class="gpa-xsmall-col">{{.S2WGP | mark}}</td>
 						{{else}}
 						<td colspan="3" class="gpa-na-col">N/A</td>
 						{{end}}
 
-						<td class="gpa-small-col">{{.FinalMark | mark}}</td>
-						<td class="gpa-small-col">{{.FinalGpa | mark}}</td>
+						<td class="gpa-xsmall-col">{{.FinalMark | mark}}</td>
+						<td class="gpa-xsmall-col">{{.FinalGpa | mark}}</td>
 					</tr>
 				{{end}}
 				</tbody>
