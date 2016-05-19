@@ -417,13 +417,13 @@ func reportcardsGpaTermHandler(w http.ResponseWriter, r *http.Request) {
 				S1Available: false,
 				S1CA:        math.NaN(),
 				S1CE:        math.NaN(),
-				S1AV:        "",
+				S1AV:        math.NaN(),
 				S1WGP:       math.NaN(),
 
 				S2Available: false,
 				S2CA:        math.NaN(),
 				S2CE:        math.NaN(),
-				S2AV:        "",
+				S2AV:        math.NaN(),
 				S2WGP:       math.NaN(),
 
 				FinalMark: math.NaN(),
@@ -449,7 +449,7 @@ func reportcardsGpaTermHandler(w http.ResponseWriter, r *http.Request) {
 						gpaRow.S1CE = 0
 					}
 					_, gpaRow.S1WGP = gpaAvWgp(s1Mark)
-					gpaRow.S1AV = formatMarkTrim(s1Mark)
+					gpaRow.S1AV = s1Mark
 
 					yearWeightedTotal += gpaRow.S1CE * s1Mark
 				} else {
@@ -474,7 +474,7 @@ func reportcardsGpaTermHandler(w http.ResponseWriter, r *http.Request) {
 						gpaRow.S2CE = 0
 					}
 					_, gpaRow.S2WGP = gpaAvWgp(s2Mark)
-					gpaRow.S2AV = formatMarkTrim(s2Mark)
+					gpaRow.S2AV = s2Mark
 
 					yearWeightedTotal += gpaRow.S2CE * s2Mark
 				} else {
