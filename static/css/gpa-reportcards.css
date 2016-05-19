@@ -209,6 +209,10 @@ table.gpa-years {
 	background: #dddddd;
 }
 
+.gpa-years-subjects-year .gpa-red {
+	color: #ff0000;
+}
+
 .gpa-years .gpa-years-summary {
 	height: 14mm;
 }

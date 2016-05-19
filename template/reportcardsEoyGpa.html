@@ -97,7 +97,7 @@ license that can be found in the LICENSE file.
 						{{if .S1Available}}
 						<td class="gpa-medium-col">{{.S1CA | markTrim3}}</td>
 						<td class="gpa-medium-col">{{.S1CE | markTrim3}}</td>
-						<td class="gpa-medium-col">{{.S1AV | markTrim}}</td>
+						<td class="gpa-medium-col {{if lt .S1AV 60.0}}gpa-red{{end}}">{{.S1AV | markTrim}}</td>
 						<td class="gpa-medium-col">{{.S1WGP | mark}}</td>
 						{{else}}
 						<td colspan="4" class="gpa-na-col">N/A</td>
@@ -106,7 +106,7 @@ license that can be found in the LICENSE file.
 						{{if .S2Available}}
 						<td class="gpa-medium-col">{{.S2CA | markTrim3}}</td>
 						<td class="gpa-medium-col">{{.S2CE | markTrim3}}</td>
-						<td class="gpa-medium-col">{{.S2AV | markTrim}}</td>
+						<td class="gpa-medium-col {{if lt .S2AV 60.0}}gpa-red{{end}}">{{.S2AV | markTrim}}</td>
 						<td class="gpa-medium-col">{{.S2WGP | mark}}</td>
 						{{else}}
 						<td colspan="4" class="gpa-na-col">N/A</td>
