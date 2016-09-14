@@ -105,7 +105,7 @@ func printStudentMarksHandler(w http.ResponseWriter, r *http.Request) {
 				numInAverage++
 			}
 
-			subjectsCols = append(subjectsCols, colDescription{subject, 100, false})
+			subjectsCols = append(subjectsCols, colDescription{subject, 100, math.NaN(), false})
 			subjectsMarks = append(subjectsMarks, mark)
 
 			studentMarksRows = append(studentMarksRows, studentMarksRow{
@@ -113,7 +113,7 @@ func printStudentMarksHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		average := total / float64(numInAverage)
-		subjectsCols = append(subjectsCols, colDescription{"Average", 100, false})
+		subjectsCols = append(subjectsCols, colDescription{"Average", 100, math.NaN(), false})
 		subjectsMarks = append(subjectsMarks, average)
 		studentMarksRows = append(studentMarksRows, studentMarksRow{
 			"All", subjectsCols, subjectsMarks, ""})

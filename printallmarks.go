@@ -115,9 +115,9 @@ func printAllHandler(w http.ResponseWriter, r *http.Request) {
 			if sub == "Remarks" || sub == "Behavior" {
 				continue
 			}
-			maxCols = append(maxCols, colDescription{sub, 100, false})
+			maxCols = append(maxCols, colDescription{sub, 100, math.NaN(), false})
 		}
-		maxCols = append(maxCols, colDescription{"Average", 100, false})
+		maxCols = append(maxCols, colDescription{"Average", 100, math.NaN(), false})
 		for _, stu := range students {
 			total := math.NaN()
 			numInAverage := 0
@@ -187,7 +187,7 @@ func printAllHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for len(maxCols) < 13 {
-		maxCols = append(maxCols, colDescription{"____", 0, false})
+		maxCols = append(maxCols, colDescription{"____", math.NaN(), math.NaN(), false})
 	}
 
 	var allRows []printAllRow

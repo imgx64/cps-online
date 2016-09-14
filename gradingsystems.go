@@ -98,9 +98,10 @@ func (t Term) String() string {
 }
 
 type colDescription struct {
-	Name     string
-	Max      float64
-	Editable bool
+	Name        string
+	Max         float64
+	FinalWeight float64
+	Editable    bool
 }
 
 type studentMarks map[Term][]float64
@@ -285,9 +286,10 @@ var gradingColumnTypeStrings = map[gradingColumnType]string{
 }
 
 type gradingColumn struct {
-	Type gradingColumnType
-	Name string
-	Max  float64
+	Type        gradingColumnType
+	Name        string
+	Max         float64
+	FinalWeight float64
 
 	NumQuizzes  int
 	BestQuizzes int
@@ -314,33 +316,33 @@ func (s Subject) description(term Term) []colDescription {
 		var cols []colDescription
 		for _, gcol := range s.QuarterGradingColumns {
 			if gcol.Type == directGrading {
-				cols = append(cols, colDescription{gcol.Name, gcol.Max, true})
+				cols = append(cols, colDescription{gcol.Name, gcol.Max, gcol.FinalWeight, true})
 			} else if gcol.Type == quizGrading {
 				cols = append(cols, quizColDescriptions(gcol)...)
 			}
 		}
-		cols = append(cols, colDescription{"Quarter Mark", 100, false})
-		cols = append(cols, colDescription{"Quarter %", s.qWeight, false})
+		cols = append(cols, colDescription{"Quarter Mark", 100, math.NaN(), false})
+		cols = append(cols, colDescription{"Quarter %", s.qWeight, math.NaN(), false})
 		return cols
 
 	} else if term.Typ == Semester {
 		var cols []colDescription
 		for _, gcol := range s.SemesterGradingColumns {
 			if gcol.Type == directGrading {
-				cols = append(cols, colDescription{gcol.Name, gcol.Max, true})
+				cols = append(cols, colDescription{gcol.Name, gcol.Max, gcol.FinalWeight, true})
 			} else if gcol.Type == quizGrading {
 				cols = append(cols, quizColDescriptions(gcol)...)
 			}
 		}
-		cols = append(cols, colDescription{"Semester %", s.sWeight, false})
-		cols = append(cols, colDescription{"Semester Mark", 100, false})
+		cols = append(cols, colDescription{"Semester %", s.sWeight, math.NaN(), false})
+		cols = append(cols, colDescription{"Semester Mark", 100, math.NaN(), false})
 		return cols
 
 	} else if term.Typ == EndOfYear {
 		return []colDescription{
-			{"Semester 1 %", 100, false},
-			{"Semester 2 %", 100, false},
-			{"Final mark", 100, false},
+			{"Semester 1 %", 100, 50, false},
+			{"Semester 2 %", 100, 50, false},
+			{"Final mark", 100, math.NaN(), false},
 		}
 	} else {
 		panic(fmt.Sprintf("Invalid term type: %d", term.Typ))
@@ -358,12 +360,14 @@ func quizColDescriptions(gc gradingColumn) []colDescription {
 		cols = append(cols, colDescription{
 			fmt.Sprintf("%s %d", gc.Name, i+1),
 			gc.Max,
+			math.NaN(),
 			true,
 		})
 	}
 	cols = append(cols, colDescription{
 		fmt.Sprintf("%s (Best %d)", gc.Name, gc.BestQuizzes),
 		gc.Max * float64(gc.BestQuizzes),
+		gc.FinalWeight,
 		false,
 	})
 
@@ -405,7 +409,7 @@ func (s Subject) evaluate(term Term, marks studentMarks) error {
 		nextMark := 0
 		for _, gcol := range s.QuarterGradingColumns {
 			if gcol.Type == directGrading {
-				total100 += m[nextMark]
+				total100 += m[nextMark] * gcol.FinalWeight / gcol.Max
 				nextMark++
 			} else if gcol.Type == quizGrading {
 				totalQuiz := quizSum(gcol.BestQuizzes, m[nextMark:nextMark+gcol.NumQuizzes])
@@ -413,7 +417,8 @@ func (s Subject) evaluate(term Term, marks studentMarks) error {
 				m[nextMark] = totalQuiz
 				nextMark++
 
-				total100 += totalQuiz
+				total100 += totalQuiz * gcol.FinalWeight /
+					(float64(gcol.BestQuizzes) * gcol.Max)
 			}
 		}
 
@@ -433,7 +438,7 @@ func (s Subject) evaluate(term Term, marks studentMarks) error {
 		nextMark := 0
 		for _, gcol := range s.SemesterGradingColumns {
 			if gcol.Type == directGrading {
-				total100 += m[nextMark]
+				total100 += m[nextMark] * gcol.FinalWeight / gcol.Max
 				nextMark++
 			} else if gcol.Type == quizGrading {
 				totalQuiz := quizSum(gcol.BestQuizzes, m[nextMark:nextMark+gcol.NumQuizzes])
@@ -441,7 +446,8 @@ func (s Subject) evaluate(term Term, marks studentMarks) error {
 				m[nextMark] = totalQuiz
 				nextMark++
 
-				total100 += totalQuiz
+				total100 += totalQuiz * gcol.FinalWeight /
+					(float64(gcol.BestQuizzes) * gcol.Max)
 			}
 		}
 
@@ -552,21 +558,21 @@ type behaviorGradingSystem struct {
 }
 
 var behaviorDesc = []colDescription{
-	{"Follows school guidelines for safe and appropriate behaviour", 4, true},
-	{"Demonstrates courtesy and respect", 4, true},
-	{"Listens and responds", 4, true},
-	{"Strives for quality work", 4, true},
-	{"Shows initiative / is a self - starter", 4, true},
-	{"Participates enthusiastically in activities", 4, true},
-	{"Uses time efficiently and appropriately", 4, true},
-	{"Completes class work on time ", 4, true},
-	{"Contributes to discussion and group tasks", 4, true},
-	{"Works cooperatively with others", 4, true},
-	{"Works well independently", 4, true},
-	{"Returns complete homework", 4, true},
-	{"Organizes shelf, materials and belongings ", 4, true},
-	{"Asks questions to clarify content", 4, true},
-	{"Clearly communicates to teachers ", 4, true},
+	{"Follows school guidelines for safe and appropriate behaviour", 4, 4, true},
+	{"Demonstrates courtesy and respect", 4, 4, true},
+	{"Listens and responds", 4, 4, true},
+	{"Strives for quality work", 4, 4, true},
+	{"Shows initiative / is a self - starter", 4, 4, true},
+	{"Participates enthusiastically in activities", 4, 4, true},
+	{"Uses time efficiently and appropriately", 4, 4, true},
+	{"Completes class work on time ", 4, 4, true},
+	{"Contributes to discussion and group tasks", 4, 4, true},
+	{"Works cooperatively with others", 4, 4, true},
+	{"Works well independently", 4, 4, true},
+	{"Returns complete homework", 4, 4, true},
+	{"Organizes shelf, materials and belongings ", 4, 4, true},
+	{"Asks questions to clarify content", 4, 4, true},
+	{"Clearly communicates to teachers ", 4, 4, true},
 }
 
 func (behaviorGradingSystem) description(term Term) []colDescription {

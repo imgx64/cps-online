@@ -85,7 +85,8 @@ license that can be found in the LICENSE file.
 		<thead>
 			<th scope="col">Type</th>
 			<th scope="col">Name</th>
-			<th scope="col">Max marks</th>
+			<th scope="col">Encoded Max</th>
+			<th scope="col">Final Weight</th>
 			<th scope="col">No. of Quizzes</th>
 			<th scope="col">Calculate Best N Quizzes</th>
 		</thead>
@@ -114,6 +115,11 @@ license that can be found in the LICENSE file.
 			   		class="form-control" value="{{$gc.Max}}">
 			</td>
 			<td>
+				<input type="number" name="qgc-weight-{{$i}}"
+					min="0" max="100" step="any"
+					class="form-control" value="{{$gc.FinalWeight}}">
+			</td>
+			<td>
 				<input type="number" name="qgc-num-quizzes-{{$i}}"
 					min="0" max="100" step="1"
 			   		class="form-control" value="{{$gc.NumQuizzes}}">
@@ -133,7 +139,8 @@ license that can be found in the LICENSE file.
 		<thead>
 			<th scope="col">Type</th>
 			<th scope="col">Name</th>
-			<th scope="col">Max marks</th>
+			<th scope="col">Encoded Max</th>
+			<th scope="col">Final Weight</th>
 			<th scope="col">No. of Quizzes</th>
 			<th scope="col">Calculate Best N Quizzes</th>
 		</thead>
@@ -160,6 +167,11 @@ license that can be found in the LICENSE file.
 				<input type="number" name="sgc-max-{{$i}}"
 					min="0" max="100" step="any"
 			   		class="form-control" value="{{$gc.Max}}">
+			</td>
+			<td>
+				<input type="number" name="sgc-weight-{{$i}}"
+					min="0" max="100" step="any"
+					class="form-control" value="{{$gc.FinalWeight}}">
 			</td>
 			<td>
 				<input type="number" name="sgc-num-quizzes-{{$i}}"

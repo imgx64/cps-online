@@ -62,6 +62,27 @@ func getSubject(c context.Context, sy, class, subjectname string) (Subject, erro
 		return Subject{}, err
 	}
 
+	for i, gc := range subject.QuarterGradingColumns {
+		if gc.FinalWeight == 0 {
+			if gc.Type == quizGrading {
+				gc.FinalWeight = gc.Max * float64(gc.BestQuizzes)
+			} else {
+				gc.FinalWeight = gc.Max
+			}
+		}
+		subject.QuarterGradingColumns[i] = gc
+	}
+	for i, gc := range subject.SemesterGradingColumns {
+		if gc.FinalWeight == 0 {
+			if gc.Type == quizGrading {
+				gc.FinalWeight = gc.Max * float64(gc.BestQuizzes)
+			} else {
+				gc.FinalWeight = gc.Max
+			}
+		}
+		subject.SemesterGradingColumns[i] = gc
+	}
+
 	return subject, nil
 }
 
@@ -87,11 +108,7 @@ func saveSubject(c context.Context, sy, class string, subject Subject) error {
 
 	qTotal := 0.0
 	for _, gc := range subject.QuarterGradingColumns {
-		if gc.Type == directGrading {
-			qTotal += gc.Max
-		} else if gc.Type == quizGrading {
-			qTotal += gc.Max * float64(gc.BestQuizzes)
-		}
+		qTotal += gc.FinalWeight
 	}
 	if qTotal != 0.0 && qTotal != 100.0 {
 		return fmt.Errorf("Total marks for quarter must be 100. Got %f", qTotal)
@@ -99,11 +116,7 @@ func saveSubject(c context.Context, sy, class string, subject Subject) error {
 
 	sTotal := 0.0
 	for _, gc := range subject.SemesterGradingColumns {
-		if gc.Type == directGrading {
-			sTotal += gc.Max
-		} else if gc.Type == quizGrading {
-			sTotal += gc.Max * float64(gc.BestQuizzes)
-		}
+		sTotal += gc.FinalWeight
 	}
 
 	if sTotal != 0.0 && sTotal != 100.0 {
@@ -348,6 +361,7 @@ func subjectsSaveHandler(w http.ResponseWriter, r *http.Request) {
 		typeStr := r.PostForm.Get(fmt.Sprintf("qgc-type-%d", i))
 		nameStr := r.PostForm.Get(fmt.Sprintf("qgc-name-%d", i))
 		maxStr := r.PostForm.Get(fmt.Sprintf("qgc-max-%d", i))
+		weightStr := r.PostForm.Get(fmt.Sprintf("qgc-weight-%d", i))
 		numQuizzesStr := r.PostForm.Get(fmt.Sprintf("qgc-num-quizzes-%d", i))
 		bestQuizzesStr := r.PostForm.Get(fmt.Sprintf("qgc-best-quizzes-%d", i))
 
@@ -365,7 +379,24 @@ func subjectsSaveHandler(w http.ResponseWriter, r *http.Request) {
 		max, err := strconv.ParseFloat(maxStr, 64)
 		if err != nil {
 			renderErrorMsg(w, r, http.StatusBadRequest,
-				fmt.Sprintf("Invalid Max marks for %s: %s", name, maxStr))
+				fmt.Sprintf("Invalid Encoded Max for %s: %s", name, maxStr))
+			return
+		}
+		if max == 0 {
+			renderErrorMsg(w, r, http.StatusBadRequest,
+				fmt.Sprintf("Invalid Encoded Max for %s: %s", name, maxStr))
+			return
+		}
+
+		weight, err := strconv.ParseFloat(weightStr, 64)
+		if err != nil {
+			renderErrorMsg(w, r, http.StatusBadRequest,
+				fmt.Sprintf("Invalid Final Weight for %s: %s", name, weightStr))
+			return
+		}
+		if weight == 0 {
+			renderErrorMsg(w, r, http.StatusBadRequest,
+				fmt.Sprintf("Invalid Final Weight for %s: %s", name, weightStr))
 			return
 		}
 
@@ -401,6 +432,7 @@ func subjectsSaveHandler(w http.ResponseWriter, r *http.Request) {
 			typ,
 			name,
 			max,
+			weight,
 			numQuizzes,
 			bestQuizzes,
 		}
@@ -412,6 +444,7 @@ func subjectsSaveHandler(w http.ResponseWriter, r *http.Request) {
 		typeStr := r.PostForm.Get(fmt.Sprintf("sgc-type-%d", i))
 		nameStr := r.PostForm.Get(fmt.Sprintf("sgc-name-%d", i))
 		maxStr := r.PostForm.Get(fmt.Sprintf("sgc-max-%d", i))
+		weightStr := r.PostForm.Get(fmt.Sprintf("sgc-weight-%d", i))
 		numQuizzesStr := r.PostForm.Get(fmt.Sprintf("sgc-num-quizzes-%d", i))
 		bestQuizzesStr := r.PostForm.Get(fmt.Sprintf("sgc-bestquizzes-%d", i))
 
@@ -429,7 +462,24 @@ func subjectsSaveHandler(w http.ResponseWriter, r *http.Request) {
 		max, err := strconv.ParseFloat(maxStr, 64)
 		if err != nil {
 			renderErrorMsg(w, r, http.StatusBadRequest,
-				fmt.Sprintf("Invalid Max marks for %s: %s", name, maxStr))
+				fmt.Sprintf("Invalid Encoded Max for %s: %s", name, maxStr))
+			return
+		}
+		if max == 0 {
+			renderErrorMsg(w, r, http.StatusBadRequest,
+				fmt.Sprintf("Invalid Encoded Max for %s: %s", name, maxStr))
+			return
+		}
+
+		weight, err := strconv.ParseFloat(weightStr, 64)
+		if err != nil {
+			renderErrorMsg(w, r, http.StatusBadRequest,
+				fmt.Sprintf("Invalid Final Weight for %s: %s", name, weightStr))
+			return
+		}
+		if weight == 0 {
+			renderErrorMsg(w, r, http.StatusBadRequest,
+				fmt.Sprintf("Invalid Final Weight for %s: %s", name, weightStr))
 			return
 		}
 
@@ -460,6 +510,7 @@ func subjectsSaveHandler(w http.ResponseWriter, r *http.Request) {
 			typ,
 			name,
 			max,
+			weight,
 			numQuizzes,
 			bestQuizzes,
 		}
