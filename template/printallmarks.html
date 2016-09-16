@@ -72,7 +72,7 @@ license that can be found in the LICENSE file.
 			<th scope="col"></th>
 			<th scope="col"></th>
 			{{range .Cols}}
-			<th scope="col">{{.Max}}</th>
+			<th scope="col">{{maxAndWeight .Max .FinalWeight}}</th>
 			{{end}}
 		</tr>
 	</thead>

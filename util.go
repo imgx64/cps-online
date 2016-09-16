@@ -129,6 +129,7 @@ var funcMap = htmltemplate.FuncMap{
 	"mapInt64Get": func(m map[int64]string, key int64) string {
 		return m[key]
 	},
+	"maxAndWeight": maxAndWeight,
 }
 
 func formatMark(mark float64) string {
@@ -157,6 +158,14 @@ func formatMarkTrim3(mark float64) string {
 	markStr := fmt.Sprintf("%.3f", mark)
 	markStr = strings.Trim(markStr, "0")
 	return strings.TrimRight(markStr, ".")
+}
+
+func maxAndWeight(max, weight float64) string {
+	maxStr := formatMarkTrim(max)
+	if math.IsNaN(weight) {
+		return maxStr
+	}
+	return fmt.Sprintf("%s (%s)", maxStr, formatMarkTrim(weight))
 }
 
 var countries = []string{

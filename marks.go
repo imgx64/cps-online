@@ -473,7 +473,7 @@ func marksExportHandler(w http.ResponseWriter, r *http.Request) {
 	fieldMax := []string{"Do not modify this column", ""}
 	for _, col := range cols {
 		fieldNames = append(fieldNames, col.Name)
-		fieldMax = append(fieldMax, formatMark(col.Max))
+		fieldMax = append(fieldMax, maxAndWeight(col.Max, col.FinalWeight))
 	}
 	errors = append(errors, csvw.Write(fieldNames))
 	errors = append(errors, csvw.Write(fieldMax))

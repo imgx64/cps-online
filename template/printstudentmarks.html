@@ -26,7 +26,7 @@ license that can be found in the LICENSE file.
 			<tr>
 				<th scope="row"></th>
 				{{range .DetailsCols}}
-				<th scope="col">{{.Max}}</th>
+				<th scope="col">{{maxAndWeight .Max .FinalWeight}}</th>
 				{{end}}
 				<th scope="col"></th>
 			</tr>
