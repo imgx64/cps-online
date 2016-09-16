@@ -14,7 +14,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	//	"strings"
 )
 
 func init() {
@@ -60,6 +59,10 @@ func getSubject(c context.Context, sy, class, subjectname string) (Subject, erro
 	err := nds.Get(c, key, &subject)
 	if err != nil {
 		return Subject{}, err
+	}
+
+	if subject.SemesterType == 0 {
+		subject.SemesterType = Quarterly
 	}
 
 	for i, gc := range subject.QuarterGradingColumns {
@@ -287,12 +290,14 @@ func subjectsDetailsHandler(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		AvailableSubjects    []string
 		GradingColumnChoices []gradingColumnChoice
+		SemesterTypes        []semesterType
 
 		Class   string
 		Subject Subject
 	}{
 		availableSubjects,
 		gradingColumnChoices,
+		semesterTypes,
 
 		class,
 		subject,
@@ -356,6 +361,14 @@ func subjectsSaveHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	subject.S2Credits = s2credits
+
+	semType, err := strconv.Atoi(r.PostForm.Get("SemesterType"))
+	if err != nil {
+		renderErrorMsg(w, r, http.StatusBadRequest,
+			fmt.Sprintf("Invalid Semester Type: %s", r.PostForm.Get("SemesterType")))
+		return
+	}
+	subject.SemesterType = semesterType(semType)
 
 	for i := 0; ; i++ {
 		typeStr := r.PostForm.Get(fmt.Sprintf("qgc-type-%d", i))

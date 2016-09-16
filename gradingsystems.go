@@ -97,6 +97,35 @@ func (t Term) String() string {
 	return fmt.Sprintf("%s %d", s, t.N)
 }
 
+type semesterType int
+
+const (
+	Quarterly semesterType = iota + 1
+	Midterm
+)
+
+var semesterTypes = []semesterType{
+	Quarterly,
+	Midterm,
+}
+
+var semesterTypeStrings = map[semesterType]string{
+	Quarterly: "Quarterly",
+	Midterm:   "Midterm",
+}
+
+func (st semesterType) Value() int {
+	return int(st)
+}
+
+func (st semesterType) String() string {
+	s, ok := semesterTypeStrings[st]
+	if !ok {
+		panic(fmt.Sprintf("Invalid semesterType type: %d", st))
+	}
+	return s
+}
+
 type colDescription struct {
 	Name        string
 	Max         float64
@@ -302,6 +331,7 @@ type Subject struct {
 	CalculateInAverage bool
 	S1Credits          float64
 	S2Credits          float64
+	SemesterType       semesterType
 
 	QuarterGradingColumns  []gradingColumn
 	SemesterGradingColumns []gradingColumn

@@ -80,7 +80,23 @@ license that can be found in the LICENSE file.
 			</div>
 		</div>
 
-		<legend>Quarter grading columns</legend>
+		<div class="form-group">
+			<label class="col-sm-3 control-label" for="SemesterType">Semester type</label>
+			<div class="col-sm-5">
+				<select id="SemesterType" name="SemesterType" class="form-control"
+					required="required">
+					<option></option>
+					{{range .SemesterTypes}}
+					<option value="{{.Value}}"
+					{{if equal . $.Subject.SemesterType}}selected="selected"{{end}}>
+						{{.String}}
+					</option>
+					{{end}}
+				</select>
+			</div>
+		</div>
+
+		<legend>Quarter/Midterm grading columns</legend>
 		<table>
 		<thead>
 			<th scope="col">Type</th>
