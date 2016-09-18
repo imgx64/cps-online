@@ -62,7 +62,7 @@ func getSubject(c context.Context, sy, class, subjectname string) (Subject, erro
 	}
 
 	if subject.SemesterType == 0 {
-		subject.SemesterType = Quarterly
+		subject.SemesterType = QuarterSemester
 	}
 
 	for i, gc := range subject.QuarterGradingColumns {
@@ -113,21 +113,30 @@ func saveSubject(c context.Context, sy, class string, subject Subject) error {
 	for _, gc := range subject.QuarterGradingColumns {
 		qTotal += gc.FinalWeight
 	}
-	if qTotal != 0.0 && qTotal != 100.0 {
-		return fmt.Errorf("Total marks for quarter must be 100. Got %f", qTotal)
-	}
 
 	sTotal := 0.0
 	for _, gc := range subject.SemesterGradingColumns {
 		sTotal += gc.FinalWeight
 	}
 
-	if sTotal != 0.0 && sTotal != 100.0 {
-		return fmt.Errorf("Total marks for semester must be 100. Got %f", sTotal)
-	}
-
 	if qTotal == 0.0 && sTotal == 0.0 {
 		return fmt.Errorf("Please add columns")
+	}
+
+	if subject.SemesterType == QuarterSemester {
+		if qTotal != 0.0 && qTotal != 100.0 {
+			return fmt.Errorf("Total marks for quarter must be 100. Got %f", qTotal)
+		}
+
+		if sTotal != 0.0 && sTotal != 100.0 {
+			return fmt.Errorf("Total marks for semester must be 100. Got %f", sTotal)
+		}
+	} else if subject.SemesterType == MidtermSemester {
+		if qTotal+sTotal != 100.0 {
+			return fmt.Errorf("Total marks for Midterm + Semester must be 100. Got %f", qTotal+sTotal)
+		}
+	} else {
+		return fmt.Errorf("Invalid semester type: %d", subject.SemesterType)
 	}
 
 	key := datastore.NewKey(c, "subjects",
@@ -459,7 +468,7 @@ func subjectsSaveHandler(w http.ResponseWriter, r *http.Request) {
 		maxStr := r.PostForm.Get(fmt.Sprintf("sgc-max-%d", i))
 		weightStr := r.PostForm.Get(fmt.Sprintf("sgc-weight-%d", i))
 		numQuizzesStr := r.PostForm.Get(fmt.Sprintf("sgc-num-quizzes-%d", i))
-		bestQuizzesStr := r.PostForm.Get(fmt.Sprintf("sgc-bestquizzes-%d", i))
+		bestQuizzesStr := r.PostForm.Get(fmt.Sprintf("sgc-best-quizzes-%d", i))
 
 		typeInt, err := strconv.Atoi(typeStr)
 		if err != nil {
@@ -498,14 +507,14 @@ func subjectsSaveHandler(w http.ResponseWriter, r *http.Request) {
 
 		var numQuizzes, bestQuizzes int
 		if typ == quizGrading {
-			numQuizzes, err := strconv.Atoi(numQuizzesStr)
+			numQuizzes, err = strconv.Atoi(numQuizzesStr)
 			if err != nil || numQuizzes < 1 {
 				renderErrorMsg(w, r, http.StatusBadRequest,
 					fmt.Sprintf("Invalid Number of Quizzes for %s: %s", name, numQuizzesStr))
 				return
 			}
 
-			bestQuizzes, err := strconv.Atoi(bestQuizzesStr)
+			bestQuizzes, err = strconv.Atoi(bestQuizzesStr)
 			if err != nil || bestQuizzes < 1 {
 				renderErrorMsg(w, r, http.StatusBadRequest,
 					fmt.Sprintf("Invalid Best Quizzes for %s: %s", name, bestQuizzesStr))

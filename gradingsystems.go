@@ -28,6 +28,7 @@ const (
 	Semester
 	EndOfYear
 	EndOfYearGpa
+	Midterm
 )
 
 var termStrings = map[termType]string{
@@ -35,6 +36,7 @@ var termStrings = map[termType]string{
 	Semester:     "Semester",
 	EndOfYear:    "End of Year",
 	EndOfYearGpa: "End of Year (GPA)",
+	Midterm:      "Midterm",
 }
 
 type Term struct {
@@ -45,9 +47,11 @@ type Term struct {
 var terms = []Term{
 	{Quarter, 1},
 	{Quarter, 2},
+	{Midterm, 1},
 	{Semester, 1},
 	{Quarter, 3},
 	{Quarter, 4},
+	{Midterm, 2},
 	{Semester, 2},
 	{EndOfYear, 0},
 }
@@ -100,18 +104,18 @@ func (t Term) String() string {
 type semesterType int
 
 const (
-	Quarterly semesterType = iota + 1
-	Midterm
+	QuarterSemester semesterType = iota + 1
+	MidtermSemester
 )
 
 var semesterTypes = []semesterType{
-	Quarterly,
-	Midterm,
+	QuarterSemester,
+	MidtermSemester,
 }
 
 var semesterTypeStrings = map[semesterType]string{
-	Quarterly: "Quarterly",
-	Midterm:   "Midterm",
+	QuarterSemester: "Quarter",
+	MidtermSemester: "Midterm",
 }
 
 func (st semesterType) Value() int {
@@ -343,28 +347,58 @@ type Subject struct {
 func (s Subject) description(term Term) []colDescription {
 	// TODO: check total max = 100
 	if term.Typ == Quarter {
+		if s.SemesterType != QuarterSemester {
+			return nil
+		}
 		var cols []colDescription
 		for _, gcol := range s.QuarterGradingColumns {
 			if gcol.Type == directGrading {
 				cols = append(cols, colDescription{gcol.Name, gcol.Max, gcol.FinalWeight, true})
 			} else if gcol.Type == quizGrading {
-				cols = append(cols, quizColDescriptions(gcol)...)
+				cols = append(cols, quizColDescriptions(gcol, false)...)
 			}
 		}
 		cols = append(cols, colDescription{"Quarter Mark", 100, math.NaN(), false})
 		cols = append(cols, colDescription{"Quarter %", s.qWeight, math.NaN(), false})
 		return cols
 
+	} else if term.Typ == Midterm {
+		if s.SemesterType != MidtermSemester {
+			return nil
+		}
+		var cols []colDescription
+		for _, gcol := range s.QuarterGradingColumns {
+			if gcol.Type == directGrading {
+				cols = append(cols, colDescription{gcol.Name, gcol.Max, 100.0, true})
+			} else if gcol.Type == quizGrading {
+				cols = append(cols, quizColDescriptions(gcol, true)...)
+			}
+		}
+		cols = append(cols, colDescription{"Midterm Mark", 100, math.NaN(), false})
+		return cols
+
 	} else if term.Typ == Semester {
 		var cols []colDescription
+		if s.SemesterType == MidtermSemester {
+			for _, gcol := range s.QuarterGradingColumns {
+				if gcol.Type == directGrading {
+					cols = append(cols, colDescription{gcol.Name, gcol.Max, gcol.FinalWeight, false})
+				} else if gcol.Type == quizGrading {
+					cols = append(cols, colDescription{gcol.Name,
+						gcol.Max * float64(gcol.BestQuizzes), gcol.FinalWeight, false})
+				}
+			}
+		}
 		for _, gcol := range s.SemesterGradingColumns {
 			if gcol.Type == directGrading {
 				cols = append(cols, colDescription{gcol.Name, gcol.Max, gcol.FinalWeight, true})
 			} else if gcol.Type == quizGrading {
-				cols = append(cols, quizColDescriptions(gcol)...)
+				cols = append(cols, quizColDescriptions(gcol, false)...)
 			}
 		}
-		cols = append(cols, colDescription{"Semester %", s.sWeight, math.NaN(), false})
+		if s.SemesterType == QuarterSemester {
+			cols = append(cols, colDescription{"Semester %", s.sWeight, math.NaN(), false})
+		}
 		cols = append(cols, colDescription{"Semester Mark", 100, math.NaN(), false})
 		return cols
 
@@ -379,7 +413,7 @@ func (s Subject) description(term Term) []colDescription {
 	}
 }
 
-func quizColDescriptions(gc gradingColumn) []colDescription {
+func quizColDescriptions(gc gradingColumn, midterm bool) []colDescription {
 	if gc.NumQuizzes < 0 || gc.BestQuizzes > gc.NumQuizzes {
 		// invalid, so return empty columns
 		return []colDescription{}
@@ -394,10 +428,18 @@ func quizColDescriptions(gc gradingColumn) []colDescription {
 			true,
 		})
 	}
+
+	var weight float64
+	if midterm {
+		weight = 100.0
+	} else {
+		weight = gc.FinalWeight
+	}
+
 	cols = append(cols, colDescription{
 		fmt.Sprintf("%s (Best %d)", gc.Name, gc.BestQuizzes),
 		gc.Max * float64(gc.BestQuizzes),
-		gc.FinalWeight,
+		weight,
 		false,
 	})
 
@@ -434,7 +476,12 @@ func (s Subject) evaluate(term Term, marks studentMarks) error {
 		}
 	}
 
+	marks[term] = m
+
 	if term.Typ == Quarter {
+		if s.SemesterType != QuarterSemester {
+			return nil
+		}
 		total100 := 0.0
 		nextMark := 0
 		for _, gcol := range s.QuarterGradingColumns {
@@ -463,9 +510,63 @@ func (s Subject) evaluate(term Term, marks studentMarks) error {
 		// Quarter %
 		m[nextMark] = total100 * s.qWeight / 100.0
 
+	} else if term.Typ == Midterm {
+		if s.SemesterType != MidtermSemester {
+			return nil
+		}
+		totalMark := 0.0
+		totalWeight := 0.0
+		nextMark := 0
+		for _, gcol := range s.QuarterGradingColumns {
+			if gcol.Type == directGrading {
+				totalMark += m[nextMark] * 100.0 / gcol.Max
+				totalWeight += 100.0
+				nextMark++
+			} else if gcol.Type == quizGrading {
+				totalQuiz := quizSum(gcol.BestQuizzes, m[nextMark:nextMark+gcol.NumQuizzes])
+				nextMark += gcol.NumQuizzes
+				m[nextMark] = totalQuiz
+				nextMark++
+
+				totalMark += totalQuiz * 100.0 /
+					(float64(gcol.BestQuizzes) * gcol.Max)
+				totalWeight += 100.0
+			}
+		}
+
+		if len(s.QuarterGradingColumns) == 0 {
+			totalMark = math.NaN()
+		}
+
+		// Midterm mark
+		m[nextMark] = totalMark / totalWeight * 100.0
+
 	} else if term.Typ == Semester {
 		total100 := 0.0
 		nextMark := 0
+		if s.SemesterType == MidtermSemester {
+			midterm := Term{Midterm, term.N}
+			s.evaluate(midterm, marks)
+			midtermMarks := marks[midterm]
+			midtermNextMark := 0
+			for _, gcol := range s.QuarterGradingColumns {
+				if gcol.Type == directGrading {
+					m[nextMark] =
+						midtermMarks[midtermNextMark]
+					total100 += m[nextMark] * gcol.FinalWeight / gcol.Max
+					nextMark++
+					midtermNextMark++
+				} else if gcol.Type == quizGrading {
+					midtermNextMark += gcol.NumQuizzes
+					m[nextMark] = midtermMarks[midtermNextMark]
+					total100 += m[nextMark] * gcol.FinalWeight /
+						(float64(gcol.BestQuizzes) * gcol.Max)
+
+					nextMark++
+					midtermNextMark++
+				}
+			}
+		}
 		for _, gcol := range s.SemesterGradingColumns {
 			if gcol.Type == directGrading {
 				total100 += m[nextMark] * gcol.FinalWeight / gcol.Max
@@ -474,34 +575,40 @@ func (s Subject) evaluate(term Term, marks studentMarks) error {
 				totalQuiz := quizSum(gcol.BestQuizzes, m[nextMark:nextMark+gcol.NumQuizzes])
 				nextMark += gcol.NumQuizzes
 				m[nextMark] = totalQuiz
-				nextMark++
-
 				total100 += totalQuiz * gcol.FinalWeight /
 					(float64(gcol.BestQuizzes) * gcol.Max)
+
+				nextMark++
 			}
 		}
 
-		// Semester Exam % (or just Semester % if there are columns other than exam)
-		m[nextMark] = total100 * s.sWeight / 100.0
-		nextMark++
+		if s.SemesterType == QuarterSemester {
+			// Semester Exam % (or just Semester % if there are columns other than exam)
+			m[nextMark] = total100 * s.sWeight / 100.0
+			nextMark++
 
-		// Semester Mark
-		q2 := term.N * 2
-		q1 := q2 - 1
+			// Semester Mark
+			q2 := term.N * 2
+			q1 := q2 - 1
 
-		s.evaluate(Term{Quarter, q1}, marks)
-		s.evaluate(Term{Quarter, q2}, marks)
+			s.evaluate(Term{Quarter, q1}, marks)
+			s.evaluate(Term{Quarter, q2}, marks)
 
-		if len(s.QuarterGradingColumns) == 0 {
+			if len(s.QuarterGradingColumns) == 0 {
+				m[nextMark] = total100
+			} else {
+				q1Marks := marks[Term{Quarter, q1}]
+				q1Mark := q1Marks[len(q1Marks)-1]
+
+				q2Marks := marks[Term{Quarter, q2}]
+				q2Mark := q2Marks[len(q2Marks)-1]
+
+				m[nextMark] = sumMarks(m[nextMark-1], q1Mark, q2Mark)
+			}
+		} else if s.SemesterType == MidtermSemester {
+			// Semester Mark
 			m[nextMark] = total100
-		} else {
-			q1Marks := marks[Term{Quarter, q1}]
-			q1Mark := q1Marks[len(q1Marks)-1]
-
-			q2Marks := marks[Term{Quarter, q2}]
-			q2Mark := q2Marks[len(q2Marks)-1]
-
-			m[nextMark] = sumMarks(m[nextMark-1], q1Mark, q2Mark)
+			nextMark++
 		}
 
 	} else if term.Typ == EndOfYear {
@@ -542,7 +649,15 @@ func quizSum(keep int, marks []float64) float64 {
 func (s Subject) get100(term Term, marks studentMarks) float64 {
 	m := marks[term]
 	if term.Typ == Quarter {
+		if s.SemesterType != QuarterSemester {
+			return math.NaN()
+		}
 		return m[len(m)-2]
+	} else if term.Typ == Midterm {
+		if s.SemesterType != MidtermSemester {
+			return math.NaN()
+		}
+		return m[len(m)-1]
 	} else if term.Typ == Semester {
 		return m[len(m)-1]
 	} else if term.Typ == EndOfYear {
@@ -554,6 +669,8 @@ func (s Subject) get100(term Term, marks studentMarks) float64 {
 func (s Subject) getExam(term Term, marks studentMarks) float64 {
 	m := marks[term]
 	if term.Typ == Quarter {
+		return math.NaN()
+	} else if term.Typ == Midterm {
 		return math.NaN()
 	} else if term.Typ == Semester {
 		return m[len(m)-2]
@@ -607,6 +724,8 @@ var behaviorDesc = []colDescription{
 
 func (behaviorGradingSystem) description(term Term) []colDescription {
 	if term.Typ == Quarter {
+		return behaviorDesc
+	} else if term.Typ == Midterm {
 		return behaviorDesc
 	} else if term.Typ == Semester || term.Typ == EndOfYear {
 		return nil
