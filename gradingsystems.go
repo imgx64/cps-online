@@ -141,7 +141,7 @@ type studentMarks map[Term][]float64
 
 type gradingSystem interface {
 	description(term Term) []colDescription
-	evaluate(term Term, marks studentMarks) error
+	evaluate(c context.Context, term Term, marks studentMarks) error
 	get100(term Term, marks studentMarks) float64
 	getExam(term Term, marks studentMarks) float64
 	ready(term Term, marks studentMarks) bool
@@ -446,7 +446,7 @@ func quizColDescriptions(gc gradingColumn, midterm bool) []colDescription {
 	return cols
 }
 
-func (s Subject) evaluate(term Term, marks studentMarks) error {
+func (s Subject) evaluate(c context.Context, term Term, marks studentMarks) error {
 	var err error
 
 	m := marks[term]
@@ -546,7 +546,7 @@ func (s Subject) evaluate(term Term, marks studentMarks) error {
 		nextMark := 0
 		if s.SemesterType == MidtermSemester {
 			midterm := Term{Midterm, term.N}
-			s.evaluate(midterm, marks)
+			s.evaluate(c, midterm, marks)
 			midtermMarks := marks[midterm]
 			midtermNextMark := 0
 			for _, gcol := range s.QuarterGradingColumns {
@@ -591,8 +591,8 @@ func (s Subject) evaluate(term Term, marks studentMarks) error {
 			q2 := term.N * 2
 			q1 := q2 - 1
 
-			s.evaluate(Term{Quarter, q1}, marks)
-			s.evaluate(Term{Quarter, q2}, marks)
+			s.evaluate(c, Term{Quarter, q1}, marks)
+			s.evaluate(c, Term{Quarter, q2}, marks)
 
 			if len(s.QuarterGradingColumns) == 0 {
 				m[nextMark] = total100
@@ -612,8 +612,8 @@ func (s Subject) evaluate(term Term, marks studentMarks) error {
 		}
 
 	} else if term.Typ == EndOfYear {
-		s.evaluate(Term{Semester, 1}, marks)
-		s.evaluate(Term{Semester, 2}, marks)
+		s.evaluate(c, Term{Semester, 1}, marks)
+		s.evaluate(c, Term{Semester, 2}, marks)
 		m[0] = s.get100(Term{Semester, 1}, marks)
 		m[1] = s.get100(Term{Semester, 2}, marks)
 
@@ -733,7 +733,7 @@ func (behaviorGradingSystem) description(term Term) []colDescription {
 	panic(fmt.Sprintf("Invalid term type: %d", term.Typ))
 }
 
-func (bgs behaviorGradingSystem) evaluate(term Term, marks studentMarks) (err error) {
+func (bgs behaviorGradingSystem) evaluate(c context.Context, term Term, marks studentMarks) (err error) {
 	m := marks[term]
 	desc := bgs.description(term)
 

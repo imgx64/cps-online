@@ -225,7 +225,7 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 					// TODO: report error
 					continue
 				}
-				gs.evaluate(term, m) // TODO: check error
+				gs.evaluate(c, term, m) // TODO: check error
 				studentRows = append(studentRows, studentRow{s.ID, s.Name, m[term], ""})
 			}
 		}
@@ -355,7 +355,7 @@ func marksSaveHandler(w http.ResponseWriter, r *http.Request) {
 				// TODO: report error
 				continue
 			}
-			gs.evaluate(term, m) // TODO: check error
+			gs.evaluate(c, term, m) // TODO: check error
 
 			marksChanged := false
 			for i, col := range cols {
@@ -370,7 +370,7 @@ func marksSaveHandler(w http.ResponseWriter, r *http.Request) {
 				}
 
 			}
-			gs.evaluate(term, m) // TODO: check error
+			gs.evaluate(c, term, m) // TODO: check error
 			if marksChanged {
 				err := storeMarksRow(c, s.ID, sy, term, subject, m[term])
 				if err != nil {
@@ -453,7 +453,7 @@ func marksExportHandler(w http.ResponseWriter, r *http.Request) {
 				// TODO: report error
 				continue
 			}
-			gs.evaluate(term, m) // TODO: check error
+			gs.evaluate(c, term, m) // TODO: check error
 			studentRows = append(studentRows, studentRow{s.ID, s.Name, m[term], ""})
 		}
 	}
@@ -654,7 +654,7 @@ func marksImportHandler(w http.ResponseWriter, r *http.Request) {
 				renderError(w, r, http.StatusInternalServerError)
 				return
 			}
-			gs.evaluate(term, m) // TODO: check error
+			gs.evaluate(c, term, m) // TODO: check error
 
 			marksChanged := false
 			for i, col := range cols {
@@ -669,7 +669,7 @@ func marksImportHandler(w http.ResponseWriter, r *http.Request) {
 				}
 
 			}
-			gs.evaluate(term, m) // TODO: check error
+			gs.evaluate(c, term, m) // TODO: check error
 			if marksChanged {
 				err := storeMarksRow(c, s.ID, sy, term, subject, m[term])
 				if err != nil {

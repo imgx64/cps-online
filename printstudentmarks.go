@@ -92,7 +92,7 @@ func printStudentMarksHandler(w http.ResponseWriter, r *http.Request) {
 				renderError(w, r, http.StatusInternalServerError)
 				return
 			}
-			gs.evaluate(term, marks)
+			gs.evaluate(c, term, marks)
 			if subject == "Behavior" {
 				behavior = marks[term]
 				continue
