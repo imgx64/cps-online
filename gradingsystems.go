@@ -336,6 +336,8 @@ type Subject struct {
 	S1Credits          float64
 	S2Credits          float64
 	SemesterType       semesterType
+	MidtermWeeks       int
+	TotalWeeks         int
 
 	QuarterGradingColumns  []gradingColumn
 	SemesterGradingColumns []gradingColumn

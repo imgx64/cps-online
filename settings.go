@@ -561,3 +561,34 @@ func settingsAccessHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO: message of success
 	http.Redirect(w, r, "/settings", http.StatusFound)
 }
+
+type weeksSetting struct {
+	Value int
+}
+
+func getMaxWeeks(c context.Context) int {
+
+	key := datastore.NewKey(c, "settings", "max_weeks", 0, nil)
+
+	setting := weeksSetting{}
+	err := nds.Get(c, key, &setting)
+	var maxWeeks int
+	if err == nil {
+		maxWeeks = setting.Value
+	} else {
+		maxWeeks = 0
+	}
+
+	return maxWeeks
+}
+
+func saveMaxWeeks(c context.Context, maxWeeks int) error {
+
+	key := datastore.NewKey(c, "settings", "max_weeks", 0, nil)
+
+	_, err := nds.Put(c, key, &weeksSetting{maxWeeks})
+	if err != nil {
+		return err
+	}
+	return nil
+}

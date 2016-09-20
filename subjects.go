@@ -166,6 +166,11 @@ func saveSubject(c context.Context, sy, class string, subject Subject) error {
 		}
 	}
 
+	maxWeeks := getMaxWeeks(c)
+	if subject.TotalWeeks > maxWeeks {
+		saveMaxWeeks(c, subject.TotalWeeks)
+	}
+
 	return nil
 }
 
@@ -378,6 +383,28 @@ func subjectsSaveHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	subject.SemesterType = semesterType(semType)
+
+	midtermWeeks, err := strconv.Atoi(r.PostForm.Get("MidtermWeeks"))
+	if err != nil || midtermWeeks < 0 {
+		renderErrorMsg(w, r, http.StatusBadRequest,
+			fmt.Sprintf("Invalid Weeks until Midterm: %s", r.PostForm.Get("MidtermWeeks")))
+		return
+	}
+	subject.MidtermWeeks = midtermWeeks
+
+	totalWeeks, err := strconv.Atoi(r.PostForm.Get("TotalWeeks"))
+	if err != nil || totalWeeks < 0 {
+		renderErrorMsg(w, r, http.StatusBadRequest,
+			fmt.Sprintf("Invalid Total Weeks: %s", r.PostForm.Get("TotalWeeks")))
+		return
+	}
+	subject.TotalWeeks = totalWeeks
+
+	if midtermWeeks > totalWeeks {
+		renderErrorMsg(w, r, http.StatusBadRequest,
+			fmt.Sprintf("Weeks until Midterm must be less than Total Weeks, got: %d > %d", midtermWeeks, totalWeeks))
+		return
+	}
 
 	for i := 0; ; i++ {
 		typeStr := r.PostForm.Get(fmt.Sprintf("qgc-type-%d", i))
