@@ -339,6 +339,7 @@ type Subject struct {
 	MidtermWeeks       int
 	TotalWeeks         int
 
+	WeeklyGradingColumns   []gradingColumn
 	QuarterGradingColumns  []gradingColumn
 	SemesterGradingColumns []gradingColumn
 

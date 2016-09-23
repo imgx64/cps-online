@@ -116,6 +116,44 @@ license that can be found in the LICENSE file.
 			</div>
 		</div>
 
+		<legend>Weekly grading columns</legend>
+		<table>
+		<thead>
+			<th scope="col"></th>
+			<th scope="col">Name</th>
+			<th scope="col">Encoded Max</th>
+			<th scope="col">Final Weight</th>
+			<th scope="col"></th>
+			<th scope="col"></th>
+		</thead>
+		<tbody>
+		{{range $i, $gc := .Subject.WeeklyGradingColumns}}
+		<tr>
+			<td>
+			</td> 
+			<td>
+				<input type="text" name="wgc-name-{{$i}}"
+			 		class="form-control" value="{{$gc.Name}}">
+			</td>
+			<td>
+				<input type="number" name="wgc-max-{{$i}}"
+					min="0" max="100" step="any"
+					class="form-control" value="{{$gc.Max}}">
+			</td>
+			<td>
+				<input type="number" name="wgc-weight-{{$i}}"
+					min="0" max="100" step="any"
+					class="form-control" value="{{$gc.FinalWeight}}">
+			</td>
+			<td>
+			</td>
+			<td>
+			</td>
+		</tr>
+		{{end}}
+		</tbody>
+		</table>
+
 		<legend>Quarter/Midterm grading columns</legend>
 		<table>
 		<thead>
@@ -143,12 +181,12 @@ license that can be found in the LICENSE file.
 			</td> 
 			<td>
 				<input type="text" name="qgc-name-{{$i}}"
-			   		class="form-control" value="{{$gc.Name}}">
+			 		class="form-control" value="{{$gc.Name}}">
 			</td>
 			<td>
 				<input type="number" name="qgc-max-{{$i}}"
 					min="0" max="100" step="any"
-			   		class="form-control" value="{{$gc.Max}}">
+			 		class="form-control" value="{{$gc.Max}}">
 			</td>
 			<td>
 				<input type="number" name="qgc-weight-{{$i}}"
@@ -158,12 +196,12 @@ license that can be found in the LICENSE file.
 			<td>
 				<input type="number" name="qgc-num-quizzes-{{$i}}"
 					min="0" max="100" step="1"
-			   		class="form-control" value="{{$gc.NumQuizzes}}">
+			 		class="form-control" value="{{$gc.NumQuizzes}}">
 			</td>
 			<td>
 				<input type="number" name="qgc-best-quizzes-{{$i}}"
 					min="0" max="100" step="1"
-			   		class="form-control" value="{{$gc.BestQuizzes}}">
+			 		class="form-control" value="{{$gc.BestQuizzes}}">
 			</td>
 		</tr>
 		{{end}}
@@ -197,12 +235,12 @@ license that can be found in the LICENSE file.
 			</td> 
 			<td>
 				<input type="text" name="sgc-name-{{$i}}"
-			   		class="form-control" value="{{$gc.Name}}">
+			 		class="form-control" value="{{$gc.Name}}">
 			</td>
 			<td>
 				<input type="number" name="sgc-max-{{$i}}"
 					min="0" max="100" step="any"
-			   		class="form-control" value="{{$gc.Max}}">
+			 		class="form-control" value="{{$gc.Max}}">
 			</td>
 			<td>
 				<input type="number" name="sgc-weight-{{$i}}"
@@ -212,12 +250,12 @@ license that can be found in the LICENSE file.
 			<td>
 				<input type="number" name="sgc-num-quizzes-{{$i}}"
 					min="0" max="100" step="1"
-			   		class="form-control" value="{{$gc.NumQuizzes}}">
+			 		class="form-control" value="{{$gc.NumQuizzes}}">
 			</td>
 			<td>
 				<input type="number" name="sgc-best-quizzes-{{$i}}"
 					min="0" max="100" step="1"
-			   		class="form-control" value="{{$gc.BestQuizzes}}">
+			 		class="form-control" value="{{$gc.BestQuizzes}}">
 			</td>
 		</tr>
 		{{end}}

@@ -65,6 +65,16 @@ func getSubject(c context.Context, sy, class, subjectname string) (Subject, erro
 		subject.SemesterType = QuarterSemester
 	}
 
+	for i, gc := range subject.WeeklyGradingColumns {
+		if gc.FinalWeight == 0 {
+			if gc.Type == quizGrading {
+				gc.FinalWeight = gc.Max * float64(gc.BestQuizzes)
+			} else {
+				gc.FinalWeight = gc.Max
+			}
+		}
+		subject.WeeklyGradingColumns[i] = gc
+	}
 	for i, gc := range subject.QuarterGradingColumns {
 		if gc.FinalWeight == 0 {
 			if gc.Type == quizGrading {
@@ -109,6 +119,11 @@ func saveSubject(c context.Context, sy, class string, subject Subject) error {
 		return fmt.Errorf("Subject does not exist: %s", subject.ShortName)
 	}
 
+	wTotal := 0.0
+	for _, gc := range subject.WeeklyGradingColumns {
+		wTotal += gc.FinalWeight
+	}
+
 	qTotal := 0.0
 	for _, gc := range subject.QuarterGradingColumns {
 		qTotal += gc.FinalWeight
@@ -119,7 +134,7 @@ func saveSubject(c context.Context, sy, class string, subject Subject) error {
 		sTotal += gc.FinalWeight
 	}
 
-	if qTotal == 0.0 && sTotal == 0.0 {
+	if qTotal == 0.0 && sTotal == 0.0 && wTotal == 0.0 {
 		return fmt.Errorf("Please add columns")
 	}
 
@@ -132,8 +147,8 @@ func saveSubject(c context.Context, sy, class string, subject Subject) error {
 			return fmt.Errorf("Total marks for semester must be 100. Got %f", sTotal)
 		}
 	} else if subject.SemesterType == MidtermSemester {
-		if qTotal+sTotal != 100.0 {
-			return fmt.Errorf("Total marks for Midterm + Semester must be 100. Got %f", qTotal+sTotal)
+		if wTotal+qTotal+sTotal != 100.0 {
+			return fmt.Errorf("Total marks for Weekly + Midterm + Semester must be 100. Got %f", wTotal+qTotal+sTotal)
 		}
 	} else {
 		return fmt.Errorf("Invalid semester type: %d", subject.SemesterType)
@@ -265,7 +280,13 @@ func subjectsDetailsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	tempGCs := subject.QuarterGradingColumns
+	tempGCs := subject.WeeklyGradingColumns
+	if len(tempGCs) < 10 {
+		tempGCs = append(tempGCs, make([]gradingColumn, 10-len(tempGCs))...)
+	}
+	subject.WeeklyGradingColumns = tempGCs
+
+	tempGCs = subject.QuarterGradingColumns
 	if len(tempGCs) < 10 {
 		tempGCs = append(tempGCs, make([]gradingColumn, 10-len(tempGCs))...)
 	}
@@ -404,6 +425,57 @@ func subjectsSaveHandler(w http.ResponseWriter, r *http.Request) {
 		renderErrorMsg(w, r, http.StatusBadRequest,
 			fmt.Sprintf("Weeks until Midterm must be less than Total Weeks, got: %d > %d", midtermWeeks, totalWeeks))
 		return
+	}
+
+	for i := 0; ; i++ {
+		_, ok := r.PostForm[fmt.Sprintf("wgc-name-%d", i)]
+		if !ok {
+			break
+		}
+
+		nameStr := r.PostForm.Get(fmt.Sprintf("wgc-name-%d", i))
+		maxStr := r.PostForm.Get(fmt.Sprintf("wgc-max-%d", i))
+		weightStr := r.PostForm.Get(fmt.Sprintf("wgc-weight-%d", i))
+
+		name := nameStr
+		if name == "" {
+			continue
+		}
+
+		max, err := strconv.ParseFloat(maxStr, 64)
+		if err != nil {
+			renderErrorMsg(w, r, http.StatusBadRequest,
+				fmt.Sprintf("Invalid Encoded Max for %s: %s", name, maxStr))
+			return
+		}
+		if max == 0 {
+			renderErrorMsg(w, r, http.StatusBadRequest,
+				fmt.Sprintf("Invalid Encoded Max for %s: %s", name, maxStr))
+			return
+		}
+
+		weight, err := strconv.ParseFloat(weightStr, 64)
+		if err != nil {
+			renderErrorMsg(w, r, http.StatusBadRequest,
+				fmt.Sprintf("Invalid Final Weight for %s: %s", name, weightStr))
+			return
+		}
+		if weight == 0 {
+			renderErrorMsg(w, r, http.StatusBadRequest,
+				fmt.Sprintf("Invalid Final Weight for %s: %s", name, weightStr))
+			return
+		}
+
+		gc := gradingColumn{
+			directGrading,
+			name,
+			max,
+			weight,
+			0,
+			0,
+		}
+
+		subject.WeeklyGradingColumns = append(subject.WeeklyGradingColumns, gc)
 	}
 
 	for i := 0; ; i++ {
