@@ -65,15 +65,67 @@ func getStudentMarks(c context.Context, id, sy, subject string) (studentMarks, e
 func storeMarksRow(c context.Context, id string, sy string, term Term,
 	subject string, marks []float64) error {
 
+	var key *datastore.Key
+	if term.Typ == WeekS1 || term.Typ == WeekS2 {
+		keyStr := fmt.Sprintf("%s|%s|%s|%s", id, sy, term.Value(), subject)
+		key = datastore.NewKey(c, "weeklymarks", keyStr, 0, nil)
+	} else {
+		// Historical mistake: term instead of term.Value()
+		oldKeyStr := fmt.Sprintf("%s|%s|%s|%s", id, sy, term, subject)
+		oldKey := datastore.NewKey(c, "marks", oldKeyStr, 0, nil)
+		nds.Delete(c, oldKey)
+
+		keyStr := fmt.Sprintf("%s|%s|%s|%s", id, sy, term.Value(), subject)
+		key = datastore.NewKey(c, "marks", keyStr, 0, nil)
+	}
+
 	mr := marksRow{id, sy, term.Value(), subject, marks}
-	keyStr := fmt.Sprintf("%s|%s|%s|%s", id, sy, term, subject)
-	key := datastore.NewKey(c, "marks", keyStr, 0, nil)
 	_, err := nds.Put(c, key, &mr)
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func getWeeklyStudentMarks(c context.Context, id, sy, subject string, week Term, gs gradingSystem) ([]float64, error) {
+	keyStr := fmt.Sprintf("%s|%s|%s|%s", id, sy, week.Value(), subject)
+	key := datastore.NewKey(c, "weeklymarks", keyStr, 0, nil)
+	var m []float64
+	var mr marksRow
+	if err := nds.Get(c, key, &mr); err != nil {
+		if err == datastore.ErrNoSuchEntity {
+			m = nil
+		} else {
+			return nil, err
+		}
+	} else {
+		m = mr.Marks
+	}
+
+	cols := gs.description(week)
+
+	switch {
+	case m == nil: // first time to evaluate it
+		m = make([]float64, len(cols))
+		for i, _ := range cols {
+			m[i] = math.NaN()
+		}
+	case len(m) != len(cols): // sanity check
+		m = make([]float64, len(cols))
+		for i, _ := range cols {
+			m[i] = math.NaN()
+		}
+	}
+
+	// more sanity checks
+	for i, d := range cols {
+		if m[i] < 0 || m[i] > d.Max {
+			m[i] = math.NaN()
+		}
+	}
+
+	return m, nil
 }
 
 // remarksRow will be stored in the datastore
@@ -187,6 +239,10 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 		sorted := r.Form.Get("sort") == "true"
 
 		if subject == "Remarks" {
+			if term.Typ != Quarter && term.Typ != Semester &&
+				term.Typ != Midterm && term.Typ != EndOfYear {
+				renderErrorMsg(w, r, http.StatusNotFound, "Remarks not applicable")
+			}
 			subjectDisplayName = "Remarks"
 			cols = []colDescription{{Name: "Remarks"}}
 			students, err := findStudents(c, sy, classSection)
@@ -220,15 +276,32 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 			}
 
 			for _, s := range students {
-				m, err := getStudentMarks(c, s.ID, sy, subject)
-				if err != nil {
-					// TODO: report error
-					continue
+				if term.Typ == WeekS1 || term.Typ == WeekS2 {
+					wm, err := getWeeklyStudentMarks(c, s.ID, sy, subject, term, gs)
+					if err != nil {
+						// TODO: report error
+						continue
+					}
+					studentRows = append(studentRows, studentRow{s.ID, s.Name, wm, ""})
+				} else {
+					m, err := getStudentMarks(c, s.ID, sy, subject)
+					if err != nil {
+						// TODO: report error
+						continue
+					}
+					gs.evaluate(c, term, m) // TODO: check error
+					studentRows = append(studentRows, studentRow{s.ID, s.Name, m[term], ""})
 				}
-				gs.evaluate(c, term, m) // TODO: check error
-				studentRows = append(studentRows, studentRow{s.ID, s.Name, m[term], ""})
 			}
 		}
+	}
+
+	var weekS1Terms []Term
+	var weekS2Terms []Term
+	maxWeeks := getMaxWeeks(c)
+	for i := 1; i <= maxWeeks; i++ {
+		weekS1Terms = append(weekS1Terms, Term{WeekS1, i})
+		weekS2Terms = append(weekS2Terms, Term{WeekS2, i})
 	}
 
 	subjects := getAllSubjects(c, sy)
@@ -244,9 +317,11 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 
 		SubjectDisplayName string
 
-		Terms    []Term
-		CG       []classGroup
-		Subjects []string
+		Terms       []Term
+		WeekS1Terms []Term
+		WeekS2Terms []Term
+		CG          []classGroup
+		Subjects    []string
 
 		Cols     []colDescription
 		Students []studentRow
@@ -258,9 +333,11 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 
 		SubjectDisplayName: subjectDisplayName,
 
-		Terms:    terms,
-		CG:       classGroups,
-		Subjects: subjects,
+		Terms:       terms,
+		WeekS1Terms: weekS1Terms,
+		WeekS2Terms: weekS2Terms,
+		CG:          classGroups,
+		Subjects:    subjects,
 
 		Cols:     cols,
 		Students: studentRows,

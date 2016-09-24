@@ -97,20 +97,40 @@ license that can be found in the LICENSE file.
 		</div>
 
 		<div class="form-group">
-			<label class="col-sm-3 control-label" for="MidtermWeeks">Weeks until Midterm</label>
+			<label class="col-sm-3 control-label" for="MidtermWeeksS1">Semester 1 weeks until Midterm</label>
 			<div class="col-sm-5">
-				<input type="number" id="MidtermWeeks" name="MidtermWeeks"
-				value="{{.Subject.MidtermWeeks}}"
+				<input type="number" id="MidtermWeeksS1" name="MidtermWeeksS1"
+				value="{{.Subject.MidtermWeeksS1}}"
 				class="form-control" required="required"
 				min="0" max="50" step="1">
 			</div>
 		</div>
 
 		<div class="form-group">
-			<label class="col-sm-3 control-label" for="TotalWeeks">Total weeks</label>
+			<label class="col-sm-3 control-label" for="TotalWeeksS1">Semester 1 total weeks</label>
 			<div class="col-sm-5">
-				<input type="number" id="TotalWeeks" name="TotalWeeks"
-				value="{{.Subject.TotalWeeks}}"
+				<input type="number" id="TotalWeeksS1" name="TotalWeeksS1"
+				value="{{.Subject.TotalWeeksS1}}"
+				class="form-control" required="required"
+				min="0" max="50" step="1">
+			</div>
+		</div>
+
+		<div class="form-group">
+			<label class="col-sm-3 control-label" for="MidtermWeeksS2">Semester 2 weeks until Midterm</label>
+			<div class="col-sm-5">
+				<input type="number" id="MidtermWeeksS2" name="MidtermWeeksS2"
+				value="{{.Subject.MidtermWeeksS2}}"
+				class="form-control" required="required"
+				min="0" max="50" step="1">
+			</div>
+		</div>
+
+		<div class="form-group">
+			<label class="col-sm-3 control-label" for="TotalWeeksS2">Semester 2 total weeks</label>
+			<div class="col-sm-5">
+				<input type="number" id="TotalWeeksS2" name="TotalWeeksS2"
+				value="{{.Subject.TotalWeeksS2}}"
 				class="form-control" required="required"
 				min="0" max="50" step="1">
 			</div>

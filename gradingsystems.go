@@ -29,6 +29,8 @@ const (
 	EndOfYear
 	EndOfYearGpa
 	Midterm
+	WeekS1
+	WeekS2
 )
 
 var termStrings = map[termType]string{
@@ -37,6 +39,8 @@ var termStrings = map[termType]string{
 	EndOfYear:    "End of Year",
 	EndOfYearGpa: "End of Year (GPA)",
 	Midterm:      "Midterm",
+	WeekS1:       "S1 Week",
+	WeekS2:       "S2 Week",
 }
 
 type Term struct {
@@ -336,8 +340,10 @@ type Subject struct {
 	S1Credits          float64
 	S2Credits          float64
 	SemesterType       semesterType
-	MidtermWeeks       int
-	TotalWeeks         int
+	MidtermWeeksS1     int
+	TotalWeeksS1       int
+	MidtermWeeksS2     int
+	TotalWeeksS2       int
 
 	WeeklyGradingColumns   []gradingColumn
 	QuarterGradingColumns  []gradingColumn
@@ -363,6 +369,18 @@ func (s Subject) description(term Term) []colDescription {
 		}
 		cols = append(cols, colDescription{"Quarter Mark", 100, math.NaN(), false})
 		cols = append(cols, colDescription{"Quarter %", s.qWeight, math.NaN(), false})
+		return cols
+
+	} else if term.Typ == WeekS1 || term.Typ == WeekS2 {
+		if s.SemesterType != MidtermSemester {
+			return nil
+		}
+		var cols []colDescription
+		for _, gcol := range s.WeeklyGradingColumns {
+			if gcol.Type == directGrading {
+				cols = append(cols, colDescription{gcol.Name, gcol.Max, math.NaN(), true})
+			}
+		}
 		return cols
 
 	} else if term.Typ == Midterm {
@@ -513,6 +531,8 @@ func (s Subject) evaluate(c context.Context, term Term, marks studentMarks) erro
 		// Quarter %
 		m[nextMark] = total100 * s.qWeight / 100.0
 
+	} else if term.Typ == WeekS1 || term.Typ == WeekS2 {
+		// No calculations
 	} else if term.Typ == Midterm {
 		if s.SemesterType != MidtermSemester {
 			return nil
@@ -656,6 +676,8 @@ func (s Subject) get100(term Term, marks studentMarks) float64 {
 			return math.NaN()
 		}
 		return m[len(m)-2]
+	} else if term.Typ == WeekS2 || term.Typ == WeekS1 {
+		return math.NaN()
 	} else if term.Typ == Midterm {
 		if s.SemesterType != MidtermSemester {
 			return math.NaN()
@@ -672,6 +694,8 @@ func (s Subject) get100(term Term, marks studentMarks) float64 {
 func (s Subject) getExam(term Term, marks studentMarks) float64 {
 	m := marks[term]
 	if term.Typ == Quarter {
+		return math.NaN()
+	} else if term.Typ == WeekS2 || term.Typ == WeekS1 {
 		return math.NaN()
 	} else if term.Typ == Midterm {
 		return math.NaN()
@@ -730,7 +754,9 @@ func (behaviorGradingSystem) description(term Term) []colDescription {
 		return behaviorDesc
 	} else if term.Typ == Midterm {
 		return behaviorDesc
-	} else if term.Typ == Semester || term.Typ == EndOfYear {
+	} else if term.Typ == Semester || term.Typ == EndOfYear ||
+		term.Typ == WeekS1 || term.Typ == WeekS2 {
+		// No calculations
 		return nil
 	}
 	panic(fmt.Sprintf("Invalid term type: %d", term.Typ))

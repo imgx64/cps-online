@@ -182,8 +182,12 @@ func saveSubject(c context.Context, sy, class string, subject Subject) error {
 	}
 
 	maxWeeks := getMaxWeeks(c)
-	if subject.TotalWeeks > maxWeeks {
-		saveMaxWeeks(c, subject.TotalWeeks)
+	if subject.TotalWeeksS1 > maxWeeks || subject.TotalWeeksS2 > maxWeeks {
+		if subject.TotalWeeksS1 > subject.TotalWeeksS2 {
+			saveMaxWeeks(c, subject.TotalWeeksS1)
+		} else {
+			saveMaxWeeks(c, subject.TotalWeeksS2)
+		}
 	}
 
 	return nil
@@ -405,25 +409,47 @@ func subjectsSaveHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	subject.SemesterType = semesterType(semType)
 
-	midtermWeeks, err := strconv.Atoi(r.PostForm.Get("MidtermWeeks"))
-	if err != nil || midtermWeeks < 0 {
+	midtermWeeksS1, err := strconv.Atoi(r.PostForm.Get("MidtermWeeksS1"))
+	if err != nil || midtermWeeksS1 < 0 {
 		renderErrorMsg(w, r, http.StatusBadRequest,
-			fmt.Sprintf("Invalid Weeks until Midterm: %s", r.PostForm.Get("MidtermWeeks")))
+			fmt.Sprintf("Invalid Weeks until Midterm: %s", r.PostForm.Get("MidtermWeeksS1")))
 		return
 	}
-	subject.MidtermWeeks = midtermWeeks
+	subject.MidtermWeeksS1 = midtermWeeksS1
 
-	totalWeeks, err := strconv.Atoi(r.PostForm.Get("TotalWeeks"))
-	if err != nil || totalWeeks < 0 {
+	totalWeeksS1, err := strconv.Atoi(r.PostForm.Get("TotalWeeksS1"))
+	if err != nil || totalWeeksS1 < 0 {
 		renderErrorMsg(w, r, http.StatusBadRequest,
-			fmt.Sprintf("Invalid Total Weeks: %s", r.PostForm.Get("TotalWeeks")))
+			fmt.Sprintf("Invalid Total Weeks: %s", r.PostForm.Get("TotalWeeksS1")))
 		return
 	}
-	subject.TotalWeeks = totalWeeks
+	subject.TotalWeeksS1 = totalWeeksS1
 
-	if midtermWeeks > totalWeeks {
+	midtermWeeksS2, err := strconv.Atoi(r.PostForm.Get("MidtermWeeksS2"))
+	if err != nil || midtermWeeksS2 < 0 {
 		renderErrorMsg(w, r, http.StatusBadRequest,
-			fmt.Sprintf("Weeks until Midterm must be less than Total Weeks, got: %d > %d", midtermWeeks, totalWeeks))
+			fmt.Sprintf("Invalid Weeks until Midterm: %s", r.PostForm.Get("MidtermWeeksS2")))
+		return
+	}
+	subject.MidtermWeeksS2 = midtermWeeksS2
+
+	totalWeeksS2, err := strconv.Atoi(r.PostForm.Get("TotalWeeksS2"))
+	if err != nil || totalWeeksS2 < 0 {
+		renderErrorMsg(w, r, http.StatusBadRequest,
+			fmt.Sprintf("Invalid Total Weeks: %s", r.PostForm.Get("TotalWeeksS2")))
+		return
+	}
+	subject.TotalWeeksS2 = totalWeeksS2
+
+	if midtermWeeksS1 > totalWeeksS1 {
+		renderErrorMsg(w, r, http.StatusBadRequest,
+			fmt.Sprintf("Weeks until Midterm must be less than Total Weeks, got: %d > %d", midtermWeeksS1, totalWeeksS1))
+		return
+	}
+
+	if midtermWeeksS2 > totalWeeksS2 {
+		renderErrorMsg(w, r, http.StatusBadRequest,
+			fmt.Sprintf("Weeks until Midterm must be less than Total Weeks, got: %d > %d", midtermWeeksS2, totalWeeksS2))
 		return
 	}
 
