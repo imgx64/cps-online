@@ -101,7 +101,7 @@ func reportcardHandler(w http.ResponseWriter, r *http.Request) {
 				renderError(w, r, http.StatusInternalServerError)
 				return
 			}
-			gs.evaluate(c, term, marks)
+			gs.evaluate(c, stu.ID, sy, term, marks)
 			if subject == "Behavior" {
 				behavior = marks[term]
 				continue

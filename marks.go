@@ -241,7 +241,8 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 		if subject == "Remarks" {
 			if term.Typ != Quarter && term.Typ != Semester &&
 				term.Typ != Midterm && term.Typ != EndOfYear {
-				renderErrorMsg(w, r, http.StatusNotFound, "Remarks not applicable")
+				renderErrorMsg(w, r, http.StatusNotFound, "Not applicable")
+				return
 			}
 			subjectDisplayName = "Remarks"
 			cols = []colDescription{{Name: "Remarks"}}
@@ -262,6 +263,10 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		} else if gs := getGradingSystem(c, sy, class, subject); gs != nil {
 			cols = gs.description(term)
+			if len(cols) == 0 {
+				renderErrorMsg(w, r, http.StatusNotFound, "Not applicable")
+				return
+			}
 			students, err := findStudentsSorted(c, sy, classSection, sorted)
 			if err != nil {
 				log.Errorf(c, "Could not get students: %s", err)
@@ -289,7 +294,7 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 						// TODO: report error
 						continue
 					}
-					gs.evaluate(c, term, m) // TODO: check error
+					gs.evaluate(c, s.ID, sy, term, m) // TODO: check error
 					studentRows = append(studentRows, studentRow{s.ID, s.Name, m[term], ""})
 				}
 			}
@@ -432,7 +437,7 @@ func marksSaveHandler(w http.ResponseWriter, r *http.Request) {
 				// TODO: report error
 				continue
 			}
-			gs.evaluate(c, term, m) // TODO: check error
+			gs.evaluate(c, s.ID, sy, term, m) // TODO: check error
 
 			marksChanged := false
 			for i, col := range cols {
@@ -447,7 +452,7 @@ func marksSaveHandler(w http.ResponseWriter, r *http.Request) {
 				}
 
 			}
-			gs.evaluate(c, term, m) // TODO: check error
+			gs.evaluate(c, s.ID, sy, term, m) // TODO: check error
 			if marksChanged {
 				err := storeMarksRow(c, s.ID, sy, term, subject, m[term])
 				if err != nil {
@@ -530,7 +535,7 @@ func marksExportHandler(w http.ResponseWriter, r *http.Request) {
 				// TODO: report error
 				continue
 			}
-			gs.evaluate(c, term, m) // TODO: check error
+			gs.evaluate(c, s.ID, sy, term, m) // TODO: check error
 			studentRows = append(studentRows, studentRow{s.ID, s.Name, m[term], ""})
 		}
 	}
@@ -731,7 +736,7 @@ func marksImportHandler(w http.ResponseWriter, r *http.Request) {
 				renderError(w, r, http.StatusInternalServerError)
 				return
 			}
-			gs.evaluate(c, term, m) // TODO: check error
+			gs.evaluate(c, s.ID, sy, term, m) // TODO: check error
 
 			marksChanged := false
 			for i, col := range cols {
@@ -746,7 +751,7 @@ func marksImportHandler(w http.ResponseWriter, r *http.Request) {
 				}
 
 			}
-			gs.evaluate(c, term, m) // TODO: check error
+			gs.evaluate(c, s.ID, sy, term, m) // TODO: check error
 			if marksChanged {
 				err := storeMarksRow(c, s.ID, sy, term, subject, m[term])
 				if err != nil {

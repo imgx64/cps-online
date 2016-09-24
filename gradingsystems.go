@@ -145,7 +145,7 @@ type studentMarks map[Term][]float64
 
 type gradingSystem interface {
 	description(term Term) []colDescription
-	evaluate(c context.Context, term Term, marks studentMarks) error
+	evaluate(c context.Context, studentID, sy string, term Term, marks studentMarks) error
 	get100(term Term, marks studentMarks) float64
 	getExam(term Term, marks studentMarks) float64
 	ready(term Term, marks studentMarks) bool
@@ -375,6 +375,10 @@ func (s Subject) description(term Term) []colDescription {
 		if s.SemesterType != MidtermSemester {
 			return nil
 		}
+		if (term.Typ == WeekS1 && term.N > s.TotalWeeksS1) ||
+			(term.Typ == WeekS2 && term.N > s.TotalWeeksS2) {
+			return nil
+		}
 		var cols []colDescription
 		for _, gcol := range s.WeeklyGradingColumns {
 			if gcol.Type == directGrading {
@@ -388,6 +392,13 @@ func (s Subject) description(term Term) []colDescription {
 			return nil
 		}
 		var cols []colDescription
+
+		for _, gcol := range s.WeeklyGradingColumns {
+			if gcol.Type == directGrading {
+				cols = append(cols, colDescription{gcol.Name, 100.0, 100.0, false})
+			}
+		}
+
 		for _, gcol := range s.QuarterGradingColumns {
 			if gcol.Type == directGrading {
 				cols = append(cols, colDescription{gcol.Name, gcol.Max, 100.0, true})
@@ -401,6 +412,12 @@ func (s Subject) description(term Term) []colDescription {
 	} else if term.Typ == Semester {
 		var cols []colDescription
 		if s.SemesterType == MidtermSemester {
+			for _, gcol := range s.WeeklyGradingColumns {
+				if gcol.Type == directGrading {
+					cols = append(cols, colDescription{gcol.Name, gcol.FinalWeight, gcol.FinalWeight, false})
+				}
+			}
+
 			for _, gcol := range s.QuarterGradingColumns {
 				if gcol.Type == directGrading {
 					cols = append(cols, colDescription{gcol.Name, gcol.Max, gcol.FinalWeight, false})
@@ -467,7 +484,7 @@ func quizColDescriptions(gc gradingColumn, midterm bool) []colDescription {
 	return cols
 }
 
-func (s Subject) evaluate(c context.Context, term Term, marks studentMarks) error {
+func (s Subject) evaluate(c context.Context, studentID, sy string, term Term, marks studentMarks) error {
 	var err error
 
 	m := marks[term]
@@ -540,6 +557,38 @@ func (s Subject) evaluate(c context.Context, term Term, marks studentMarks) erro
 		totalMark := 0.0
 		totalWeight := 0.0
 		nextMark := 0
+		if len(s.WeeklyGradingColumns) > 0 {
+			var weekMarks [][]float64
+			if term.N == 1 {
+				for i := 1; i <= s.MidtermWeeksS1; i++ {
+					wm, err := getWeeklyStudentMarks(c, studentID, sy, s.ShortName, Term{WeekS1, i}, s)
+					if err != nil {
+						weekMarks = append(weekMarks, nil)
+						continue
+					}
+					weekMarks = append(weekMarks, wm)
+				}
+			} else if term.N == 2 {
+				for i := 1; i <= s.MidtermWeeksS2; i++ {
+					wm, err := getWeeklyStudentMarks(c, studentID, sy, s.ShortName, Term{WeekS2, i}, s)
+					if err != nil {
+						weekMarks = append(weekMarks, nil)
+						continue
+					}
+					weekMarks = append(weekMarks, wm)
+				}
+			}
+			for i, gcol := range s.WeeklyGradingColumns {
+				colTotal := 0.0
+				for _, wm := range weekMarks {
+					colTotal += wm[i]
+				}
+				m[nextMark] = colTotal * 100.0 / (gcol.Max * float64(len(weekMarks)))
+				totalMark += m[nextMark]
+				totalWeight += 100.0
+				nextMark++
+			}
+		}
 		for _, gcol := range s.QuarterGradingColumns {
 			if gcol.Type == directGrading {
 				totalMark += m[nextMark] * 100.0 / gcol.Max
@@ -568,8 +617,40 @@ func (s Subject) evaluate(c context.Context, term Term, marks studentMarks) erro
 		total100 := 0.0
 		nextMark := 0
 		if s.SemesterType == MidtermSemester {
+			if len(s.WeeklyGradingColumns) > 0 {
+				var weekMarks [][]float64
+				if term.N == 1 {
+					for i := 1; i <= s.TotalWeeksS1; i++ {
+						wm, err := getWeeklyStudentMarks(c, studentID, sy, s.ShortName, Term{WeekS1, i}, s)
+						if err != nil {
+							weekMarks = append(weekMarks, nil)
+							continue
+						}
+						weekMarks = append(weekMarks, wm)
+					}
+				} else if term.N == 2 {
+					for i := 1; i <= s.TotalWeeksS2; i++ {
+						wm, err := getWeeklyStudentMarks(c, studentID, sy, s.ShortName, Term{WeekS2, i}, s)
+						if err != nil {
+							weekMarks = append(weekMarks, nil)
+							continue
+						}
+						weekMarks = append(weekMarks, wm)
+					}
+				}
+				for i, gcol := range s.WeeklyGradingColumns {
+					colTotal := 0.0
+					for _, wm := range weekMarks {
+						colTotal += wm[i]
+					}
+					m[nextMark] = colTotal * gcol.FinalWeight / (gcol.Max * float64(len(weekMarks)))
+					total100 += m[nextMark]
+					nextMark++
+				}
+			}
+
 			midterm := Term{Midterm, term.N}
-			s.evaluate(c, midterm, marks)
+			s.evaluate(c, studentID, sy, midterm, marks)
 			midtermMarks := marks[midterm]
 			midtermNextMark := 0
 			for _, gcol := range s.QuarterGradingColumns {
@@ -614,8 +695,8 @@ func (s Subject) evaluate(c context.Context, term Term, marks studentMarks) erro
 			q2 := term.N * 2
 			q1 := q2 - 1
 
-			s.evaluate(c, Term{Quarter, q1}, marks)
-			s.evaluate(c, Term{Quarter, q2}, marks)
+			s.evaluate(c, studentID, sy, Term{Quarter, q1}, marks)
+			s.evaluate(c, studentID, sy, Term{Quarter, q2}, marks)
 
 			if len(s.QuarterGradingColumns) == 0 {
 				m[nextMark] = total100
@@ -635,8 +716,8 @@ func (s Subject) evaluate(c context.Context, term Term, marks studentMarks) erro
 		}
 
 	} else if term.Typ == EndOfYear {
-		s.evaluate(c, Term{Semester, 1}, marks)
-		s.evaluate(c, Term{Semester, 2}, marks)
+		s.evaluate(c, studentID, sy, Term{Semester, 1}, marks)
+		s.evaluate(c, studentID, sy, Term{Semester, 2}, marks)
 		m[0] = s.get100(Term{Semester, 1}, marks)
 		m[1] = s.get100(Term{Semester, 2}, marks)
 
@@ -762,7 +843,7 @@ func (behaviorGradingSystem) description(term Term) []colDescription {
 	panic(fmt.Sprintf("Invalid term type: %d", term.Typ))
 }
 
-func (bgs behaviorGradingSystem) evaluate(c context.Context, term Term, marks studentMarks) (err error) {
+func (bgs behaviorGradingSystem) evaluate(c context.Context, studentID, sy string, term Term, marks studentMarks) (err error) {
 	m := marks[term]
 	desc := bgs.description(term)
 

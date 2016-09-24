@@ -138,7 +138,7 @@ func printAllHandler(w http.ResponseWriter, r *http.Request) {
 					renderError(w, r, http.StatusInternalServerError)
 					return
 				}
-				gs.evaluate(c, term, marks)
+				gs.evaluate(c, stu.ID, sy, term, marks)
 
 				mark := gs.get100(term, marks)
 
@@ -178,7 +178,7 @@ func printAllHandler(w http.ResponseWriter, r *http.Request) {
 					// TODO: report error
 					continue
 				}
-				gs.evaluate(c, term, m) // TODO: check error
+				gs.evaluate(c, stu.ID, sy, term, m) // TODO: check error
 				classSection := fmt.Sprintf("%s|%s", stu.Class, stu.Section)
 				row := printAllRow{stu.Class + stu.Section, stu.Name, m[term], gs.get100(term, m)}
 				studentRows[classSection] = append(studentRows[classSection], row)

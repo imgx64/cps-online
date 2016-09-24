@@ -169,7 +169,7 @@ func gpaReportcardHandler(w http.ResponseWriter, r *http.Request) {
 
 			if sub.S1Credits > 0 {
 				gpaRow.S1Available = true
-				gs.evaluate(c, s1Term, marks)
+				gs.evaluate(c, stu.ID, sy, s1Term, marks)
 
 				s1Mark = gs.get100(s1Term, marks)
 
@@ -192,7 +192,7 @@ func gpaReportcardHandler(w http.ResponseWriter, r *http.Request) {
 
 			if sub.S2Credits > 0 {
 				gpaRow.S2Available = true
-				gs.evaluate(c, s2Term, marks)
+				gs.evaluate(c, stu.ID, sy, s2Term, marks)
 
 				s2Mark = gs.get100(s2Term, marks)
 
