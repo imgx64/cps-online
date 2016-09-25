@@ -108,6 +108,7 @@ func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 
 	classSection := r.Form.Get("ClassSection")
 	calculateAll := r.Form.Get("CalculateAll") != ""
+	showQuarterCols := r.Form.Get("ShowQuarterColumns") != ""
 
 	var reportcards []reportcard
 
@@ -146,40 +147,46 @@ func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 
 		if term.Typ == Quarter {
 			rc.Cols = []string{"Max Mark", "Mark Obtained"}
+		} else if term.Typ == Midterm {
+			rc.Cols = []string{"Max Mark", "Mark Obtained"}
 		} else if term.Typ == Semester {
-			q2 := term.N * 2
-			q1 := q2 - 1
+			if showQuarterCols {
+				q2 := term.N * 2
+				q1 := q2 - 1
 
-			var qWeight, sWeight float64
-			found := false
-			for _, classSetting := range getClassSettings(c, sy) {
-				if classSetting.Class != class {
-					continue
+				var qWeight, sWeight float64
+				found := false
+				for _, classSetting := range getClassSettings(c, sy) {
+					if classSetting.Class != class {
+						continue
+					}
+
+					qWeight = classSetting.QuarterWeight
+					if qWeight > 50 {
+						qWeight = 50
+					}
+					if qWeight < 0 {
+						qWeight = 0
+					}
+
+					sWeight = 100 - qWeight*2
+
+					found = true
+					break
 				}
-
-				qWeight = classSetting.QuarterWeight
-				if qWeight > 50 {
-					qWeight = 50
+				if !found {
+					log.Errorf(c, "Could not get class settings: %s %s", sy, class)
+					renderError(w, r, http.StatusInternalServerError)
+					return
 				}
-				if qWeight < 0 {
-					qWeight = 0
+				rc.Cols = []string{
+					fmt.Sprintf("Quarter %d (%.0f%%)", q1, qWeight),
+					fmt.Sprintf("Quarter %d (%.0f%%)", q2, qWeight),
+					fmt.Sprintf("Semester Exam (%.0f%%)", sWeight),
+					"Mark Obtained (100%)",
 				}
-
-				sWeight = 100 - qWeight*2
-
-				found = true
-				break
-			}
-			if !found {
-				log.Errorf(c, "Could not get class settings: %s %s", sy, class)
-				renderError(w, r, http.StatusInternalServerError)
-				return
-			}
-			rc.Cols = []string{
-				fmt.Sprintf("Quarter %d (%.0f%%)", q1, qWeight),
-				fmt.Sprintf("Quarter %d (%.0f%%)", q2, qWeight),
-				fmt.Sprintf("Semester Exam (%.0f%%)", sWeight),
-				"Mark Obtained (100%)",
+			} else {
+				rc.Cols = []string{"Max Mark", "Mark Obtained"}
 			}
 		} else if term.Typ == EndOfYear {
 			rc.Cols = []string{
@@ -229,14 +236,20 @@ func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 
 			if term.Typ == Quarter {
 				rcRow.Marks = []float64{100, mark}
+			} else if term.Typ == Midterm {
+				rcRow.Marks = []float64{100, mark}
 			} else if term.Typ == Semester {
-				q2 := term.N * 2
-				q1 := q2 - 1
-				rcRow.Marks = []float64{
-					gs.get100(Term{Quarter, q1}, marks) * gs.quarterWeight() / 100.0,
-					gs.get100(Term{Quarter, q2}, marks) * gs.quarterWeight() / 100.0,
-					gs.getExam(term, marks),
-					gs.get100(term, marks),
+				if showQuarterCols {
+					q2 := term.N * 2
+					q1 := q2 - 1
+					rcRow.Marks = []float64{
+						gs.get100(Term{Quarter, q1}, marks) * gs.quarterWeight() / 100.0,
+						gs.get100(Term{Quarter, q2}, marks) * gs.quarterWeight() / 100.0,
+						gs.getExam(term, marks),
+						gs.get100(term, marks),
+					}
+				} else {
+					rcRow.Marks = []float64{100, mark}
 				}
 			} else if term.Typ == EndOfYear {
 				rcRow.Marks = marks[term]
@@ -271,8 +284,14 @@ func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 			totalRow.Letter = formatMark(average) + "%"
 			if term.Typ == Quarter {
 				totalRow.Marks = []float64{totalMax, total}
+			} else if term.Typ == Midterm {
+				totalRow.Marks = []float64{totalMax, total}
 			} else if term.Typ == Semester {
-				totalRow.Marks = []float64{math.NaN(), math.NaN(), math.NaN(), total}
+				if showQuarterCols {
+					totalRow.Marks = []float64{math.NaN(), math.NaN(), math.NaN(), total}
+				} else {
+					totalRow.Marks = []float64{totalMax, total}
+				}
 			} else if term.Typ == EndOfYear {
 				totalRow.Marks = []float64{math.NaN(), math.NaN(), total}
 			}
@@ -281,8 +300,14 @@ func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 			totalRow.Letter = ls.getLetter(average)
 			if term.Typ == Quarter {
 				totalRow.Marks = []float64{math.NaN(), average}
+			} else if term.Typ == Midterm {
+				totalRow.Marks = []float64{math.NaN(), average}
 			} else if term.Typ == Semester {
-				totalRow.Marks = []float64{math.NaN(), math.NaN(), math.NaN(), average}
+				if showQuarterCols {
+					totalRow.Marks = []float64{math.NaN(), math.NaN(), math.NaN(), average}
+				} else {
+					totalRow.Marks = []float64{math.NaN(), average}
+				}
 			} else if term.Typ == EndOfYear {
 				totalRow.Marks = []float64{math.NaN(), math.NaN(), average}
 			}

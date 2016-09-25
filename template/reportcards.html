@@ -7,14 +7,14 @@ license that can be found in the LICENSE file.
 {{define "title"}}Print Reportcards{{end}}
 {{define "content"}}
 <form class="form-inline" action="/reportcards/print">
-	<div class="form-group">
+	<div>
 		<select id="Term" name="Term" required="required" class="form-control col-sm-3">
 			{{range .Terms}}
 			<option value="{{.Value}}">{{.}}</option>
 			{{end}}
 		</select>
 	</div>
-	<div class="form-group">
+	<div>
 		<select id="classSection" name="ClassSection" required="required" class="form-control col-sm-2">
 			{{range .CG}}
 			{{$class := .Class}}
@@ -26,13 +26,19 @@ license that can be found in the LICENSE file.
 			{{end}}
 		</select>
 	</div>
-	<div class="checkbox hidden-print">
+	<div>
 		<label>
 			<input type="checkbox" name="CalculateAll">
 			Calculate all subjects in the average
 		</label>
 	</div>
-	<div class="form-group">
+	<div>
+		<label>
+			<input type="checkbox" name="ShowQuarterColumns">
+			Show Quarter columns in Semester reportcard
+		</label>
+	</div>
+	<div>
 		<input type="submit" class="btn btn-default" value="Go">
 	</div>
 </form>
