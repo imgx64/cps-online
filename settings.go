@@ -26,6 +26,8 @@ func init() {
 	http.HandleFunc("/settings/addsubject", accessHandler(settingsAddSubjectHandler))
 	http.HandleFunc("/settings/deletesubject", accessHandler(settingsDeleteSubjectHandler))
 	http.HandleFunc("/settings/access", accessHandler(settingsAccessHandler))
+	http.HandleFunc("/gradinggroups/details", accessHandler(gradingGroupsDetailsHandler))
+	http.HandleFunc("/gradinggroups/save", accessHandler(gradingGroupsSaveHandler))
 }
 
 const startYear = 2012
@@ -272,6 +274,8 @@ func settingsHandler(w http.ResponseWriter, r *http.Request) {
 
 	subjects := getAllSubjects(c, sy)
 
+	gradingGroups := getGradingGroups(c, sy)
+
 	data := struct {
 		SectionChoices      []string
 		LetterSystemChoices []string
@@ -285,7 +289,8 @@ func settingsHandler(w http.ResponseWriter, r *http.Request) {
 
 		ClassSettings []classSetting
 
-		Subjects []string
+		Subjects      []string
+		GradingGroups []string
 
 		NextSchoolYear string
 	}{
@@ -302,6 +307,7 @@ func settingsHandler(w http.ResponseWriter, r *http.Request) {
 		settings,
 
 		subjects,
+		gradingGroups,
 
 		nextSchoolYear,
 	}
@@ -591,4 +597,223 @@ func saveMaxWeeks(c context.Context, maxWeeks int) error {
 		return err
 	}
 	return nil
+}
+
+type GradingGroupSettings struct {
+	Value []string
+}
+
+type GradingGroup struct {
+	Name    string
+	Columns []GradingGroupColumn
+}
+
+type GradingGroupColumn struct {
+	Name string
+	Max  float64
+}
+
+func getGradingGroups(c context.Context, sy string) []string {
+	key := datastore.NewKey(c, "settings", "grading-groups-"+sy, 0, nil)
+
+	setting := GradingGroupSettings{}
+	err := nds.Get(c, key, &setting)
+	if err != nil {
+		return []string{}
+	}
+
+	return setting.Value
+}
+
+func saveGradingGroups(c context.Context, sy string, groups []string) error {
+	key := datastore.NewKey(c, "settings", "grading-groups-"+sy, 0, nil)
+
+	_, err := nds.Put(c, key, &GradingGroupSettings{groups})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func getGradingGroup(c context.Context, sy string, name string) (GradingGroup, error) {
+	key := datastore.NewKey(c, "grading_groups", name+"-"+sy, 0, nil)
+
+	group := GradingGroup{}
+	err := nds.Get(c, key, &group)
+	if err != nil {
+		return group, err
+	}
+
+	return group, nil
+}
+
+func saveGradingGroup(c context.Context, sy string, group GradingGroup) error {
+	key := datastore.NewKey(c, "grading_groups", group.Name+"-"+sy, 0, nil)
+
+	_, err := nds.Put(c, key, &group)
+	if err != nil {
+		return err
+	}
+
+	gradingGroups := getGradingGroups(c, sy)
+	found := false
+	for _, existingGroup := range gradingGroups {
+		if existingGroup == group.Name {
+			found = true
+			break
+		}
+	}
+	if !found {
+		gradingGroups = append(gradingGroups, group.Name)
+		err := saveGradingGroups(c, sy, gradingGroups)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func deleteGradingGroup(c context.Context, sy string, groupName string) error {
+	key := datastore.NewKey(c, "grading_groups", groupName+"-"+sy, 0, nil)
+
+	gradingGroups := getGradingGroups(c, sy)
+	for i, existingGroup := range gradingGroups {
+		if existingGroup == groupName {
+			gradingGroups = append(gradingGroups[:i], gradingGroups[i+1:]...)
+			err := saveGradingGroups(c, sy, gradingGroups)
+			if err != nil {
+				return err
+			}
+			break
+		}
+	}
+
+	err := nds.Delete(c, key)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func gradingGroupsDetailsHandler(w http.ResponseWriter, r *http.Request) {
+	c := appengine.NewContext(r)
+
+	sy := getSchoolYear(c)
+
+	if err := r.ParseForm(); err != nil {
+		log.Errorf(c, "Could not parse form: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	groupName := r.Form.Get("group")
+
+	group := GradingGroup{}
+	if groupName != "" {
+		var err error
+		group, err = getGradingGroup(c, sy, groupName)
+		if err != nil {
+			log.Errorf(c, "Could not get group %s %s: %s", sy, groupName, err)
+			renderError(w, r, http.StatusInternalServerError)
+			return
+		}
+	}
+
+	if len(group.Columns) < 15 {
+		group.Columns = append(group.Columns, make([]GradingGroupColumn, 15-len(group.Columns))...)
+	}
+
+	data := struct {
+		Group GradingGroup
+	}{
+		group,
+	}
+
+	if err := render(w, r, "gradinggroup", data); err != nil {
+		log.Errorf(c, "Could not render template gradinggroup: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+}
+
+func gradingGroupsSaveHandler(w http.ResponseWriter, r *http.Request) {
+	c := appengine.NewContext(r)
+
+	sy := getSchoolYear(c)
+
+	if err := r.ParseForm(); err != nil {
+		log.Errorf(c, "Could not parse form: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	groupName := r.Form.Get("group")
+
+	if r.PostForm.Get("submit") == "Delete" {
+
+		err := deleteGradingGroup(c, sy, groupName)
+		if err != nil {
+			log.Errorf(c, "could not delete group %s %s: %s", sy, groupName, err)
+			renderErrorMsg(w, r, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		// TODO: message of success
+		http.Redirect(w, r, "/settings", http.StatusFound)
+		return
+	}
+
+	var group GradingGroup
+
+	group.Name = r.PostForm.Get("GroupName")
+
+	for i := 0; ; i++ {
+		_, ok := r.PostForm[fmt.Sprintf("ggc-name-%d", i)]
+		if !ok {
+			break
+		}
+
+		nameStr := r.PostForm.Get(fmt.Sprintf("ggc-name-%d", i))
+		maxStr := r.PostForm.Get(fmt.Sprintf("ggc-max-%d", i))
+
+		name := nameStr
+		if name == "" {
+			continue
+		}
+
+		max, err := strconv.ParseFloat(maxStr, 64)
+		if err != nil {
+			renderErrorMsg(w, r, http.StatusBadRequest,
+				fmt.Sprintf("Invalid Encoded Max for %s: %s", name, maxStr))
+			return
+		}
+		if max <= 0 {
+			renderErrorMsg(w, r, http.StatusBadRequest,
+				fmt.Sprintf("Invalid Encoded Max for %s: %s", name, maxStr))
+			return
+		}
+
+		column := GradingGroupColumn{
+			name,
+			max,
+		}
+
+		group.Columns = append(group.Columns, column)
+	}
+
+	if len(group.Columns) == 0 {
+		renderErrorMsg(w, r, http.StatusBadRequest, "Please add columns")
+		return
+	}
+
+	err := saveGradingGroup(c, sy, group)
+	if err != nil {
+		log.Errorf(c, "could not save group %s %v: %s", sy, group, err)
+		renderErrorMsg(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	// TODO: message of success
+	http.Redirect(w, r, "/settings", http.StatusFound)
 }

@@ -191,5 +191,32 @@ license that can be found in the LICENSE file.
 </fieldset>
 <div class="spacer">
 </div>
+<fieldset>
+	<legend>Custom grading groups</legend>
+	<table>
+	{{range .GradingGroups}}
+		<tr>
+			<th scope="row">
+				{{.}}
+			</th>
+			<td>
+				<form action="/gradinggroups/save?group={{.}}" method="POST">
+				<a href="/gradinggroups/details?group={{.}}"
+					class="btn btn-default">Edit</a>
+				<input type="submit" name="submit" value="Delete"
+					class="btn btn-danger are-you-sure">
+				</form>
+			</td>
+		</tr>
+	{{end}}
+	</table>
+	<br>
+	<div>
+		<a href="/gradinggroups/details"
+			class="btn btn-default">Add</a>
+	</div>
+</fieldset>
+<div class="spacer">
+</div>
 {{end}}
 

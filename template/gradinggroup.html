@@ -1,0 +1,58 @@
+{{/*
+Copyright 2013 Ibrahim Ghazal. All rights reserved.
+Use of this source code is governed by a BSD-style
+license that can be found in the LICENSE file.
+*/}}
+
+{{define "title"}}Grading Group{{end}}
+{{define "content"}}
+<form action="/gradinggroups/save" method="POST" class="form-horizontal">
+	<fieldset>
+		<legend>Grading group details</legend>
+
+		<div class="form-group">
+			<label class="col-sm-3 control-label" for="GroupName">Group Name</label>
+			<div class="col-sm-5">
+				<input type="text" id="GroupName" name="GroupName"
+				value="{{.Group.Name}}" class="form-control"
+				required="required"
+				{{if not (equal .Group.Name "")}}readonly="readonly"{{end}}>
+			</div>
+		</div>
+
+		<legend>Group grading columns</legend>
+		<table>
+		<thead>
+			<th scope="col">Name</th>
+			<th scope="col">Encoded Max</th>
+		</thead>
+		<tbody>
+		{{range $i, $gc := .Group.Columns}}
+		<tr>
+			<td>
+				<input type="text" name="ggc-name-{{$i}}"
+			 		class="form-control" value="{{$gc.Name}}">
+			</td>
+			<td>
+				<input type="number" name="ggc-max-{{$i}}"
+					min="0" max="100" step="any"
+					class="form-control" value="{{$gc.Max}}">
+			</td>
+		</tr>
+		{{end}}
+		</tbody>
+		</table>
+		
+		<legend></legend>
+		<div>
+			<input type="submit" name="submit" class="btn btn-default" value="Save">
+			{{if not (equal .Group.Name "")}}
+			<input type="submit" name="submit" class="btn btn-default btn-danger are-you-sure" value="Delete">
+			{{end}}
+		</div>
+	</fieldset>
+</form>
+<div class="spacer">
+</div>
+{{end}}
+
