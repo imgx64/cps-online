@@ -326,16 +326,23 @@ func subjectsDetailsHandler(w http.ResponseWriter, r *http.Request) {
 		{quizGrading, gradingColumnTypeStrings[quizGrading]},
 	}
 
+	weekGradingColumnChoices := []gradingColumnChoice{
+		{noGrading, gradingColumnTypeStrings[noGrading]},
+		{directGrading, gradingColumnTypeStrings[directGrading]},
+	}
+
 	data := struct {
-		AvailableSubjects    []string
-		GradingColumnChoices []gradingColumnChoice
-		SemesterTypes        []semesterType
+		AvailableSubjects        []string
+		GradingColumnChoices     []gradingColumnChoice
+		WeekGradingColumnChoices []gradingColumnChoice
+		SemesterTypes            []semesterType
 
 		Class   string
 		Subject Subject
 	}{
 		availableSubjects,
 		gradingColumnChoices,
+		weekGradingColumnChoices,
 		semesterTypes,
 
 		class,
@@ -454,14 +461,26 @@ func subjectsSaveHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for i := 0; ; i++ {
-		_, ok := r.PostForm[fmt.Sprintf("wgc-name-%d", i)]
+		_, ok := r.PostForm[fmt.Sprintf("wgc-type-%d", i)]
 		if !ok {
 			break
 		}
 
+		typeStr := r.PostForm.Get(fmt.Sprintf("wgc-type-%d", i))
 		nameStr := r.PostForm.Get(fmt.Sprintf("wgc-name-%d", i))
 		maxStr := r.PostForm.Get(fmt.Sprintf("wgc-max-%d", i))
 		weightStr := r.PostForm.Get(fmt.Sprintf("wgc-weight-%d", i))
+
+		typeInt, err := strconv.Atoi(typeStr)
+		if err != nil {
+			renderErrorMsg(w, r, http.StatusBadRequest,
+				fmt.Sprintf("Invalid Type: %s", typeStr))
+			return
+		}
+		typ := gradingColumnType(typeInt)
+		if typ == noGrading {
+			continue
+		}
 
 		name := nameStr
 		if name == "" {
@@ -492,8 +511,16 @@ func subjectsSaveHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		if typ == directGrading {
+			// No special handling
+		} else {
+			renderErrorMsg(w, r, http.StatusBadRequest,
+				fmt.Sprintf("Invalid Type: %s", typeStr))
+			return
+		}
+
 		gc := gradingColumn{
-			directGrading,
+			typ,
 			name,
 			max,
 			weight,
@@ -505,6 +532,11 @@ func subjectsSaveHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for i := 0; ; i++ {
+		_, ok := r.PostForm[fmt.Sprintf("qgc-type-%d", i)]
+		if !ok {
+			break
+		}
+
 		typeStr := r.PostForm.Get(fmt.Sprintf("qgc-type-%d", i))
 		nameStr := r.PostForm.Get(fmt.Sprintf("qgc-name-%d", i))
 		maxStr := r.PostForm.Get(fmt.Sprintf("qgc-max-%d", i))
@@ -514,9 +546,14 @@ func subjectsSaveHandler(w http.ResponseWriter, r *http.Request) {
 
 		typeInt, err := strconv.Atoi(typeStr)
 		if err != nil {
-			break
+			renderErrorMsg(w, r, http.StatusBadRequest,
+				fmt.Sprintf("Invalid Type: %s", typeStr))
+			return
 		}
 		typ := gradingColumnType(typeInt)
+		if typ == noGrading {
+			continue
+		}
 
 		name := nameStr
 		if name == "" {
@@ -571,8 +608,9 @@ func subjectsSaveHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		} else {
-			// Unused
-			continue
+			renderErrorMsg(w, r, http.StatusBadRequest,
+				fmt.Sprintf("Invalid Type: %s", typeStr))
+			return
 		}
 
 		gc := gradingColumn{
@@ -588,6 +626,11 @@ func subjectsSaveHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for i := 0; ; i++ {
+		_, ok := r.PostForm[fmt.Sprintf("sgc-type-%d", i)]
+		if !ok {
+			break
+		}
+
 		typeStr := r.PostForm.Get(fmt.Sprintf("sgc-type-%d", i))
 		nameStr := r.PostForm.Get(fmt.Sprintf("sgc-name-%d", i))
 		maxStr := r.PostForm.Get(fmt.Sprintf("sgc-max-%d", i))
@@ -597,9 +640,14 @@ func subjectsSaveHandler(w http.ResponseWriter, r *http.Request) {
 
 		typeInt, err := strconv.Atoi(typeStr)
 		if err != nil {
-			break
+			renderErrorMsg(w, r, http.StatusBadRequest,
+				fmt.Sprintf("Invalid Type: %s", typeStr))
+			return
 		}
 		typ := gradingColumnType(typeInt)
+		if typ == noGrading {
+			continue
+		}
 
 		name := nameStr
 		if name == "" {
@@ -631,7 +679,9 @@ func subjectsSaveHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		var numQuizzes, bestQuizzes int
-		if typ == quizGrading {
+		if typ == directGrading {
+			// No special handling
+		} else if typ == quizGrading {
 			numQuizzes, err = strconv.Atoi(numQuizzesStr)
 			if err != nil || numQuizzes < 1 {
 				renderErrorMsg(w, r, http.StatusBadRequest,
@@ -651,6 +701,10 @@ func subjectsSaveHandler(w http.ResponseWriter, r *http.Request) {
 					fmt.Sprintf("Best Quizzes for %s are greater than Number of Quizzes: %s", name, bestQuizzesStr))
 				return
 			}
+		} else {
+			renderErrorMsg(w, r, http.StatusBadRequest,
+				fmt.Sprintf("Invalid Type: %s", typeStr))
+			return
 		}
 
 		gc := gradingColumn{

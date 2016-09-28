@@ -139,7 +139,7 @@ license that can be found in the LICENSE file.
 		<legend>Weekly grading columns</legend>
 		<table>
 		<thead>
-			<th scope="col"></th>
+			<th scope="col">Type</th>
 			<th scope="col">Name</th>
 			<th scope="col">Encoded Max</th>
 			<th scope="col">Final Weight</th>
@@ -150,6 +150,16 @@ license that can be found in the LICENSE file.
 		{{range $i, $gc := .Subject.WeeklyGradingColumns}}
 		<tr>
 			<td>
+				<select id="wgc-type-{{$i}}"
+					name="wgc-type-{{$i}}" class="form-control">
+					{{$currentType := $gc.Type}}
+					{{range $.WeekGradingColumnChoices}}
+					<option value="{{.Value}}"
+					{{if equal .Value $currentType}}selected="selected"{{end}}>
+						{{.Name}}
+					</option>
+					{{end}}
+				</select>
 			</td> 
 			<td>
 				<input type="text" name="wgc-name-{{$i}}"
