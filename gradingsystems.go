@@ -592,6 +592,23 @@ func (s Subject) evaluate(c context.Context, studentID, sy string, term Term, ma
 				total100 += totalQuiz * gcol.FinalWeight /
 					(float64(gcol.BestQuizzes) * gcol.Max)
 			} else if gcol.Type == groupGrading {
+				group, err := getGradingGroup(c, sy, gcol.GroupName)
+				if err != nil {
+					// TODO: handle error
+					continue
+				}
+
+				totalMax := 0.0
+				for _, col := range group.Columns {
+					totalMax += col.Max
+				}
+
+				totalGroup := sumMarks(m[nextMark : nextMark+len(group.Columns)]...)
+				nextMark += len(group.Columns)
+				m[nextMark] = totalGroup
+				nextMark++
+
+				total100 += totalGroup / totalMax * gcol.Max
 			}
 		}
 
@@ -636,12 +653,35 @@ func (s Subject) evaluate(c context.Context, studentID, sy string, term Term, ma
 					weekMarks = append(weekMarks, wm)
 				}
 			}
-			for i, gcol := range s.WeeklyGradingColumns {
+
+			nextWeekMark := 0
+			for _, gcol := range s.WeeklyGradingColumns {
+				var max float64
+				if gcol.Type == directGrading {
+					max = gcol.Max
+				} else if gcol.Type == groupGrading {
+					group, err := getGradingGroup(c, sy, gcol.GroupName)
+					if err != nil {
+						// TODO: handle error
+						continue
+					}
+
+					totalMax := 0.0
+					for _, col := range group.Columns {
+						totalMax += col.Max
+					}
+					max = totalMax
+
+					nextWeekMark += len(group.Columns)
+
+				}
+
 				colTotal := 0.0
 				for _, wm := range weekMarks {
-					colTotal += wm[i]
+					colTotal += wm[nextWeekMark]
 				}
-				m[nextMark] = colTotal * 100.0 / (gcol.Max * float64(len(weekMarks)))
+				nextWeekMark++
+				m[nextMark] = colTotal * 100.0 / (max * float64(len(weekMarks)))
 				totalMark += m[nextMark]
 				totalWeight += 100.0
 				nextMark++
@@ -662,6 +702,24 @@ func (s Subject) evaluate(c context.Context, studentID, sy string, term Term, ma
 					(float64(gcol.BestQuizzes) * gcol.Max)
 				totalWeight += 100.0
 			} else if gcol.Type == groupGrading {
+				group, err := getGradingGroup(c, sy, gcol.GroupName)
+				if err != nil {
+					// TODO: handle error
+					continue
+				}
+
+				totalMax := 0.0
+				for _, col := range group.Columns {
+					totalMax += col.Max
+				}
+
+				totalGroup := sumMarks(m[nextMark : nextMark+len(group.Columns)]...)
+				nextMark += len(group.Columns)
+				m[nextMark] = totalGroup
+				nextMark++
+
+				totalMark += totalGroup / totalMax * 100.0
+				totalWeight += 100.0
 			}
 		}
 
@@ -697,12 +755,34 @@ func (s Subject) evaluate(c context.Context, studentID, sy string, term Term, ma
 						weekMarks = append(weekMarks, wm)
 					}
 				}
-				for i, gcol := range s.WeeklyGradingColumns {
+				nextWeekMark := 0
+				for _, gcol := range s.WeeklyGradingColumns {
+					var max float64
+					if gcol.Type == directGrading {
+						max = gcol.Max
+					} else if gcol.Type == groupGrading {
+						group, err := getGradingGroup(c, sy, gcol.GroupName)
+						if err != nil {
+							// TODO: handle error
+							continue
+						}
+
+						totalMax := 0.0
+						for _, col := range group.Columns {
+							totalMax += col.Max
+						}
+						max = totalMax
+
+						nextWeekMark += len(group.Columns)
+
+					}
+
 					colTotal := 0.0
 					for _, wm := range weekMarks {
-						colTotal += wm[i]
+						colTotal += wm[nextWeekMark]
 					}
-					m[nextMark] = colTotal * gcol.FinalWeight / (gcol.Max * float64(len(weekMarks)))
+					nextWeekMark++
+					m[nextMark] = colTotal * gcol.FinalWeight / (max * float64(len(weekMarks)))
 					total100 += m[nextMark]
 					nextMark++
 				}
@@ -712,6 +792,7 @@ func (s Subject) evaluate(c context.Context, studentID, sy string, term Term, ma
 			s.evaluate(c, studentID, sy, midterm, marks)
 			midtermMarks := marks[midterm]
 			midtermNextMark := 0
+			midtermNextMark += len(s.WeeklyGradingColumns)
 			for _, gcol := range s.QuarterGradingColumns {
 				if gcol.Type == directGrading {
 					m[nextMark] =
@@ -728,6 +809,24 @@ func (s Subject) evaluate(c context.Context, studentID, sy string, term Term, ma
 					nextMark++
 					midtermNextMark++
 				} else if gcol.Type == groupGrading {
+					group, err := getGradingGroup(c, sy, gcol.GroupName)
+					if err != nil {
+						// TODO: handle error
+						continue
+					}
+
+					totalMax := 0.0
+					for _, col := range group.Columns {
+						totalMax += col.Max
+					}
+
+					midtermNextMark += len(group.Columns)
+					m[nextMark] = midtermMarks[midtermNextMark]
+					total100 += m[nextMark] / totalMax * gcol.Max
+
+					nextMark++
+					midtermNextMark++
+
 				}
 			}
 		}
@@ -744,6 +843,23 @@ func (s Subject) evaluate(c context.Context, studentID, sy string, term Term, ma
 
 				nextMark++
 			} else if gcol.Type == groupGrading {
+				group, err := getGradingGroup(c, sy, gcol.GroupName)
+				if err != nil {
+					// TODO: handle error
+					continue
+				}
+
+				totalMax := 0.0
+				for _, col := range group.Columns {
+					totalMax += col.Max
+				}
+
+				totalGroup := sumMarks(m[nextMark : nextMark+len(group.Columns)]...)
+				nextMark += len(group.Columns)
+				m[nextMark] = totalGroup
+				nextMark++
+
+				total100 += totalGroup / totalMax * gcol.Max
 			}
 		}
 
