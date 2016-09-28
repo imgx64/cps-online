@@ -357,6 +357,8 @@ type Subject struct {
 }
 
 func (s Subject) description(c context.Context, term Term) []colDescription {
+	sy := getSchoolYear(c)
+
 	// TODO: check total max = 100
 	if term.Typ == Quarter {
 		if s.SemesterType != QuarterSemester {
@@ -368,6 +370,8 @@ func (s Subject) description(c context.Context, term Term) []colDescription {
 				cols = append(cols, colDescription{gcol.Name, gcol.Max, gcol.FinalWeight, true})
 			} else if gcol.Type == quizGrading {
 				cols = append(cols, quizColDescriptions(gcol, false)...)
+			} else if gcol.Type == groupGrading {
+				cols = append(cols, groupColDescriptions(c, sy, gcol, false, false)...)
 			}
 		}
 		cols = append(cols, colDescription{"Quarter Mark", 100, math.NaN(), false})
@@ -386,6 +390,8 @@ func (s Subject) description(c context.Context, term Term) []colDescription {
 		for _, gcol := range s.WeeklyGradingColumns {
 			if gcol.Type == directGrading {
 				cols = append(cols, colDescription{gcol.Name, gcol.Max, math.NaN(), true})
+			} else if gcol.Type == groupGrading {
+				cols = append(cols, groupColDescriptions(c, sy, gcol, false, false)...)
 			}
 		}
 		return cols
@@ -399,6 +405,8 @@ func (s Subject) description(c context.Context, term Term) []colDescription {
 		for _, gcol := range s.WeeklyGradingColumns {
 			if gcol.Type == directGrading {
 				cols = append(cols, colDescription{gcol.Name, 100.0, 100.0, false})
+			} else if gcol.Type == groupGrading {
+				cols = append(cols, groupColDescriptions(c, sy, gcol, true, true)...)
 			}
 		}
 
@@ -407,6 +415,8 @@ func (s Subject) description(c context.Context, term Term) []colDescription {
 				cols = append(cols, colDescription{gcol.Name, gcol.Max, 100.0, true})
 			} else if gcol.Type == quizGrading {
 				cols = append(cols, quizColDescriptions(gcol, true)...)
+			} else if gcol.Type == groupGrading {
+				cols = append(cols, groupColDescriptions(c, sy, gcol, false, true)...)
 			}
 		}
 		cols = append(cols, colDescription{"Midterm Mark", 100, math.NaN(), false})
@@ -418,6 +428,8 @@ func (s Subject) description(c context.Context, term Term) []colDescription {
 			for _, gcol := range s.WeeklyGradingColumns {
 				if gcol.Type == directGrading {
 					cols = append(cols, colDescription{gcol.Name, gcol.FinalWeight, gcol.FinalWeight, false})
+				} else if gcol.Type == groupGrading {
+					cols = append(cols, groupColDescriptions(c, sy, gcol, true, false)...)
 				}
 			}
 
@@ -427,6 +439,8 @@ func (s Subject) description(c context.Context, term Term) []colDescription {
 				} else if gcol.Type == quizGrading {
 					cols = append(cols, colDescription{gcol.Name,
 						gcol.Max * float64(gcol.BestQuizzes), gcol.FinalWeight, false})
+				} else if gcol.Type == groupGrading {
+					cols = append(cols, groupColDescriptions(c, sy, gcol, true, false)...)
 				}
 			}
 		}
@@ -435,6 +449,8 @@ func (s Subject) description(c context.Context, term Term) []colDescription {
 				cols = append(cols, colDescription{gcol.Name, gcol.Max, gcol.FinalWeight, true})
 			} else if gcol.Type == quizGrading {
 				cols = append(cols, quizColDescriptions(gcol, false)...)
+			} else if gcol.Type == groupGrading {
+				cols = append(cols, groupColDescriptions(c, sy, gcol, false, false)...)
 			}
 		}
 		if s.SemesterType == QuarterSemester {
@@ -480,6 +496,44 @@ func quizColDescriptions(gc gradingColumn, midterm bool) []colDescription {
 	cols = append(cols, colDescription{
 		fmt.Sprintf("%s (Best %d)", gc.Name, gc.BestQuizzes),
 		gc.Max * float64(gc.BestQuizzes),
+		weight,
+		false,
+	})
+
+	return cols
+}
+
+func groupColDescriptions(c context.Context, sy string, gc gradingColumn, onlyTotalColumn, midterm bool) []colDescription {
+	group, err := getGradingGroup(c, sy, gc.GroupName)
+	if err != nil {
+		log.Errorf(c, "Could not get grading group %s %s: %s", sy, gc.GroupName, err)
+		return []colDescription{}
+	}
+
+	var cols []colDescription
+	totalMax := 0.0
+	for _, col := range group.Columns {
+		totalMax += col.Max
+		if !onlyTotalColumn {
+			cols = append(cols, colDescription{
+				fmt.Sprintf("(%s) %s", gc.Name, col.Name),
+				col.Max,
+				math.NaN(),
+				true,
+			})
+		}
+	}
+
+	var weight float64
+	if midterm {
+		weight = 100.0
+	} else {
+		weight = gc.FinalWeight
+	}
+
+	cols = append(cols, colDescription{
+		gc.Name,
+		totalMax,
 		weight,
 		false,
 	})
@@ -537,6 +591,7 @@ func (s Subject) evaluate(c context.Context, studentID, sy string, term Term, ma
 
 				total100 += totalQuiz * gcol.FinalWeight /
 					(float64(gcol.BestQuizzes) * gcol.Max)
+			} else if gcol.Type == groupGrading {
 			}
 		}
 
@@ -606,6 +661,7 @@ func (s Subject) evaluate(c context.Context, studentID, sy string, term Term, ma
 				totalMark += totalQuiz * 100.0 /
 					(float64(gcol.BestQuizzes) * gcol.Max)
 				totalWeight += 100.0
+			} else if gcol.Type == groupGrading {
 			}
 		}
 
@@ -671,6 +727,7 @@ func (s Subject) evaluate(c context.Context, studentID, sy string, term Term, ma
 
 					nextMark++
 					midtermNextMark++
+				} else if gcol.Type == groupGrading {
 				}
 			}
 		}
@@ -686,6 +743,7 @@ func (s Subject) evaluate(c context.Context, studentID, sy string, term Term, ma
 					(float64(gcol.BestQuizzes) * gcol.Max)
 
 				nextMark++
+			} else if gcol.Type == groupGrading {
 			}
 		}
 
