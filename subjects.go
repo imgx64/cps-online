@@ -324,18 +324,23 @@ func subjectsDetailsHandler(w http.ResponseWriter, r *http.Request) {
 		{noGrading, gradingColumnTypeStrings[noGrading]},
 		{directGrading, gradingColumnTypeStrings[directGrading]},
 		{quizGrading, gradingColumnTypeStrings[quizGrading]},
+		{groupGrading, gradingColumnTypeStrings[groupGrading]},
 	}
 
 	weekGradingColumnChoices := []gradingColumnChoice{
 		{noGrading, gradingColumnTypeStrings[noGrading]},
 		{directGrading, gradingColumnTypeStrings[directGrading]},
+		{groupGrading, gradingColumnTypeStrings[groupGrading]},
 	}
+
+	gradingGroups := getGradingGroups(c, sy)
 
 	data := struct {
 		AvailableSubjects        []string
 		GradingColumnChoices     []gradingColumnChoice
 		WeekGradingColumnChoices []gradingColumnChoice
 		SemesterTypes            []semesterType
+		GradingGroups            []string
 
 		Class   string
 		Subject Subject
@@ -344,6 +349,7 @@ func subjectsDetailsHandler(w http.ResponseWriter, r *http.Request) {
 		gradingColumnChoices,
 		weekGradingColumnChoices,
 		semesterTypes,
+		gradingGroups,
 
 		class,
 		subject,
@@ -470,6 +476,7 @@ func subjectsSaveHandler(w http.ResponseWriter, r *http.Request) {
 		nameStr := r.PostForm.Get(fmt.Sprintf("wgc-name-%d", i))
 		maxStr := r.PostForm.Get(fmt.Sprintf("wgc-max-%d", i))
 		weightStr := r.PostForm.Get(fmt.Sprintf("wgc-weight-%d", i))
+		groupStr := r.PostForm.Get(fmt.Sprintf("wgc-group-%d", i))
 
 		typeInt, err := strconv.Atoi(typeStr)
 		if err != nil {
@@ -493,7 +500,7 @@ func subjectsSaveHandler(w http.ResponseWriter, r *http.Request) {
 				fmt.Sprintf("Invalid Encoded Max for %s: %s", name, maxStr))
 			return
 		}
-		if max == 0 {
+		if typ != groupGrading && max == 0 {
 			renderErrorMsg(w, r, http.StatusBadRequest,
 				fmt.Sprintf("Invalid Encoded Max for %s: %s", name, maxStr))
 			return
@@ -511,8 +518,18 @@ func subjectsSaveHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		var group string
 		if typ == directGrading {
 			// No special handling
+		} else if typ == groupGrading {
+			max = 0
+			_, err := getGradingGroup(c, sy, groupStr)
+			if err != nil {
+				renderErrorMsg(w, r, http.StatusBadRequest,
+					fmt.Sprintf("Invalid Group Name for %s: %s", name, groupStr))
+				return
+			}
+			group = groupStr
 		} else {
 			renderErrorMsg(w, r, http.StatusBadRequest,
 				fmt.Sprintf("Invalid Type: %s", typeStr))
@@ -526,6 +543,7 @@ func subjectsSaveHandler(w http.ResponseWriter, r *http.Request) {
 			weight,
 			0,
 			0,
+			group,
 		}
 
 		subject.WeeklyGradingColumns = append(subject.WeeklyGradingColumns, gc)
@@ -543,6 +561,7 @@ func subjectsSaveHandler(w http.ResponseWriter, r *http.Request) {
 		weightStr := r.PostForm.Get(fmt.Sprintf("qgc-weight-%d", i))
 		numQuizzesStr := r.PostForm.Get(fmt.Sprintf("qgc-num-quizzes-%d", i))
 		bestQuizzesStr := r.PostForm.Get(fmt.Sprintf("qgc-best-quizzes-%d", i))
+		groupStr := r.PostForm.Get(fmt.Sprintf("qgc-group-%d", i))
 
 		typeInt, err := strconv.Atoi(typeStr)
 		if err != nil {
@@ -566,7 +585,7 @@ func subjectsSaveHandler(w http.ResponseWriter, r *http.Request) {
 				fmt.Sprintf("Invalid Encoded Max for %s: %s", name, maxStr))
 			return
 		}
-		if max == 0 {
+		if typ != groupGrading && max == 0 {
 			renderErrorMsg(w, r, http.StatusBadRequest,
 				fmt.Sprintf("Invalid Encoded Max for %s: %s", name, maxStr))
 			return
@@ -585,100 +604,7 @@ func subjectsSaveHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		var numQuizzes, bestQuizzes int
-		if typ == directGrading {
-			// no special handling
-		} else if typ == quizGrading {
-			numQuizzes, err = strconv.Atoi(numQuizzesStr)
-			if err != nil || numQuizzes < 1 {
-				renderErrorMsg(w, r, http.StatusBadRequest,
-					fmt.Sprintf("Invalid Number of Quizzes for %s: %s", name, numQuizzesStr))
-				return
-			}
-
-			bestQuizzes, err = strconv.Atoi(bestQuizzesStr)
-			if err != nil || bestQuizzes < 1 {
-				renderErrorMsg(w, r, http.StatusBadRequest,
-					fmt.Sprintf("Invalid Best Quizzes for %s: %s", name, bestQuizzesStr))
-				return
-			}
-
-			if bestQuizzes > numQuizzes {
-				renderErrorMsg(w, r, http.StatusBadRequest,
-					fmt.Sprintf("Best Quizzes for %s are greater than Number of Quizzes: %s", name, bestQuizzesStr))
-				return
-			}
-		} else {
-			renderErrorMsg(w, r, http.StatusBadRequest,
-				fmt.Sprintf("Invalid Type: %s", typeStr))
-			return
-		}
-
-		gc := gradingColumn{
-			typ,
-			name,
-			max,
-			weight,
-			numQuizzes,
-			bestQuizzes,
-		}
-
-		subject.QuarterGradingColumns = append(subject.QuarterGradingColumns, gc)
-	}
-
-	for i := 0; ; i++ {
-		_, ok := r.PostForm[fmt.Sprintf("sgc-type-%d", i)]
-		if !ok {
-			break
-		}
-
-		typeStr := r.PostForm.Get(fmt.Sprintf("sgc-type-%d", i))
-		nameStr := r.PostForm.Get(fmt.Sprintf("sgc-name-%d", i))
-		maxStr := r.PostForm.Get(fmt.Sprintf("sgc-max-%d", i))
-		weightStr := r.PostForm.Get(fmt.Sprintf("sgc-weight-%d", i))
-		numQuizzesStr := r.PostForm.Get(fmt.Sprintf("sgc-num-quizzes-%d", i))
-		bestQuizzesStr := r.PostForm.Get(fmt.Sprintf("sgc-best-quizzes-%d", i))
-
-		typeInt, err := strconv.Atoi(typeStr)
-		if err != nil {
-			renderErrorMsg(w, r, http.StatusBadRequest,
-				fmt.Sprintf("Invalid Type: %s", typeStr))
-			return
-		}
-		typ := gradingColumnType(typeInt)
-		if typ == noGrading {
-			continue
-		}
-
-		name := nameStr
-		if name == "" {
-			continue
-		}
-
-		max, err := strconv.ParseFloat(maxStr, 64)
-		if err != nil {
-			renderErrorMsg(w, r, http.StatusBadRequest,
-				fmt.Sprintf("Invalid Encoded Max for %s: %s", name, maxStr))
-			return
-		}
-		if max == 0 {
-			renderErrorMsg(w, r, http.StatusBadRequest,
-				fmt.Sprintf("Invalid Encoded Max for %s: %s", name, maxStr))
-			return
-		}
-
-		weight, err := strconv.ParseFloat(weightStr, 64)
-		if err != nil {
-			renderErrorMsg(w, r, http.StatusBadRequest,
-				fmt.Sprintf("Invalid Final Weight for %s: %s", name, weightStr))
-			return
-		}
-		if weight == 0 {
-			renderErrorMsg(w, r, http.StatusBadRequest,
-				fmt.Sprintf("Invalid Final Weight for %s: %s", name, weightStr))
-			return
-		}
-
-		var numQuizzes, bestQuizzes int
+		var group string
 		if typ == directGrading {
 			// No special handling
 		} else if typ == quizGrading {
@@ -701,6 +627,15 @@ func subjectsSaveHandler(w http.ResponseWriter, r *http.Request) {
 					fmt.Sprintf("Best Quizzes for %s are greater than Number of Quizzes: %s", name, bestQuizzesStr))
 				return
 			}
+		} else if typ == groupGrading {
+			max = 0
+			_, err := getGradingGroup(c, sy, groupStr)
+			if err != nil {
+				renderErrorMsg(w, r, http.StatusBadRequest,
+					fmt.Sprintf("Invalid Group Name for %s: %s", name, groupStr))
+				return
+			}
+			group = groupStr
 		} else {
 			renderErrorMsg(w, r, http.StatusBadRequest,
 				fmt.Sprintf("Invalid Type: %s", typeStr))
@@ -714,6 +649,113 @@ func subjectsSaveHandler(w http.ResponseWriter, r *http.Request) {
 			weight,
 			numQuizzes,
 			bestQuizzes,
+			group,
+		}
+
+		subject.QuarterGradingColumns = append(subject.QuarterGradingColumns, gc)
+	}
+
+	for i := 0; ; i++ {
+		_, ok := r.PostForm[fmt.Sprintf("sgc-type-%d", i)]
+		if !ok {
+			break
+		}
+
+		typeStr := r.PostForm.Get(fmt.Sprintf("sgc-type-%d", i))
+		nameStr := r.PostForm.Get(fmt.Sprintf("sgc-name-%d", i))
+		maxStr := r.PostForm.Get(fmt.Sprintf("sgc-max-%d", i))
+		weightStr := r.PostForm.Get(fmt.Sprintf("sgc-weight-%d", i))
+		numQuizzesStr := r.PostForm.Get(fmt.Sprintf("sgc-num-quizzes-%d", i))
+		bestQuizzesStr := r.PostForm.Get(fmt.Sprintf("sgc-best-quizzes-%d", i))
+		groupStr := r.PostForm.Get(fmt.Sprintf("sgc-group-%d", i))
+
+		typeInt, err := strconv.Atoi(typeStr)
+		if err != nil {
+			renderErrorMsg(w, r, http.StatusBadRequest,
+				fmt.Sprintf("Invalid Type: %s", typeStr))
+			return
+		}
+		typ := gradingColumnType(typeInt)
+		if typ == noGrading {
+			continue
+		}
+
+		name := nameStr
+		if name == "" {
+			continue
+		}
+
+		max, err := strconv.ParseFloat(maxStr, 64)
+		if err != nil {
+			renderErrorMsg(w, r, http.StatusBadRequest,
+				fmt.Sprintf("Invalid Encoded Max for %s: %s", name, maxStr))
+			return
+		}
+		if typ != groupGrading && max == 0 {
+			renderErrorMsg(w, r, http.StatusBadRequest,
+				fmt.Sprintf("Invalid Encoded Max for %s: %s", name, maxStr))
+			return
+		}
+
+		weight, err := strconv.ParseFloat(weightStr, 64)
+		if err != nil {
+			renderErrorMsg(w, r, http.StatusBadRequest,
+				fmt.Sprintf("Invalid Final Weight for %s: %s", name, weightStr))
+			return
+		}
+		if weight == 0 {
+			renderErrorMsg(w, r, http.StatusBadRequest,
+				fmt.Sprintf("Invalid Final Weight for %s: %s", name, weightStr))
+			return
+		}
+
+		var numQuizzes, bestQuizzes int
+		var group string
+		if typ == directGrading {
+			// No special handling
+		} else if typ == quizGrading {
+			numQuizzes, err = strconv.Atoi(numQuizzesStr)
+			if err != nil || numQuizzes < 1 {
+				renderErrorMsg(w, r, http.StatusBadRequest,
+					fmt.Sprintf("Invalid Number of Quizzes for %s: %s", name, numQuizzesStr))
+				return
+			}
+
+			bestQuizzes, err = strconv.Atoi(bestQuizzesStr)
+			if err != nil || bestQuizzes < 1 {
+				renderErrorMsg(w, r, http.StatusBadRequest,
+					fmt.Sprintf("Invalid Best Quizzes for %s: %s", name, bestQuizzesStr))
+				return
+			}
+
+			if bestQuizzes > numQuizzes {
+				renderErrorMsg(w, r, http.StatusBadRequest,
+					fmt.Sprintf("Best Quizzes for %s are greater than Number of Quizzes: %s", name, bestQuizzesStr))
+				return
+			}
+		} else if typ == groupGrading {
+			max = 0
+			_, err := getGradingGroup(c, sy, groupStr)
+			if err != nil {
+				renderErrorMsg(w, r, http.StatusBadRequest,
+					fmt.Sprintf("Invalid Group Name for %s: %s", name, groupStr))
+				return
+			}
+			group = groupStr
+		} else {
+			renderErrorMsg(w, r, http.StatusBadRequest,
+				fmt.Sprintf("Invalid Type: %s", typeStr))
+			return
+		}
+
+		gc := gradingColumn{
+			typ,
+			name,
+			max,
+			weight,
+			numQuizzes,
+			bestQuizzes,
+			group,
 		}
 
 		subject.SemesterGradingColumns = append(subject.SemesterGradingColumns, gc)

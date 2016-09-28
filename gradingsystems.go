@@ -314,12 +314,14 @@ const (
 	noGrading gradingColumnType = iota
 	directGrading
 	quizGrading
+	groupGrading
 )
 
 var gradingColumnTypeStrings = map[gradingColumnType]string{
 	noGrading:     "Unused",
 	directGrading: "Direct",
 	quizGrading:   "Quizzes",
+	groupGrading:  "Group",
 }
 
 type gradingColumn struct {
@@ -330,6 +332,7 @@ type gradingColumn struct {
 
 	NumQuizzes  int
 	BestQuizzes int
+	GroupName   string
 }
 
 type Subject struct {

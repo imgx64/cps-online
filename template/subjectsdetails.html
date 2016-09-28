@@ -145,6 +145,7 @@ license that can be found in the LICENSE file.
 			<th scope="col">Final Weight</th>
 			<th scope="col"></th>
 			<th scope="col"></th>
+			<th scope="col">Group Name</th>
 		</thead>
 		<tbody>
 		{{range $i, $gc := .Subject.WeeklyGradingColumns}}
@@ -179,6 +180,19 @@ license that can be found in the LICENSE file.
 			</td>
 			<td>
 			</td>
+			<td>
+				<select id="wgc-group-{{$i}}"
+					name="wgc-group-{{$i}}" class="form-control">
+					<option></option>
+					{{$currentGroup := $gc.GroupName}}
+					{{range $.GradingGroups}}
+					<option value="{{.}}"
+					{{if equal . $currentGroup}}selected="selected"{{end}}>
+						{{.}}
+					</option>
+					{{end}}
+				</select>
+			</td> 
 		</tr>
 		{{end}}
 		</tbody>
@@ -193,6 +207,7 @@ license that can be found in the LICENSE file.
 			<th scope="col">Final Weight</th>
 			<th scope="col">No. of Quizzes</th>
 			<th scope="col">Calculate Best N Quizzes</th>
+			<th scope="col">Group Name</th>
 		</thead>
 		<tbody>
 		{{range $i, $gc := .Subject.QuarterGradingColumns}}
@@ -233,6 +248,19 @@ license that can be found in the LICENSE file.
 					min="0" max="100" step="1"
 			 		class="form-control" value="{{$gc.BestQuizzes}}">
 			</td>
+			<td>
+				<select id="qgc-group-{{$i}}"
+					name="qgc-group-{{$i}}" class="form-control">
+					<option></option>
+					{{$currentGroup := $gc.GroupName}}
+					{{range $.GradingGroups}}
+					<option value="{{.}}"
+					{{if equal . $currentGroup}}selected="selected"{{end}}>
+						{{.}}
+					</option>
+					{{end}}
+				</select>
+			</td> 
 		</tr>
 		{{end}}
 		</tbody>
@@ -247,6 +275,7 @@ license that can be found in the LICENSE file.
 			<th scope="col">Final Weight</th>
 			<th scope="col">No. of Quizzes</th>
 			<th scope="col">Calculate Best N Quizzes</th>
+			<th scope="col">Group Name</th>
 		</thead>
 		<tbody>
 		{{range $i, $gc := .Subject.SemesterGradingColumns}}
@@ -287,6 +316,19 @@ license that can be found in the LICENSE file.
 					min="0" max="100" step="1"
 			 		class="form-control" value="{{$gc.BestQuizzes}}">
 			</td>
+			<td>
+				<select id="sgc-group-{{$i}}"
+					name="sgc-group-{{$i}}" class="form-control">
+					<option></option>
+					{{$currentGroup := $gc.GroupName}}
+					{{range $.GradingGroups}}
+					<option value="{{.}}"
+					{{if equal . $currentGroup}}selected="selected"{{end}}>
+						{{.}}
+					</option>
+					{{end}}
+				</select>
+			</td> 
 		</tr>
 		{{end}}
 		</tbody>
