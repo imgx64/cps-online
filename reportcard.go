@@ -119,7 +119,7 @@ func reportcardHandler(w http.ResponseWriter, r *http.Request) {
 				inAverage = true
 			}
 			reportcardRows = append(reportcardRows, reportcardRow{
-				subject, mark, letter, inAverage, gs.description(term), marks[term]})
+				subject, mark, letter, inAverage, gs.description(c, term), marks[term]})
 		}
 		average = total / float64(numInAverage)
 

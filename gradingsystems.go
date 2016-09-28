@@ -144,7 +144,7 @@ type colDescription struct {
 type studentMarks map[Term][]float64
 
 type gradingSystem interface {
-	description(term Term) []colDescription
+	description(c context.Context, term Term) []colDescription
 	evaluate(c context.Context, studentID, sy string, term Term, marks studentMarks) error
 	get100(term Term, marks studentMarks) float64
 	getExam(term Term, marks studentMarks) float64
@@ -356,7 +356,7 @@ type Subject struct {
 	sWeight float64 `datastore:"-"`
 }
 
-func (s Subject) description(term Term) []colDescription {
+func (s Subject) description(c context.Context, term Term) []colDescription {
 	// TODO: check total max = 100
 	if term.Typ == Quarter {
 		if s.SemesterType != QuarterSemester {
@@ -491,7 +491,7 @@ func (s Subject) evaluate(c context.Context, studentID, sy string, term Term, ma
 	var err error
 
 	m := marks[term]
-	cols := s.description(term)
+	cols := s.description(c, term)
 
 	switch {
 	case m == nil: // first time to evaluate it
@@ -833,7 +833,7 @@ var behaviorDesc = []colDescription{
 	{"Clearly communicates to teachers ", 4, 4, true},
 }
 
-func (behaviorGradingSystem) description(term Term) []colDescription {
+func (behaviorGradingSystem) description(c context.Context, term Term) []colDescription {
 	if term.Typ == Quarter {
 		return behaviorDesc
 	} else if term.Typ == Midterm {
@@ -848,7 +848,7 @@ func (behaviorGradingSystem) description(term Term) []colDescription {
 
 func (bgs behaviorGradingSystem) evaluate(c context.Context, studentID, sy string, term Term, marks studentMarks) (err error) {
 	m := marks[term]
-	desc := bgs.description(term)
+	desc := bgs.description(c, term)
 
 	switch {
 	case m == nil: // first time to evaluate it

@@ -103,7 +103,7 @@ func getWeeklyStudentMarks(c context.Context, id, sy, subject string, week Term,
 		m = mr.Marks
 	}
 
-	cols := gs.description(week)
+	cols := gs.description(c, week)
 
 	switch {
 	case m == nil: // first time to evaluate it
@@ -262,7 +262,7 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 				studentRows = append(studentRows, studentRow{s.ID, s.Name, nil, rem})
 			}
 		} else if gs := getGradingSystem(c, sy, class, subject); gs != nil {
-			cols = gs.description(term)
+			cols = gs.description(c, term)
 			if len(cols) == 0 {
 				renderErrorMsg(w, r, http.StatusNotFound, "Not applicable")
 				return
@@ -412,7 +412,7 @@ func marksSaveHandler(w http.ResponseWriter, r *http.Request) {
 			nComplete++
 		}
 	} else if gs := getGradingSystem(c, sy, class, subject); gs != nil {
-		cols := gs.description(term)
+		cols := gs.description(c, term)
 		hasEditable := false
 		for _, col := range cols {
 			if col.Editable {
@@ -521,7 +521,7 @@ func marksExportHandler(w http.ResponseWriter, r *http.Request) {
 			studentRows = append(studentRows, studentRow{s.ID, s.Name, nil, rem})
 		}
 	} else if gs := getGradingSystem(c, sy, class, subject); gs != nil {
-		cols = gs.description(term)
+		cols = gs.description(c, term)
 		students, err := findStudents(c, sy, classSection)
 		if err != nil {
 			log.Errorf(c, "Could not get students: %s", err)
@@ -635,7 +635,7 @@ func marksImportHandler(w http.ResponseWriter, r *http.Request) {
 	fieldMax := []string{"Do not modify this column", ""}
 	var cols []colDescription
 	if gs := getGradingSystem(c, sy, class, subject); gs != nil {
-		cols = gs.description(term)
+		cols = gs.description(c, term)
 		for _, col := range cols {
 			fieldNames = append(fieldNames, col.Name)
 			fieldMax = append(fieldMax, formatMark(col.Max))
@@ -697,7 +697,7 @@ func marksImportHandler(w http.ResponseWriter, r *http.Request) {
 
 	nComplete := 0
 	if gs := getGradingSystem(c, sy, class, subject); gs != nil {
-		cols := gs.description(term)
+		cols := gs.description(c, term)
 		hasEditable := false
 		for _, col := range cols {
 			if col.Editable {
