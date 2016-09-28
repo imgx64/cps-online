@@ -281,22 +281,18 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 			}
 
 			for _, s := range students {
+				var m studentMarks
 				if term.Typ == WeekS1 || term.Typ == WeekS2 {
-					wm, err := getWeeklyStudentMarks(c, s.ID, sy, subject, term, gs)
-					if err != nil {
-						// TODO: report error
-						continue
-					}
-					studentRows = append(studentRows, studentRow{s.ID, s.Name, wm, ""})
+					m = make(studentMarks)
 				} else {
-					m, err := getStudentMarks(c, s.ID, sy, subject)
+					m, err = getStudentMarks(c, s.ID, sy, subject)
 					if err != nil {
 						// TODO: report error
 						continue
 					}
-					gs.evaluate(c, s.ID, sy, term, m) // TODO: check error
-					studentRows = append(studentRows, studentRow{s.ID, s.Name, m[term], ""})
 				}
+				gs.evaluate(c, s.ID, sy, term, m) // TODO: check error
+				studentRows = append(studentRows, studentRow{s.ID, s.Name, m[term], ""})
 			}
 		}
 	}
@@ -432,10 +428,15 @@ func marksSaveHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		for _, s := range students {
-			m, err := getStudentMarks(c, s.ID, sy, subject)
-			if err != nil {
-				// TODO: report error
-				continue
+			var m studentMarks
+			if term.Typ == WeekS1 || term.Typ == WeekS2 {
+				m = make(studentMarks)
+			} else {
+				m, err = getStudentMarks(c, s.ID, sy, subject)
+				if err != nil {
+					// TODO: report error
+					continue
+				}
 			}
 			gs.evaluate(c, s.ID, sy, term, m) // TODO: check error
 
@@ -530,10 +531,15 @@ func marksExportHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		for _, s := range students {
-			m, err := getStudentMarks(c, s.ID, sy, subject)
-			if err != nil {
-				// TODO: report error
-				continue
+			var m studentMarks
+			if term.Typ == WeekS1 || term.Typ == WeekS2 {
+				m = make(studentMarks)
+			} else {
+				m, err = getStudentMarks(c, s.ID, sy, subject)
+				if err != nil {
+					// TODO: report error
+					continue
+				}
 			}
 			gs.evaluate(c, s.ID, sy, term, m) // TODO: check error
 			studentRows = append(studentRows, studentRow{s.ID, s.Name, m[term], ""})

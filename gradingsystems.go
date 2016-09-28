@@ -544,7 +544,14 @@ func groupColDescriptions(c context.Context, sy string, gc gradingColumn, onlyTo
 func (s Subject) evaluate(c context.Context, studentID, sy string, term Term, marks studentMarks) error {
 	var err error
 
-	m := marks[term]
+	m, ok := marks[term]
+	if !ok && (term.Typ == WeekS1 || term.Typ == WeekS2) {
+		m, err = getWeeklyStudentMarks(c, studentID, sy, s.ShortName, term, s)
+		if err != nil {
+			return err
+		}
+	}
+
 	cols := s.description(c, term)
 
 	switch {
@@ -624,7 +631,23 @@ func (s Subject) evaluate(c context.Context, studentID, sy string, term Term, ma
 		m[nextMark] = total100 * s.qWeight / 100.0
 
 	} else if term.Typ == WeekS1 || term.Typ == WeekS2 {
-		// No calculations
+		nextMark := 0
+		for _, gcol := range s.WeeklyGradingColumns {
+			if gcol.Type == directGrading {
+				nextMark++
+			} else if gcol.Type == groupGrading {
+				group, err := getGradingGroup(c, sy, gcol.GroupName)
+				if err != nil {
+					return err
+				}
+
+				totalGroup := sumMarks(m[nextMark : nextMark+len(group.Columns)]...)
+				nextMark += len(group.Columns)
+				m[nextMark] = totalGroup
+				nextMark++
+
+			}
+		}
 	} else if term.Typ == Midterm {
 		if s.SemesterType != MidtermSemester {
 			return nil
@@ -681,8 +704,8 @@ func (s Subject) evaluate(c context.Context, studentID, sy string, term Term, ma
 					colTotal += wm[nextWeekMark]
 				}
 				nextWeekMark++
-				m[nextMark] = colTotal * 100.0 / (max * float64(len(weekMarks)))
-				totalMark += m[nextMark]
+				m[nextMark] = colTotal / float64(len(weekMarks))
+				totalMark += colTotal * 100.0 / (max * float64(len(weekMarks)))
 				totalWeight += 100.0
 				nextMark++
 			}
@@ -782,8 +805,8 @@ func (s Subject) evaluate(c context.Context, studentID, sy string, term Term, ma
 						colTotal += wm[nextWeekMark]
 					}
 					nextWeekMark++
-					m[nextMark] = colTotal * gcol.FinalWeight / (max * float64(len(weekMarks)))
-					total100 += m[nextMark]
+					m[nextMark] = colTotal / float64(len(weekMarks))
+					total100 += colTotal * gcol.FinalWeight / (max * float64(len(weekMarks)))
 					nextMark++
 				}
 			}
@@ -822,7 +845,7 @@ func (s Subject) evaluate(c context.Context, studentID, sy string, term Term, ma
 
 					midtermNextMark += len(group.Columns)
 					m[nextMark] = midtermMarks[midtermNextMark]
-					total100 += m[nextMark] / totalMax * gcol.Max
+					total100 += m[nextMark] / totalMax * gcol.FinalWeight
 
 					nextMark++
 					midtermNextMark++
@@ -859,7 +882,7 @@ func (s Subject) evaluate(c context.Context, studentID, sy string, term Term, ma
 				m[nextMark] = totalGroup
 				nextMark++
 
-				total100 += totalGroup / totalMax * gcol.Max
+				total100 += totalGroup / totalMax * gcol.FinalWeight
 			}
 		}
 
