@@ -302,6 +302,9 @@ func subjectsDetailsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	subject.SemesterGradingColumns = tempGCs
 
+	allSubjects := getAllSubjects(c, sy)
+	classes := getClasses(c, sy)
+
 	subjectsMap := make(map[string]bool)
 	subjects, err := getSubjects(c, sy, class)
 	if err != nil {
@@ -314,7 +317,7 @@ func subjectsDetailsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var availableSubjects []string
-	for _, s := range getAllSubjects(c, sy) {
+	for _, s := range allSubjects {
 		if !subjectsMap[s] {
 			availableSubjects = append(availableSubjects, s)
 		}
@@ -344,6 +347,9 @@ func subjectsDetailsHandler(w http.ResponseWriter, r *http.Request) {
 
 		Class   string
 		Subject Subject
+
+		Subjects []string
+		Classes  []string
 	}{
 		availableSubjects,
 		gradingColumnChoices,
@@ -353,6 +359,9 @@ func subjectsDetailsHandler(w http.ResponseWriter, r *http.Request) {
 
 		class,
 		subject,
+
+		allSubjects,
+		classes,
 	}
 
 	if err := render(w, r, "subjectsdetails", data); err != nil {
@@ -383,6 +392,35 @@ func subjectsSaveHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Errorf(c, "could not delete subject %s %s %s: %s", sy, class, subjectname, err)
 			renderErrorMsg(w, r, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		// TODO: message of success
+		http.Redirect(w, r, "/subjects", http.StatusFound)
+		return
+	}
+
+	if r.PostForm.Get("submit") == "Copy" {
+
+		subjectname := r.PostForm.Get("ShortName")
+		description := r.PostForm.Get("Description")
+		copySubject := r.PostForm.Get("CopyShortName")
+		copyClass := r.PostForm.Get("CopyClass")
+
+		subjectToCopy, err := getSubject(c, sy, copyClass, copySubject)
+		if err != nil {
+			renderErrorMsg(w, r, http.StatusBadRequest,
+				fmt.Sprintf("Could not get subject %s, %s, %s: %s", sy, copyClass, copySubject, err))
+			return
+		}
+
+		subjectToCopy.ShortName = subjectname
+		subjectToCopy.Description = description
+
+		err = saveSubject(c, sy, class, subjectToCopy)
+		if err != nil {
+			renderErrorMsg(w, r, http.StatusBadRequest,
+				fmt.Sprintf("could not save subject %s %s %v: %s", sy, class, subjectToCopy, err))
 			return
 		}
 
