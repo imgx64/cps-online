@@ -644,7 +644,7 @@ func marksImportHandler(w http.ResponseWriter, r *http.Request) {
 		cols = gs.description(c, term)
 		for _, col := range cols {
 			fieldNames = append(fieldNames, col.Name)
-			fieldMax = append(fieldMax, formatMark(col.Max))
+			fieldMax = append(fieldMax, maxAndWeight(col.Max, col.FinalWeight))
 		}
 	} else if subject == "Remarks" {
 		fieldNames = append(fieldNames, "Remarks")
