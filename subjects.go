@@ -181,14 +181,7 @@ func saveSubject(c context.Context, sy, class string, subject Subject) error {
 		}
 	}
 
-	maxWeeks := getMaxWeeks(c)
-	if subject.TotalWeeksS1 > maxWeeks || subject.TotalWeeksS2 > maxWeeks {
-		if subject.TotalWeeksS1 > subject.TotalWeeksS2 {
-			saveMaxWeeks(c, subject.TotalWeeksS1)
-		} else {
-			saveMaxWeeks(c, subject.TotalWeeksS2)
-		}
-	}
+	updateMaxWeeks(c)
 
 	return nil
 }

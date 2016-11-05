@@ -588,7 +588,40 @@ func getMaxWeeks(c context.Context) int {
 	return maxWeeks
 }
 
-func saveMaxWeeks(c context.Context, maxWeeks int) error {
+func updateMaxWeeks(c context.Context) error {
+
+	s1q := datastore.NewQuery("subjects")
+	s1q = s1q.Order("-TotalWeeksS1")
+	s1q = s1q.Limit(1)
+	var s1 []Subject
+	s1MaxWeeks := 0
+	if _, err := s1q.GetAll(c, &s1); err == nil {
+		if len(s1) > 0 {
+			s1MaxWeeks = s1[0].TotalWeeksS1
+		}
+	} else {
+		log.Errorf(c, "Could not get weeks: %s", err)
+	}
+
+	s2q := datastore.NewQuery("subjects")
+	s2q = s2q.Order("-TotalWeeksS2")
+	s2q = s2q.Limit(1)
+	var s2 []Subject
+	s2MaxWeeks := 0
+	if _, err := s2q.GetAll(c, &s2); err == nil {
+		if len(s2) > 0 {
+			s2MaxWeeks = s2[0].TotalWeeksS2
+		}
+	} else {
+		log.Errorf(c, "Could not get weeks: %s", err)
+	}
+
+	maxWeeks := 0
+	if s1MaxWeeks > s2MaxWeeks {
+		maxWeeks = s1MaxWeeks
+	} else {
+		maxWeeks = s2MaxWeeks
+	}
 
 	key := datastore.NewKey(c, "settings", "max_weeks", 0, nil)
 
