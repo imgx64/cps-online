@@ -19,7 +19,7 @@ license that can be found in the LICENSE file.
 	<body>
 	{{range .}}
 		<div class="cps-reportcard">
-			<div class="cps-reportcard-main cps-reportcard-{{if .Term.IsQuarter}}left{{else}}one{{end}}">
+			<div class="cps-reportcard-main cps-reportcard-{{if .Term.ShowBehaviorReportCard}}left{{else}}one{{end}}">
 				<div class="cps-reportcard-header">
 					<img src="/static/img/cps-logo-100.png" alt="CPS Logo" class="cps-reportcard-cps-logo">
 					<img src="/static/img/advanced_logo.png" alt="AdvancED Logo" class="cps-reportcard-advanced-logo">
@@ -28,7 +28,7 @@ license that can be found in the LICENSE file.
 					<p class="cps-reportcard-cps">Creativity Private School</p>
 					<p class="cps-reportcard-ltlt">"Learners Today, Leaders Tomorrow"</p>
 					<p class="cps-reportcard-sy">School Year {{.SY}}</p>
-					<p class="cps-reportcard-qsf">{{.Term}} Report</p>
+					<p class="cps-reportcard-qsf">{{.Term}}{{if .Term.ShowBehaviorReportCard}} Progress{{end}} Report</p>
 				</div>
 				<div class="cps-reportcard-name-class">
 					<div class="cps-reportcard-name"><strong>Name:</strong> {{.Name}}</div>
@@ -94,7 +94,7 @@ license that can be found in the LICENSE file.
 					</tbody>
 				</table>
 			</div>
-			{{if .Term.IsQuarter}}
+			{{if .Term.ShowBehaviorReportCard}}
 			<div class="cps-reportcard-behavior">
 				<div class="cps-reportcard-behavior-header">
 					<div class="cps-reportcard-coq">

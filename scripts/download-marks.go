@@ -145,11 +145,6 @@ func (t Term) Value() string {
 	return fmt.Sprintf("%d|%d", t.Typ, t.N)
 }
 
-// Used in reportcards template
-func (t Term) IsQuarter() bool {
-	return t.Typ == Quarter
-}
-
 func (t Term) String() string {
 	s, ok := termStrings[t.Typ]
 	if !ok {

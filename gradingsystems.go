@@ -90,8 +90,8 @@ func (t Term) Value() string {
 }
 
 // Used in reportcards template
-func (t Term) IsQuarter() bool {
-	return t.Typ == Quarter
+func (t Term) ShowBehaviorReportCard() bool {
+	return t.Typ == Quarter || t.Typ == Midterm
 }
 
 func (t Term) String() string {
