@@ -14,6 +14,18 @@ license that can be found in the LICENSE file.
 			<option {{if equal .Value $term}}selected="selected"{{end}}
 			value="{{.Value}}">{{.}}</option>
 			{{end}}
+			<optgroup label="Semester 1 Weeks">
+				{{range .WeekS1Terms}}
+				<option {{if equal .Value $term}}selected="selected"{{end}}
+				value="{{.Value}}">{{.}}</option>
+				{{end}}
+			</optgroup>
+			<optgroup label="Semester 2 Weeks">
+				{{range .WeekS2Terms}}
+				<option {{if equal .Value $term}}selected="selected"{{end}}
+				value="{{.Value}}">{{.}}</option>
+				{{end}}
+			</optgroup>
 		</select>
 	</div>
 	<div class="form-group">

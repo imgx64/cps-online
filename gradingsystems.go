@@ -989,6 +989,16 @@ func (s Subject) getExam(term Term, marks studentMarks) float64 {
 }
 
 func (s Subject) ready(term Term, marks studentMarks) bool {
+	if term.Typ == WeekS2 || term.Typ == WeekS1 {
+		m := marks[term]
+		for _, v := range m {
+			if math.IsNaN(v) {
+				// mark not entered
+				return false
+			}
+		}
+		return true
+	}
 	return !math.IsNaN(s.get100(term, marks))
 }
 

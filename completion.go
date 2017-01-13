@@ -127,16 +127,28 @@ func completionHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	var weekS1Terms []Term
+	var weekS2Terms []Term
+	maxWeeks := getMaxWeeks(c)
+	for i := 1; i <= maxWeeks; i++ {
+		weekS1Terms = append(weekS1Terms, Term{WeekS1, i})
+		weekS2Terms = append(weekS2Terms, Term{WeekS2, i})
+	}
+
 	allSubjects := getAllSubjects(c, sy)
 
 	data := struct {
-		Terms []Term
-		Term  Term
+		Terms       []Term
+		WeekS1Terms []Term
+		WeekS2Terms []Term
+		Term        Term
 
 		Subjects       []string
 		CompletionRows []completionRow
 	}{
 		terms,
+		weekS1Terms,
+		weekS2Terms,
 		term,
 
 		allSubjects,
