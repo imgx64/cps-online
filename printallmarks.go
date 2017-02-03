@@ -121,7 +121,7 @@ func printAllHandler(w http.ResponseWriter, r *http.Request) {
 		for _, stu := range students {
 			total := math.NaN()
 			numInAverage := 0
-			var studentMarks []float64
+			var studentMarksArr []float64
 			for _, subject := range subjects {
 				if subject == "Remarks" || subject == "Behavior" {
 					continue
@@ -129,18 +129,19 @@ func printAllHandler(w http.ResponseWriter, r *http.Request) {
 				gs := getGradingSystem(c, sy, stu.Class, subject)
 				if gs == nil {
 					// class doesn't have subject
-					studentMarks = append(studentMarks, math.NaN())
+					studentMarksArr = append(studentMarksArr, math.NaN())
 					continue
 				}
-				marks, err := getStudentMarks(c, stu.ID, sy, subject)
+				marks, err := getStudentTermMarks(c, stu.ID, sy, subject, term, gs)
 				if err != nil {
 					log.Errorf(c, "Could not get marks: %s", err)
 					renderError(w, r, http.StatusInternalServerError)
 					return
 				}
-				gs.evaluate(c, stu.ID, sy, term, marks)
+				m := make(studentMarks)
+				m[term] = marks
 
-				mark := gs.get100(term, marks)
+				mark := gs.get100(term, m)
 
 				if (calculateAll || gs.subjectInAverage()) && !math.IsNaN(mark) {
 					if math.IsNaN(total) {
@@ -149,16 +150,16 @@ func printAllHandler(w http.ResponseWriter, r *http.Request) {
 					total += mark
 					numInAverage++
 				}
-				studentMarks = append(studentMarks, mark)
+				studentMarksArr = append(studentMarksArr, mark)
 			}
 			average := math.NaN()
 			if numInAverage > 0 {
 				average = total / float64(numInAverage)
 			}
-			studentMarks = append(studentMarks, average)
+			studentMarksArr = append(studentMarksArr, average)
 
 			//TODO: Sort by marks other than average
-			row := printAllRow{stu.Class + stu.Section, stu.Name, studentMarks, average}
+			row := printAllRow{stu.Class + stu.Section, stu.Name, studentMarksArr, average}
 			classSection := fmt.Sprintf("%s|%s", stu.Class, stu.Section)
 			studentRows[classSection] = append(studentRows[classSection], row)
 		}
@@ -173,12 +174,14 @@ func printAllHandler(w http.ResponseWriter, r *http.Request) {
 						maxCols = cols
 					}
 				}
-				m, err := getStudentMarks(c, stu.ID, sy, subject)
+				marks, err := getStudentTermMarks(c, stu.ID, sy, subject, term, gs)
 				if err != nil {
 					// TODO: report error
 					continue
 				}
-				gs.evaluate(c, stu.ID, sy, term, m) // TODO: check error
+				m := make(studentMarks)
+				m[term] = marks
+
 				classSection := fmt.Sprintf("%s|%s", stu.Class, stu.Section)
 				row := printAllRow{stu.Class + stu.Section, stu.Name, m[term], gs.get100(term, m)}
 				studentRows[classSection] = append(studentRows[classSection], row)

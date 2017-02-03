@@ -37,6 +37,46 @@ type marksRow struct {
 	Marks     []float64
 }
 
+func getStudentTermMarks(c context.Context, id, sy, subject string, term Term, gs gradingSystem) ([]float64, error) {
+	keyStr := fmt.Sprintf("%s|%s|%s|%s", id, sy, term.Value(), subject)
+	key := datastore.NewKey(c, "marks", keyStr, 0, nil)
+	var m []float64
+	var mr marksRow
+	if err := nds.Get(c, key, &mr); err != nil {
+		if err == datastore.ErrNoSuchEntity {
+			m = nil
+		} else {
+			return nil, err
+		}
+	} else {
+		m = mr.Marks
+	}
+
+	cols := gs.description(c, term)
+
+	switch {
+	case m == nil: // first time to evaluate it
+		m = make([]float64, len(cols))
+		for i, _ := range cols {
+			m[i] = math.NaN()
+		}
+	case len(m) != len(cols): // sanity check
+		m = make([]float64, len(cols))
+		for i, _ := range cols {
+			m[i] = math.NaN()
+		}
+	}
+
+	// more sanity checks
+	for i, d := range cols {
+		if m[i] < 0 || m[i] > d.Max {
+			m[i] = math.NaN()
+		}
+	}
+
+	return m, nil
+}
+
 func getStudentMarks(c context.Context, id, sy, subject string) (studentMarks, error) {
 	q := datastore.NewQuery("marks")
 	q = q.Filter("StudentID =", id)
