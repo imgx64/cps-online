@@ -63,7 +63,8 @@ func getStudentMarks(c context.Context, id, sy, subject string) (studentMarks, e
 }
 
 func storeMarksRow(c context.Context, id string, sy string, term Term,
-	subject string, marks []float64) error {
+	subject string, m studentMarks, gs gradingSystem) error {
+	marks := m[term]
 
 	var key *datastore.Key
 	if term.Typ == WeekS1 || term.Typ == WeekS2 {
@@ -83,6 +84,27 @@ func storeMarksRow(c context.Context, id string, sy string, term Term,
 	_, err := nds.Put(c, key, &mr)
 	if err != nil {
 		return err
+	}
+
+	var nextTerm Term
+	switch term.Typ {
+	case Quarter:
+		nextTerm = Term{Semester, (term.N + 1) / 2}
+	case WeekS1:
+		nextTerm = Term{Midterm, 1}
+	case WeekS2:
+		nextTerm = Term{Midterm, 2}
+	case Midterm:
+		nextTerm = Term{Semester, term.N}
+	case Semester:
+		nextTerm = Term{EndOfYear, 0}
+	}
+	if nextTerm.Typ != 0 {
+		gs.evaluate(c, id, sy, nextTerm, m) // TODO: check error
+		err = storeMarksRow(c, id, sy, nextTerm, subject, m, gs)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -455,7 +477,7 @@ func marksSaveHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			gs.evaluate(c, s.ID, sy, term, m) // TODO: check error
 			if marksChanged {
-				err := storeMarksRow(c, s.ID, sy, term, subject, m[term])
+				err := storeMarksRow(c, s.ID, sy, term, subject, m, gs)
 				if err != nil {
 					log.Errorf(c, "Could not store marks: %s", err)
 					renderError(w, r, http.StatusInternalServerError)
@@ -759,7 +781,7 @@ func marksImportHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			gs.evaluate(c, s.ID, sy, term, m) // TODO: check error
 			if marksChanged {
-				err := storeMarksRow(c, s.ID, sy, term, subject, m[term])
+				err := storeMarksRow(c, s.ID, sy, term, subject, m, gs)
 				if err != nil {
 					log.Errorf(c, "Could not store marks: %s", err)
 					renderError(w, r, http.StatusInternalServerError)
