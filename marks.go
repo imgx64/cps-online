@@ -126,6 +126,18 @@ func storeMarksRow(c context.Context, id string, sy string, term Term,
 		return err
 	}
 
+	if term.Typ == WeekS1 || term.Typ == WeekS2 {
+		// Load the rest of the marks
+		mOld, err := getStudentMarks(c, id, sy, subject)
+		if err != nil {
+			return err
+		}
+		for k, v := range m {
+			mOld[k] = v
+		}
+		m = mOld
+	}
+
 	var nextTerm Term
 	switch term.Typ {
 	case Quarter:
