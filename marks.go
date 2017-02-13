@@ -12,6 +12,7 @@ import (
 	"google.golang.org/appengine/log"
 
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"io"
 	"math"
@@ -26,6 +27,7 @@ func init() {
 	http.HandleFunc("/marks/save", accessHandler(marksSaveHandler))
 	http.HandleFunc("/marks/export", accessHandler(marksExportHandler))
 	http.HandleFunc("/marks/import", accessHandler(marksImportHandler))
+	http.HandleFunc("/subjectsmap", accessHandler(subjectsMapHandler))
 }
 
 // marksRow will be stored in the datastore
@@ -889,4 +891,60 @@ func marksImportHandler(w http.ResponseWriter, r *http.Request) {
 
 	// TODO: message of success/fail
 	http.Redirect(w, r, redirectURL, http.StatusFound)
+}
+
+func subjectsMapHandler(w http.ResponseWriter, r *http.Request) {
+	c := appengine.NewContext(r)
+
+	sy := getSchoolYear(c)
+	maxWeeks := getMaxWeeks(c)
+
+	var allTerms []Term
+	for _, term := range terms {
+		if (term == Term{Midterm, 1}) {
+			for i := 1; i <= maxWeeks; i++ {
+				allTerms = append(allTerms, Term{WeekS1, i})
+			}
+		} else if (term == Term{Midterm, 2}) {
+			for i := 1; i <= maxWeeks; i++ {
+				allTerms = append(allTerms, Term{WeekS2, i})
+			}
+		}
+		allTerms = append(allTerms, term)
+	}
+
+	// term -> class -> subject
+	resultsMap := make(map[string]map[string][]string)
+	for _, term := range allTerms {
+		termMap := make(map[string][]string)
+		for _, classGroup := range getClassGroups(c, sy) {
+			var realClassSubjects []string
+			subjects, err := getSubjects(c, sy, classGroup.Class)
+			if err != nil {
+				panic(err)
+			}
+			for _, subject := range subjects {
+				gs := getGradingSystem(c, sy, classGroup.Class, subject)
+				if len(gs.description(c, term)) > 0 {
+					realClassSubjects = append(realClassSubjects, subject)
+				}
+			}
+			if len(realClassSubjects) > 0 {
+				realClassSubjects = append(realClassSubjects, "Remarks", "Behavior")
+				for _, section := range classGroup.Sections {
+					classSection := classGroup.Class + "|" + section
+					termMap[classSection] = realClassSubjects
+				}
+			}
+		}
+		if len(termMap) > 0 {
+			resultsMap[term.Value()] = termMap
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	enc := json.NewEncoder(w)
+	if err := enc.Encode(resultsMap); err != nil {
+		panic(err)
+	}
 }
