@@ -541,7 +541,7 @@ func reportcardsGpaTermHandler(w http.ResponseWriter, r *http.Request) {
 			Student: stuType,
 			Rows:    gpaRows,
 
-			CreditsEarned: yearCredits,
+			CreditsEarned: yearCreditsEarned,
 			YearAverage:   yearAverage,
 			GPA:           yearFinalGpa,
 		}
