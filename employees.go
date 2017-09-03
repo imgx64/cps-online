@@ -147,7 +147,7 @@ func (emp *employeeType) save(c context.Context) error {
 }
 
 func getEmployeeFromEmail(c context.Context, email string) (employeeType, error) {
-	q := datastore.NewQuery("employee").Filter("CPSEmail =", email).Limit(2)
+	q := datastore.NewQuery("employee").Filter("CPSEmail =", email).Limit(1)
 	var employees []employeeType
 	keys, err := q.GetAll(c, &employees)
 	if err != nil {
@@ -156,8 +156,6 @@ func getEmployeeFromEmail(c context.Context, email string) (employeeType, error)
 
 	if len(employees) == 0 {
 		return employeeType{}, fmt.Errorf("Could not find user with email: %s", email)
-	} else if len(employees) > 1 {
-		return employeeType{}, fmt.Errorf("Users with duplicate emails: %s", email)
 	}
 
 	emp := employees[0]
@@ -302,6 +300,15 @@ func employeesSaveHandler(w http.ResponseWriter, r *http.Request) {
 			HR:      f.Get("HRRole") == "on",
 			Teacher: f.Get("TeacherRole") == "on",
 		}
+
+	}
+
+	// check for duplicate email
+	emailEmp, err := getEmployeeFromEmail(c, emp.CPSEmail)
+	if err == nil && emp.ID != emailEmp.ID {
+		log.Errorf(c, "Duplicate email: %s", emp.CPSEmail)
+		renderErrorMsg(w, r, http.StatusBadRequest, "Duplicate email")
+		return
 	}
 
 	dateOfHiring, err := time.Parse("2006-01-02", f.Get("DateOfHiring"))
