@@ -146,6 +146,16 @@ func (emp *employeeType) save(c context.Context) error {
 	return nil
 }
 
+func (emp *employeeType) delete(c context.Context) error {
+	key := datastore.NewKey(c, "employee", "", emp.ID, nil)
+	err := nds.Delete(c, key)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func getEmployeeFromEmail(c context.Context, email string) (employeeType, error) {
 	q := datastore.NewQuery("employee").Filter("CPSEmail =", email).Limit(1)
 	var employees []employeeType
@@ -284,6 +294,12 @@ func employeesSaveHandler(w http.ResponseWriter, r *http.Request) {
 	} else if err != nil {
 		log.Errorf(c, "Could not retrieve employee details: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	if f.Get("action") == "Delete" {
+		emp.delete(c)
+		http.Redirect(w, r, "/employees", http.StatusFound)
 		return
 	}
 
