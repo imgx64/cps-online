@@ -387,6 +387,10 @@ func main() {
 }
 
 func download(term Term, class, section, subject string) {
+	subject = strings.Replace(subject, "/", "_", -1)
+	class = strings.Replace(class, "/", "_", -1)
+	section = strings.Replace(section, "/", "_", -1)
+
 	id := fmt.Sprintf("%15s %7s %s %22s", term, class, section, subject)
 
 	filedir := filepath.Join(".", "Marks", term.String(), subject)
