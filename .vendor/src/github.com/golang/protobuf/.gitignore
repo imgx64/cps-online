@@ -1,6 +1,5 @@
 .DS_Store
 *.[568ao]
-*.pb.go
 *.ao
 *.so
 *.pyc
@@ -13,5 +12,6 @@ core
 _obj
 _test
 _testmain.go
-compiler/protoc-gen-go
-compiler/testdata/extension_test
+
+# Conformance test output and transient files.
+conformance/failing_tests.txt

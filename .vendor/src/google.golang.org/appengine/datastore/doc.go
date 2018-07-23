@@ -49,11 +49,11 @@ Example code:
 	}
 
 	func handle(w http.ResponseWriter, r *http.Request) {
-		c := appengine.NewContext(r)
+		ctx := appengine.NewContext(r)
 
-		k := datastore.NewKey(c, "Entity", "stringID", 0, nil)
+		k := datastore.NewKey(ctx, "Entity", "stringID", 0, nil)
 		e := new(Entity)
-		if err := datastore.Get(c, k, e); err != nil {
+		if err := datastore.Get(ctx, k, e); err != nil {
 			http.Error(w, err.Error(), 500)
 			return
 		}
@@ -61,7 +61,7 @@ Example code:
 		old := e.Value
 		e.Value = r.URL.Path
 
-		if _, err := datastore.Put(c, k, e); err != nil {
+		if _, err := datastore.Put(ctx, k, e); err != nil {
 			http.Error(w, err.Error(), 500)
 			return
 		}
@@ -87,7 +87,7 @@ behavior for struct pointers. Struct pointers are more strongly typed and are
 easier to use; PropertyLoadSavers are more flexible.
 
 The actual types passed do not have to match between Get and Put calls or even
-across different App Engine requests. It is valid to put a *PropertyList and
+across different calls to datastore. It is valid to put a *PropertyList and
 get that same entity as a *myStruct, or put a *myStruct0 and get a *myStruct1.
 Conceptually, any entity is saved as a sequence of properties, and is loaded
 into the destination value on a property-by-property basis. When loading into
@@ -97,18 +97,28 @@ caller whether this error is fatal, recoverable or ignorable.
 
 By default, for struct pointers, all properties are potentially indexed, and
 the property name is the same as the field name (and hence must start with an
-upper case letter). Fields may have a `datastore:"name,options"` tag. The tag
-name is the property name, which must be one or more valid Go identifiers
-joined by ".", but may start with a lower case letter. An empty tag name means
-to just use the field name. A "-" tag name means that the datastore will
-ignore that field. If options is "noindex" then the field will not be indexed.
-If the options is "" then the comma may be omitted. There are no other
-recognized options.
+upper case letter).
 
-Fields (except for []byte) are indexed by default. Strings longer than 1500
-bytes cannot be indexed; fields used to store long strings should be
-tagged with "noindex". Similarly, ByteStrings longer than 1500 bytes cannot be
-indexed.
+Fields may have a `datastore:"name,options"` tag. The tag name is the
+property name, which must be one or more valid Go identifiers joined by ".",
+but may start with a lower case letter. An empty tag name means to just use the
+field name. A "-" tag name means that the datastore will ignore that field.
+
+The only valid options are "omitempty" and "noindex".
+
+If the options include "omitempty" and the value of the field is empty, then the field will be omitted on Save.
+The empty values are false, 0, any nil interface value, and any array, slice, map, or string of length zero.
+Struct field values will never be empty.
+
+If options include "noindex" then the field will not be indexed. All fields are indexed
+by default. Strings or byte slices longer than 1500 bytes cannot be indexed;
+fields used to store long strings and byte slices must be tagged with "noindex"
+or they will cause Put operations to fail.
+
+To use multiple options together, separate them by a comma.
+The order does not matter.
+
+If the options is "" then the comma may be omitted.
 
 Example code:
 
@@ -200,7 +210,7 @@ Example code:
 	func (x *CustomPropsExample) Save() ([]datastore.Property, error) {
 		// Validate the Sum field.
 		if x.Sum != x.I + x.J {
-			return errors.New("CustomPropsExample has inconsistent sum")
+			return nil, errors.New("CustomPropsExample has inconsistent sum")
 		}
 		// Save I and J as usual. The code below is equivalent to calling
 		// "return datastore.SaveStruct(x)", but is done manually for
@@ -214,7 +224,7 @@ Example code:
 				Name:  "J",
 				Value: int64(x.J),
 			},
-		}
+		}, nil
 	}
 
 The *PropertyList type implements PropertyLoadSaver, and can therefore hold an
@@ -253,19 +263,19 @@ Example code:
 	}
 
 	func handle(w http.ResponseWriter, r *http.Request) {
-		c := appengine.NewContext(r)
+		ctx := appengine.NewContext(r)
 		q := datastore.NewQuery("Widget").
 			Filter("Price <", 1000).
 			Order("-Price")
 		b := new(bytes.Buffer)
-		for t := q.Run(c); ; {
+		for t := q.Run(ctx); ; {
 			var x Widget
 			key, err := t.Next(&x)
 			if err == datastore.Done {
 				break
 			}
 			if err != nil {
-				serveError(c, w, err)
+				serveError(ctx, w, err)
 				return
 			}
 			fmt.Fprintf(b, "Key=%v\nWidget=%#v\n\n", key, x)
@@ -285,32 +295,67 @@ Example code:
 		Count int
 	}
 
-	func inc(c appengine.Context, key *datastore.Key) (int, error) {
+	func inc(ctx context.Context, key *datastore.Key) (int, error) {
 		var x Counter
-		if err := datastore.Get(c, key, &x); err != nil && err != datastore.ErrNoSuchEntity {
+		if err := datastore.Get(ctx, key, &x); err != nil && err != datastore.ErrNoSuchEntity {
 			return 0, err
 		}
 		x.Count++
-		if _, err := datastore.Put(c, key, &x); err != nil {
+		if _, err := datastore.Put(ctx, key, &x); err != nil {
 			return 0, err
 		}
 		return x.Count, nil
 	}
 
 	func handle(w http.ResponseWriter, r *http.Request) {
-		c := appengine.NewContext(r)
+		ctx := appengine.NewContext(r)
 		var count int
-		err := datastore.RunInTransaction(c, func(c appengine.Context) error {
+		err := datastore.RunInTransaction(ctx, func(ctx context.Context) error {
 			var err1 error
-			count, err1 = inc(c, datastore.NewKey(c, "Counter", "singleton", 0, nil))
+			count, err1 = inc(ctx, datastore.NewKey(ctx, "Counter", "singleton", 0, nil))
 			return err1
 		}, nil)
 		if err != nil {
-			serveError(c, w, err)
+			serveError(ctx, w, err)
 			return
 		}
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		fmt.Fprintf(w, "Count=%d", count)
+	}
+
+
+Metadata
+
+The datastore package provides access to some of App Engine's datastore
+metadata. This metadata includes information about the entity groups,
+namespaces, entity kinds, and properties in the datastore, as well as the
+property representations for each property.
+
+Example code:
+
+	func handle(w http.ResponseWriter, r *http.Request) {
+		// Print all the kinds in the datastore, with all the indexed
+		// properties (and their representations) for each.
+		ctx := appengine.NewContext(r)
+
+		kinds, err := datastore.Kinds(ctx)
+		if err != nil {
+			serveError(ctx, w, err)
+			return
+		}
+
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		for _, kind := range kinds {
+			fmt.Fprintf(w, "%s:\n", kind)
+			props, err := datastore.KindProperties(ctx, kind)
+			if err != nil {
+				fmt.Fprintln(w, "\t(unable to retrieve properties)")
+				continue
+			}
+			for p, rep := range props {
+				fmt.Fprintf(w, "\t-%s (%s)\n", p, strings.Join(rep, ", "))
+			}
+		}
 	}
 */
 package datastore // import "google.golang.org/appengine/datastore"

@@ -2,6 +2,9 @@
 // Use of this source code is governed by the Apache 2.0
 // license that can be found in the LICENSE file.
 
+// This example only works on App Engine "flexible environment".
+// +build !appengine
+
 package main
 
 import (

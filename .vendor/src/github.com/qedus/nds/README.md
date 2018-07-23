@@ -1,6 +1,6 @@
 # nds
 
-[![Build Status](https://travis-ci.org/qedus/nds.svg?branch=master)](https://travis-ci.org/qedus/nds) [![Coverage Status](https://coveralls.io/repos/qedus/nds/badge.png?branch=master)](https://coveralls.io/r/qedus/nds?branch=master) [![GoDoc](https://godoc.org/github.com/qedus/nds?status.png)](https://godoc.org/github.com/qedus/nds)
+[![Build Status](https://travis-ci.org/qedus/nds.svg?branch=master)](https://travis-ci.org/qedus/nds) [![Coverage Status](https://coveralls.io/repos/github/qedus/nds/badge.svg?branch=master)](https://coveralls.io/github/qedus/nds?branch=master) [![GoDoc](https://godoc.org/github.com/qedus/nds?status.png)](https://godoc.org/github.com/qedus/nds)
 
 Package `github.com/qedus/nds` is a datastore API for the Google App Engine (GAE) [Go Runtime Environment](https://developers.google.com/appengine/docs/go/) that uses memcache to cache all datastore requests. It is compatible with both Classic and Managed VM products. This package guarantees strong cache consistency when using `nds.Get*` and `nds.Put*`, meaning you will never get data from a stale cache.
 
@@ -8,7 +8,7 @@ Exposed parts of this API are the same as the official one distributed by Google
 
 You can find the API documentation at [http://godoc.org/github.com/qedus/nds](http://godoc.org/github.com/qedus/nds).
 
-One other benefit is that the standard `datastore.GetMulti` function only allows you to retrieve a maximum of 1000 entities at a time. The [`GetMulti`](http://godoc.org/github.com/qedus/nds#GetMulti) in this package allows you to get as many as you need (within timeout limits) by concurrently calling the datastore until your entity request is fulfilled.
+One other benefit is that the standard `datastore.GetMulti`, `datastore.PutMulti` and `datastore.DeleteMulti` functions only allow you to work with a maximum of 1000, 500 and 500 entities per call respectively. The `nds.GetMulti`, `nds.PutMulti` and `nds.DeleteMulti` functions in this package allow you to work with as many entities as you need (within timeout limits) by concurrently calling the appropriate datastore function until your request is fulfilled.
 
 ## How To Use
 
@@ -20,7 +20,3 @@ Ultimately all you need to do is find/replace the following in your codebase:
 - `datastore.Put` -> `nds.Put`
 - `datastore.Delete` -> `nds.Delete`
 - `datastore.RunInTransaction` -> `nds.RunInTransaction`
-
-## Classic App Engine
-
-This package has recently been converted to use [`context.Context`](http://godoc.org/golang.org/x/net/context) instead of [`appengine.Context`](https://cloud.google.com/appengine/docs/go/reference#Context). The [classic branch](https://github.com/qedus/nds/tree/classic) has an old version that uses `appengine.Context`.

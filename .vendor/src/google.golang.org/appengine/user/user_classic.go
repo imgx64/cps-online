@@ -1,3 +1,7 @@
+// Copyright 2015 Google Inc. All rights reserved.
+// Use of this source code is governed by the Apache 2.0
+// license that can be found in the LICENSE file.
+
 // +build appengine
 
 package user
@@ -11,7 +15,11 @@ import (
 )
 
 func Current(ctx context.Context) *User {
-	u := user.Current(internal.ClassicContextFromContext(ctx))
+	c, err := internal.ClassicContextFromContext(ctx)
+	if err != nil {
+		panic(err)
+	}
+	u := user.Current(c)
 	if u == nil {
 		return nil
 	}
@@ -27,5 +35,10 @@ func Current(ctx context.Context) *User {
 }
 
 func IsAdmin(ctx context.Context) bool {
-	return user.IsAdmin(internal.ClassicContextFromContext(ctx))
+	c, err := internal.ClassicContextFromContext(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	return user.IsAdmin(c)
 }

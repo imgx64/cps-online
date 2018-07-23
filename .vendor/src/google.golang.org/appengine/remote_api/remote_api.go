@@ -33,10 +33,13 @@ func handle(w http.ResponseWriter, req *http.Request) {
 
 	u := user.Current(c)
 	if u == nil {
-		u, _ = user.CurrentOAuth(c, "")
+		u, _ = user.CurrentOAuth(c,
+			"https://www.googleapis.com/auth/cloud-platform",
+			"https://www.googleapis.com/auth/appengine.apis",
+		)
 	}
 
-	if u == nil || !u.Admin {
+	if !appengine.IsDevAppServer() && (u == nil || !u.Admin) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		w.WriteHeader(http.StatusUnauthorized)
 		io.WriteString(w, "You must be logged in as an administrator to access this.\n")

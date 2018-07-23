@@ -3,7 +3,6 @@ package nds_test
 import (
 	"encoding/hex"
 	"math/rand"
-	"net/http"
 	"reflect"
 	"strconv"
 	"testing"
@@ -13,27 +12,21 @@ import (
 
 	"golang.org/x/net/context"
 	"google.golang.org/appengine"
+	"google.golang.org/appengine/aetest"
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/memcache"
-
-	"appengine/aetest"
 )
 
-type CloseFunc func()
-
-func NewContext(t *testing.T, opts *aetest.Options) (
-	context.Context, CloseFunc) {
-	c, err := aetest.NewContext(opts)
+func NewContext(t *testing.T) (context.Context, func()) {
+	c, closeFunc, err := aetest.NewContext()
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	return appengine.NewContext(c.Request().(*http.Request)),
-		func() { c.Close() }
+	return c, closeFunc
 }
 
 func TestPutGetDelete(t *testing.T) {
-	c, closeFunc := NewContext(t, nil)
+	c, closeFunc := NewContext(t)
 	defer closeFunc()
 
 	type testEntity struct {
@@ -129,7 +122,7 @@ func TestPutGetDelete(t *testing.T) {
 }
 
 func TestInterfaces(t *testing.T) {
-	c, closeFunc := NewContext(t, nil)
+	c, closeFunc := NewContext(t)
 	defer closeFunc()
 
 	type testEntity struct {
@@ -206,7 +199,7 @@ func TestInterfaces(t *testing.T) {
 }
 
 func TestGetMultiNoSuchEntity(t *testing.T) {
-	c, closeFunc := NewContext(t, nil)
+	c, closeFunc := NewContext(t)
 	defer closeFunc()
 
 	type testEntity struct {
@@ -239,7 +232,7 @@ func TestGetMultiNoSuchEntity(t *testing.T) {
 }
 
 func TestGetMultiNoErrors(t *testing.T) {
-	c, closeFunc := NewContext(t, nil)
+	c, closeFunc := NewContext(t)
 	defer closeFunc()
 
 	type testEntity struct {
@@ -263,7 +256,7 @@ func TestGetMultiNoErrors(t *testing.T) {
 		}
 
 		respEntities := []testEntity{}
-		for _ = range keys {
+		for range keys {
 			respEntities = append(respEntities, testEntity{})
 		}
 
@@ -282,7 +275,7 @@ func TestGetMultiNoErrors(t *testing.T) {
 }
 
 func TestGetMultiErrorMix(t *testing.T) {
-	c, closeFunc := NewContext(t, nil)
+	c, closeFunc := NewContext(t)
 	defer closeFunc()
 
 	type testEntity struct {
@@ -346,7 +339,7 @@ func TestGetMultiErrorMix(t *testing.T) {
 }
 
 func TestMultiCache(t *testing.T) {
-	c, closeFunc := NewContext(t, nil)
+	c, closeFunc := NewContext(t)
 	defer closeFunc()
 
 	type testEntity struct {
@@ -479,7 +472,7 @@ func TestMultiCache(t *testing.T) {
 }
 
 func TestRunInTransaction(t *testing.T) {
-	c, closeFunc := NewContext(t, nil)
+	c, closeFunc := NewContext(t)
 	defer closeFunc()
 
 	type testEntity struct {
@@ -533,61 +526,8 @@ func TestRunInTransaction(t *testing.T) {
 	}
 }
 
-func TestLoadSaveStruct(t *testing.T) {
-	type testEntity struct {
-		IntValue      int `datastore:",noindex"`
-		StringValue   string
-		MultipleValue []int64
-	}
-
-	te := testEntity{10, "ten", []int64{1, 2, 3}}
-	pl, err := datastore.SaveStruct(&te)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	tests := []struct {
-		name     string
-		value    interface{}
-		noIndex  bool
-		multiple bool
-	}{
-		{"IntValue", int64(10), true, false},
-		{"StringValue", "ten", false, false},
-		{"MultipleValue", int64(1), false, true},
-		{"MultipleValue", int64(2), false, true},
-		{"MultipleValue", int64(3), false, true},
-	}
-
-	for i, test := range tests {
-		prop := pl[i]
-		if prop.Name != test.name {
-			t.Fatal("incorrect name")
-		}
-		if prop.Value != test.value {
-			t.Fatalf("incorrect value required %+v got %+v",
-				prop.Value, test.value)
-		}
-		if prop.NoIndex != test.noIndex {
-			t.Fatal("incorrect no index")
-		}
-		if prop.Multiple != test.multiple {
-			t.Fatal("incorrect multiple flag")
-		}
-	}
-
-	loadTestEntity := testEntity{}
-	if err := datastore.LoadStruct(&loadTestEntity, pl); err != nil {
-		t.Fatal(err)
-	}
-
-	if !reflect.DeepEqual(te, loadTestEntity) {
-		t.Fatal("entities not equal")
-	}
-}
-
 func TestMarshalUnmarshalPropertyList(t *testing.T) {
-	c, closeFunc := NewContext(t, nil)
+	c, closeFunc := NewContext(t)
 	defer closeFunc()
 
 	timeVal := time.Now()
@@ -682,7 +622,7 @@ func randHexString(length int) string {
 }
 
 func TestCreateMemcacheKey(t *testing.T) {
-	c, closeFunc := NewContext(t, nil)
+	c, closeFunc := NewContext(t)
 	defer closeFunc()
 
 	// Check keys are hashed over nds.MemcacheMaxKeySize.
@@ -694,4 +634,38 @@ func TestCreateMemcacheKey(t *testing.T) {
 	if len(memcacheKey) > maxKeySize {
 		t.Fatal("incorrect memcache key size")
 	}
+}
+
+func TestMemcacheNamespace(t *testing.T) {
+
+	c, closeFunc := NewContext(t)
+	defer closeFunc()
+
+	type testEntity struct {
+		IntVal int
+	}
+
+	// Illegal namespace chars.
+	nds.SetMemcacheNamespace("£££")
+
+	key := datastore.NewKey(c, "Entity", "", 1, nil)
+	if err := nds.Get(c, key, &testEntity{}); err == nil {
+		t.Fatal("expected namespace error")
+	}
+
+	if _, err := nds.Put(c, key, &testEntity{}); err == nil {
+		t.Fatal("expected namespace error")
+	}
+
+	if err := nds.Delete(c, key); err == nil {
+		t.Fatal("expected namespace error")
+	}
+
+	if err := nds.RunInTransaction(c, func(tc context.Context) error {
+		return nil
+	}, nil); err == nil {
+		t.Fatal("expected namespace error")
+	}
+
+	nds.SetMemcacheNamespace("")
 }

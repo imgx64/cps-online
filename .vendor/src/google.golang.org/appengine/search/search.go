@@ -2,89 +2,6 @@
 // Use of this source code is governed by the Apache 2.0
 // license that can be found in the LICENSE file.
 
-/*
-Package search provides a client for App Engine's search service.
-
-Indexes contains documents, and a document's contents are a mapping from case-
-sensitive field names to values. In Go, documents are represented by struct
-pointers, and the valid types for a struct's fields are:
-  - string,
-  - search.Atom,
-  - search.HTML,
-  - time.Time (stored with millisecond precision),
-  - float64 (value between -2,147,483,647 and 2,147,483,647 inclusive),
-  - appengine.GeoPoint.
-
-Documents can also be represented by any type implementing the FieldLoadSaver
-interface.
-
-Example code:
-
-	type Doc struct {
-		Author   string
-		Comment  string
-		Creation time.Time
-	}
-
-	index, err := search.Open("comments")
-	if err != nil {
-		return err
-	}
-	newID, err := index.Put(c, "", &Doc{
-		Author:   "gopher",
-		Comment:  "the truth of the matter",
-		Creation: time.Now(),
-	})
-	if err != nil {
-		return err
-	}
-
-Searching an index for a query will result in an iterator. As with an iterator
-from package datastore, pass a destination struct to Next to decode the next
-result. Next will return Done when the iterator is exhausted.
-
-	for t := index.Search(c, "Comment:truth", nil); ; {
-		var doc Doc
-		id, err := t.Next(&doc)
-		if err == search.Done {
-			break
-		}
-		if err != nil {
-			return err
-		}
-		fmt.Fprintf(w, "%s -> %#v\n", id, doc)
-	}
-
-Call List to iterate over documents.
-
-	for t := index.List(c, nil); ; {
-		var doc Doc
-		id, err := t.Next(&doc)
-		if err == search.Done {
-			break
-		}
-		if err != nil {
-			return err
-		}
-		fmt.Fprintf(w, "%s -> %#v\n", id, doc)
-	}
-
-A single document can also be retrieved by its ID. Pass a destination struct
-to Get to hold the resulting document.
-
-	var doc Doc
-	err := index.Get(c, id, &doc)
-	if err != nil {
-		return err
-	}
-
-Queries are expressed as strings, plus some optional parameters. The query
-language is described at
-https://cloud.google.com/appengine/docs/go/search/query_strings
-
-Note that in Go, field names come from the struct field definition and begin
-with an upper case letter.
-*/
 package search // import "google.golang.org/appengine/search"
 
 // TODO: let Put specify the document language: "en", "fr", etc. Also: order_id?? storage??
@@ -112,6 +29,8 @@ import (
 	pb "google.golang.org/appengine/internal/search"
 )
 
+const maxDocumentsPerPutDelete = 200
+
 var (
 	// ErrInvalidDocumentType is returned when methods like Put, Get or Next
 	// are passed a dst or src argument of invalid type.
@@ -119,6 +38,10 @@ var (
 
 	// ErrNoSuchDocument is returned when no document was found for a given ID.
 	ErrNoSuchDocument = errors.New("search: no such document")
+
+	// ErrTooManyDocuments is returned when the user passes too many documents to
+	// PutMulti or DeleteMulti.
+	ErrTooManyDocuments = fmt.Errorf("search: too many documents given to put or delete (max is %d)", maxDocumentsPerPutDelete)
 )
 
 // Atom is a document field whose contents are indexed as a single indivisible
@@ -203,36 +126,78 @@ func Open(name string) (*Index, error) {
 // src must be a non-nil struct pointer or implement the FieldLoadSaver
 // interface.
 func (x *Index) Put(c context.Context, id string, src interface{}) (string, error) {
-	d, err := saveDoc(src)
+	ids, err := x.PutMulti(c, []string{id}, []interface{}{src})
 	if err != nil {
 		return "", err
 	}
-	if id != "" {
-		if !validIndexNameOrDocID(id) {
-			return "", fmt.Errorf("search: invalid ID %q", id)
-		}
-		d.Id = proto.String(id)
+	return ids[0], nil
+}
+
+// PutMulti is like Put, but is more efficient for adding multiple documents to
+// the index at once.
+//
+// Up to 200 documents can be added at once. ErrTooManyDocuments is returned if
+// you try to add more.
+//
+// ids can either be an empty slice (which means new IDs will be allocated for
+// each of the documents added) or a slice the same size as srcs.
+//
+// The error may be an instance of appengine.MultiError, in which case it will
+// be the same size as srcs and the individual errors inside will correspond
+// with the items in srcs.
+func (x *Index) PutMulti(c context.Context, ids []string, srcs []interface{}) ([]string, error) {
+	if len(ids) != 0 && len(srcs) != len(ids) {
+		return nil, fmt.Errorf("search: PutMulti expects ids and srcs slices of the same length")
 	}
+	if len(srcs) > maxDocumentsPerPutDelete {
+		return nil, ErrTooManyDocuments
+	}
+
+	docs := make([]*pb.Document, len(srcs))
+	for i, s := range srcs {
+		var err error
+		docs[i], err = saveDoc(s)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(ids) != 0 && ids[i] != "" {
+			if !validIndexNameOrDocID(ids[i]) {
+				return nil, fmt.Errorf("search: invalid ID %q", ids[i])
+			}
+			docs[i].Id = proto.String(ids[i])
+		}
+	}
+
+	// spec is modified by Call when applying the current Namespace, so copy it to
+	// avoid retaining the namespace beyond the scope of the Call.
+	spec := x.spec
 	req := &pb.IndexDocumentRequest{
 		Params: &pb.IndexDocumentParams{
-			Document:  []*pb.Document{d},
-			IndexSpec: &x.spec,
+			Document:  docs,
+			IndexSpec: &spec,
 		},
 	}
 	res := &pb.IndexDocumentResponse{}
 	if err := internal.Call(c, "search", "IndexDocument", req, res); err != nil {
-		return "", err
+		return nil, err
 	}
-	if len(res.Status) > 0 {
-		if s := res.Status[0]; s.GetCode() != pb.SearchServiceError_OK {
-			return "", fmt.Errorf("search: %s: %s", s.GetCode(), s.GetErrorDetail())
+	multiErr, hasErr := make(appengine.MultiError, len(res.Status)), false
+	for i, s := range res.Status {
+		if s.GetCode() != pb.SearchServiceError_OK {
+			multiErr[i] = fmt.Errorf("search: %s: %s", s.GetCode(), s.GetErrorDetail())
+			hasErr = true
 		}
 	}
-	if len(res.Status) != 1 || len(res.DocId) != 1 {
-		return "", fmt.Errorf("search: internal error: wrong number of results (%d Statuses, %d DocIDs)",
-			len(res.Status), len(res.DocId))
+	if hasErr {
+		return res.DocId, multiErr
 	}
-	return res.DocId[0], nil
+
+	if len(res.Status) != len(docs) || len(res.DocId) != len(docs) {
+		return nil, fmt.Errorf("search: internal error: wrong number of results (%d Statuses, %d DocIDs, expected %d)",
+			len(res.Status), len(res.DocId), len(docs))
+	}
+	return res.DocId, nil
 }
 
 // Get loads the document with the given ID into dst.
@@ -274,9 +239,22 @@ func (x *Index) Get(c context.Context, id string, dst interface{}) error {
 
 // Delete deletes a document from the index.
 func (x *Index) Delete(c context.Context, id string) error {
+	return x.DeleteMulti(c, []string{id})
+}
+
+// DeleteMulti deletes multiple documents from the index.
+//
+// The returned error may be an instance of appengine.MultiError, in which case
+// it will be the same size as srcs and the individual errors inside will
+// correspond with the items in srcs.
+func (x *Index) DeleteMulti(c context.Context, ids []string) error {
+	if len(ids) > maxDocumentsPerPutDelete {
+		return ErrTooManyDocuments
+	}
+
 	req := &pb.DeleteDocumentRequest{
 		Params: &pb.DeleteDocumentParams{
-			DocId:     []string{id},
+			DocId:     ids,
 			IndexSpec: &x.spec,
 		},
 	}
@@ -284,11 +262,19 @@ func (x *Index) Delete(c context.Context, id string) error {
 	if err := internal.Call(c, "search", "DeleteDocument", req, res); err != nil {
 		return err
 	}
-	if len(res.Status) != 1 {
-		return fmt.Errorf("search: internal error: wrong number of results (%d)", len(res.Status))
+	if len(res.Status) != len(ids) {
+		return fmt.Errorf("search: internal error: wrong number of results (%d, expected %d)",
+			len(res.Status), len(ids))
 	}
-	if s := res.Status[0]; s.GetCode() != pb.SearchServiceError_OK {
-		return fmt.Errorf("search: %s: %s", s.GetCode(), s.GetErrorDetail())
+	multiErr, hasErr := make(appengine.MultiError, len(ids)), false
+	for i, s := range res.Status {
+		if s.GetCode() != pb.SearchServiceError_OK {
+			multiErr[i] = fmt.Errorf("search: %s: %s", s.GetCode(), s.GetErrorDetail())
+			hasErr = true
+		}
+	}
+	if hasErr {
+		return multiErr
 	}
 	return nil
 }
@@ -384,6 +370,7 @@ func (x *Index) Search(c context.Context, query string, opts *SearchOptions) *It
 		t.refinements = opts.Refinements
 		t.facetOpts = opts.Facets
 		t.searchOffset = opts.Offset
+		t.countAccuracy = opts.CountAccuracy
 	}
 	return t
 }
@@ -410,6 +397,9 @@ func moreSearch(t *Iterator) error {
 	if t.searchOffset > 0 {
 		req.Params.Offset = proto.Int32(int32(t.searchOffset))
 		t.searchOffset = 0
+	}
+	if t.countAccuracy > 0 {
+		req.Params.MatchedCountAccuracy = proto.Int32(int32(t.countAccuracy))
 	}
 	if t.idsOnly {
 		req.Params.KeysOnly = &t.idsOnly
@@ -496,6 +486,10 @@ type SearchOptions struct {
 	// Offset specifies the number of documents to skip over before returning results.
 	// When specified, Cursor must be nil.
 	Offset int
+
+	// CountAccuracy specifies the maximum result count that can be expected to
+	// be accurate. If zero, the count accuracy defaults to 20.
+	CountAccuracy int
 }
 
 // Cursor represents an iterator's position.
@@ -510,7 +504,7 @@ type FieldExpression struct {
 	Name string
 
 	// Expr is evaluated to provide a custom content snippet for each document.
-	// See https://cloud.google.com/appengine/docs/go/search/options for
+	// See https://cloud.google.com/appengine/docs/standard/go/search/options for
 	// the supported expression syntax.
 	Expr string
 }
@@ -657,7 +651,7 @@ type SortOptions struct {
 // SortExpression defines a single dimension for sorting a document.
 type SortExpression struct {
 	// Expr is evaluated to provide a sorting value for each document.
-	// See https://cloud.google.com/appengine/docs/go/search/options for
+	// See https://cloud.google.com/appengine/docs/standard/go/search/options for
 	// the supported expression syntax.
 	Expr string
 
@@ -808,9 +802,10 @@ type Iterator struct {
 
 	more func(*Iterator) error
 
-	count   int
-	limit   int // items left to return; 0 for unlimited.
-	idsOnly bool
+	count         int
+	countAccuracy int
+	limit         int // items left to return; 0 for unlimited.
+	idsOnly       bool
 }
 
 // errIter returns an iterator that only returns the given error.
@@ -923,7 +918,7 @@ func saveDoc(src interface{}) (*pb.Document, error) {
 	case FieldLoadSaver:
 		fields, meta, err = x.Save()
 	default:
-		fields, err = SaveStruct(src)
+		fields, meta, err = saveStructWithMeta(src)
 	}
 	if err != nil {
 		return nil, err
@@ -934,8 +929,9 @@ func saveDoc(src interface{}) (*pb.Document, error) {
 		return nil, err
 	}
 	d := &pb.Document{
-		Field:   fieldsProto,
-		OrderId: proto.Int32(int32(time.Since(orderIDEpoch).Seconds())),
+		Field:         fieldsProto,
+		OrderId:       proto.Int32(int32(time.Since(orderIDEpoch).Seconds())),
+		OrderIdSource: pb.Document_DEFAULTED.Enum(),
 	}
 	if meta != nil {
 		if meta.Rank != 0 {
@@ -943,6 +939,7 @@ func saveDoc(src interface{}) (*pb.Document, error) {
 				return nil, fmt.Errorf("search: invalid rank %d, must be [0, 2^31)", meta.Rank)
 			}
 			*d.OrderId = int32(meta.Rank)
+			d.OrderIdSource = pb.Document_SUPPLIED.Enum()
 		}
 		if len(meta.Facets) > 0 {
 			facets, err := facetsToProto(meta.Facets)

@@ -16,7 +16,7 @@ import (
 )
 
 func TestGetMultiStruct(t *testing.T) {
-	c, closeFunc := NewContext(t, nil)
+	c, closeFunc := NewContext(t)
 	defer closeFunc()
 
 	type testEntity struct {
@@ -58,7 +58,7 @@ func TestGetMultiStruct(t *testing.T) {
 }
 
 func TestGetMultiStructPtr(t *testing.T) {
-	c, closeFunc := NewContext(t, nil)
+	c, closeFunc := NewContext(t)
 	defer closeFunc()
 
 	type testEntity struct {
@@ -107,7 +107,7 @@ func TestGetMultiStructPtr(t *testing.T) {
 }
 
 func TestGetMultiStructPtrNil(t *testing.T) {
-	c, closeFunc := NewContext(t, nil)
+	c, closeFunc := NewContext(t)
 	defer closeFunc()
 
 	type testEntity struct {
@@ -149,7 +149,7 @@ func TestGetMultiStructPtrNil(t *testing.T) {
 }
 
 func TestGetMultiInterface(t *testing.T) {
-	c, closeFunc := NewContext(t, nil)
+	c, closeFunc := NewContext(t)
 	defer closeFunc()
 
 	type testEntity struct {
@@ -206,7 +206,7 @@ func TestGetMultiInterface(t *testing.T) {
 }
 
 func TestGetMultiPropertyLoadSaver(t *testing.T) {
-	c, closeFunc := NewContext(t, nil)
+	c, closeFunc := NewContext(t)
 	defer closeFunc()
 
 	type testEntity struct {
@@ -276,7 +276,7 @@ func TestGetMultiPropertyLoadSaver(t *testing.T) {
 }
 
 func TestGetMultiNoKeys(t *testing.T) {
-	c, closeFunc := NewContext(t, nil)
+	c, closeFunc := NewContext(t)
 	defer closeFunc()
 
 	type testEntity struct {
@@ -292,7 +292,7 @@ func TestGetMultiNoKeys(t *testing.T) {
 }
 
 func TestGetMultiInterfaceError(t *testing.T) {
-	c, closeFunc := NewContext(t, nil)
+	c, closeFunc := NewContext(t)
 	defer closeFunc()
 
 	type testEntity struct {
@@ -351,7 +351,7 @@ func newReaderTestEntity() io.Reader {
 }
 
 func TestGetArgs(t *testing.T) {
-	c, closeFunc := NewContext(t, nil)
+	c, closeFunc := NewContext(t)
 	defer closeFunc()
 
 	type testEntity struct {
@@ -382,7 +382,7 @@ func TestGetArgs(t *testing.T) {
 }
 
 func TestGetMultiArgs(t *testing.T) {
-	c, closeFunc := NewContext(t, nil)
+	c, closeFunc := NewContext(t)
 	defer closeFunc()
 
 	type testEntity struct {
@@ -415,7 +415,7 @@ func TestGetMultiArgs(t *testing.T) {
 }
 
 func TestGetSliceProperty(t *testing.T) {
-	c, closeFunc := NewContext(t, nil)
+	c, closeFunc := NewContext(t)
 	defer closeFunc()
 
 	type testEntity struct {
@@ -452,7 +452,7 @@ func TestGetSliceProperty(t *testing.T) {
 }
 
 func TestGetMultiNoPropertyList(t *testing.T) {
-	c, closeFunc := NewContext(t, nil)
+	c, closeFunc := NewContext(t)
 	defer closeFunc()
 
 	keys := []*datastore.Key{datastore.NewKey(c, "Test", "", 1, nil)}
@@ -464,7 +464,7 @@ func TestGetMultiNoPropertyList(t *testing.T) {
 }
 
 func TestGetMultiNonStruct(t *testing.T) {
-	c, closeFunc := NewContext(t, nil)
+	c, closeFunc := NewContext(t)
 	defer closeFunc()
 
 	keys := []*datastore.Key{datastore.NewKey(c, "Test", "", 1, nil)}
@@ -476,7 +476,7 @@ func TestGetMultiNonStruct(t *testing.T) {
 }
 
 func TestGetMultiLockReturnEntitySetValueFail(t *testing.T) {
-	c, closeFunc := NewContext(t, nil)
+	c, closeFunc := NewContext(t)
 	defer closeFunc()
 
 	type testEntity struct {
@@ -537,7 +537,7 @@ func TestGetMultiLockReturnEntitySetValueFail(t *testing.T) {
 }
 
 func TestGetMultiLockReturnEntity(t *testing.T) {
-	c, closeFunc := NewContext(t, nil)
+	c, closeFunc := NewContext(t)
 	defer closeFunc()
 
 	type testEntity struct {
@@ -597,7 +597,7 @@ func TestGetMultiLockReturnEntity(t *testing.T) {
 }
 
 func TestGetMultiLockReturnUnknown(t *testing.T) {
-	c, closeFunc := NewContext(t, nil)
+	c, closeFunc := NewContext(t)
 	defer closeFunc()
 
 	type testEntity struct {
@@ -650,7 +650,7 @@ func TestGetMultiLockReturnUnknown(t *testing.T) {
 }
 
 func TestGetMultiLockReturnMiss(t *testing.T) {
-	c, closeFunc := NewContext(t, nil)
+	c, closeFunc := NewContext(t)
 	defer closeFunc()
 
 	type testEntity struct {
@@ -701,6 +701,67 @@ func TestGetMultiLockReturnMiss(t *testing.T) {
 	}
 }
 
+// TestGetNamespacedKey ensures issue https://goo.gl/rXU8nK is fixed so that
+// memcache uses the namespace from the key instead of the context.
+func TestGetNamespacedKey(t *testing.T) {
+	c, closeFunc := NewContext(t)
+	defer closeFunc()
+
+	const intVal = int64(12)
+	type testEntity struct {
+		IntVal int64
+	}
+
+	namespacedCtx, err := appengine.Namespace(c, "keyNamespace")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	key := datastore.NewKey(c, "Entity", "", 1, nil)
+	namespacedKey := datastore.NewKey(namespacedCtx,
+		"Entity", "", key.IntID(), nil)
+	entity := &testEntity{intVal}
+
+	if namespacedKey, err = nds.Put(c, namespacedKey, entity); err != nil {
+		t.Fatal(err)
+	}
+
+	// Prime cache.
+	if err := nds.Get(namespacedCtx, namespacedKey, &testEntity{}); err != nil {
+		t.Fatal(err)
+	}
+
+	// Ensure that we get a value back from the cache by checking if the
+	// datastore is called at all.
+	entityFromCache := true
+	nds.SetDatastoreGetMulti(func(c context.Context,
+		keys []*datastore.Key, vals interface{}) error {
+		if len(keys) != 0 {
+			entityFromCache = false
+		}
+		return nil
+	})
+	if err := nds.Get(c, namespacedKey, &testEntity{}); err != nil {
+		t.Fatal(err)
+	}
+	nds.SetDatastoreGetMulti(datastore.GetMulti)
+
+	if !entityFromCache {
+		t.Fatal("entity not obtained from cache")
+	}
+
+	if err := nds.Delete(namespacedCtx, namespacedKey); err != nil {
+		t.Fatal(err)
+	}
+
+	entity = &testEntity{}
+	if err := nds.Get(c, namespacedKey, entity); err == nil {
+		t.Fatalf("expected no such entity error but got %+v", entity)
+	} else if err != datastore.ErrNoSuchEntity {
+		t.Fatal(err)
+	}
+}
+
 func TestGetMultiPaths(t *testing.T) {
 	expectedErr := errors.New("expected error")
 
@@ -744,7 +805,7 @@ func TestGetMultiPaths(t *testing.T) {
 	   }
 	*/
 
-	c, closeFunc := NewContext(t, nil)
+	c, closeFunc := NewContext(t)
 	defer closeFunc()
 
 	type testEntity struct {
@@ -1151,5 +1212,113 @@ func TestGetMultiPaths(t *testing.T) {
 			t.Fatal(err)
 		}
 		t.Log("End", test.description)
+	}
+}
+
+type loadSaveStruct struct {
+	Value int64
+}
+
+func (lss *loadSaveStruct) Save() ([]datastore.Property, error) {
+	return []datastore.Property{
+		datastore.Property{
+			Name:     "Val",
+			Value:    lss.Value,
+			NoIndex:  true,
+			Multiple: false,
+		},
+	}, nil
+}
+
+func (lss *loadSaveStruct) Load(properties []datastore.Property) error {
+
+	for _, p := range properties {
+		if p.Name == "Val" {
+			lss.Value = p.Value.(int64)
+		}
+	}
+	return nil
+}
+
+func TestPropertyLoadSaver(t *testing.T) {
+	ctx, closeFunc := NewContext(t)
+	defer closeFunc()
+
+	keys := []*datastore.Key{
+		datastore.NewIncompleteKey(ctx, "Entity", nil),
+	}
+	entities := []*loadSaveStruct{
+		&loadSaveStruct{
+			Value: 23,
+		},
+	}
+	keys, err := nds.PutMulti(ctx, keys, entities)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	entities = make([]*loadSaveStruct, 1)
+	if err := nds.GetMulti(ctx, keys, entities); err != nil {
+		t.Fatal(err)
+	}
+
+	if entities[0].Value != 23 {
+		t.Fatal("expected another value")
+	}
+}
+
+func TestUnsupportedValueType(t *testing.T) {
+	ctx, closeFunc := NewContext(t)
+	defer closeFunc()
+
+	keys := []*datastore.Key{
+		datastore.NewIncompleteKey(ctx, "Entity", nil),
+	}
+	entities := make([]int, 1)
+	if err := nds.GetMulti(ctx, keys, entities); err == nil {
+		t.Fatal("expected unsupported value error")
+	}
+}
+
+func TestGetMultiFieldMismatch(t *testing.T) {
+	c, closeFunc := NewContext(t)
+	defer closeFunc()
+
+	type testEntity struct {
+		IntVal  int64
+		IntVal2 int64
+	}
+
+	type testEntityLean struct {
+		IntVal int64
+	}
+
+	keys := []*datastore.Key{}
+	entities := []testEntity{}
+	for i := int64(1); i < 3; i++ {
+		keys = append(keys, datastore.NewKey(c, "Entity", "", i, nil))
+		entities = append(entities, testEntity{i, i})
+	}
+
+	if _, err := nds.PutMulti(c, keys, entities); err != nil {
+		t.Fatal(err)
+	}
+
+	// Get from datastore using nds.
+	ndsResponse := make([]testEntityLean, len(keys))
+	ndsErr := nds.GetMulti(c, keys, ndsResponse)
+
+	// Get from datastore using google api
+	dsResponse := make([]testEntityLean, len(keys))
+	dsErr := datastore.GetMulti(c, keys, dsResponse)
+
+	if ndsErr.Error() != dsErr.Error() {
+		t.Fatal("Errors are not equal")
+	}
+
+	for i := int64(0); i < 2; i++ {
+		if ndsResponse[i].IntVal != dsResponse[i].IntVal {
+			t.Fatalf("IntVals are not equal %d %d", ndsResponse[i].IntVal, dsResponse[i].IntVal)
+		}
 	}
 }

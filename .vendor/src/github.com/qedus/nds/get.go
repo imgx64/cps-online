@@ -2,8 +2,11 @@ package nds
 
 import (
 	"bytes"
+	"encoding/binary"
+	"math/rand"
 	"reflect"
 	"sync"
+	"time"
 
 	"golang.org/x/net/context"
 	"google.golang.org/appengine"
@@ -55,18 +58,14 @@ func GetMulti(c context.Context,
 	keys []*datastore.Key, vals interface{}) error {
 
 	v := reflect.ValueOf(vals)
-	if err := checkMultiArgs(keys, v); err != nil {
+	if err := checkKeysValues(keys, v); err != nil {
 		return err
-	}
-
-	if len(keys) == 0 {
-		return nil
 	}
 
 	callCount := (len(keys)-1)/getMultiLimit + 1
 	errs := make([]error, callCount)
 
-	wg := sync.WaitGroup{}
+	var wg sync.WaitGroup
 	wg.Add(callCount)
 	for i := 0; i < callCount; i++ {
 		lo := i * getMultiLimit
@@ -75,47 +74,22 @@ func GetMulti(c context.Context,
 			hi = len(keys)
 		}
 
-		index := i
-		keySlice := keys[lo:hi]
-		valSlice := v.Slice(lo, hi)
-
-		go func() {
+		go func(i int, keys []*datastore.Key, vals reflect.Value) {
 			if _, ok := transactionFromContext(c); ok {
-				errs[index] = datastoreGetMulti(c,
-					keySlice, valSlice.Interface())
+				errs[i] = datastoreGetMulti(c, keys, vals.Interface())
 			} else {
-				errs[index] = getMulti(c, keySlice, valSlice)
+				errs[i] = getMulti(c, keys, vals)
 			}
 			wg.Done()
-		}()
+		}(i, keys[lo:hi], v.Slice(lo, hi))
 	}
 	wg.Wait()
 
-	// Quick escape if all errors are nil.
-	errsNil := true
-	for _, err := range errs {
-		if err != nil {
-			errsNil = false
-		}
-	}
-	if errsNil {
+	if isErrorsNil(errs) {
 		return nil
 	}
 
-	groupedErrs := make(appengine.MultiError, len(keys))
-	for i, err := range errs {
-		lo := i * getMultiLimit
-		hi := (i + 1) * getMultiLimit
-		if hi > len(keys) {
-			hi = len(keys)
-		}
-		if me, ok := err.(appengine.MultiError); ok {
-			copy(groupedErrs[lo:hi], me)
-		} else if err != nil {
-			return err
-		}
-	}
-	return groupedErrs
+	return groupErrors(errs, len(keys), getMultiLimit)
 }
 
 // Get loads the entity stored for key into val, which must be a struct pointer.
@@ -131,7 +105,8 @@ func GetMulti(c context.Context,
 // unexported in the destination struct. ErrFieldMismatch is only returned if
 // val is a struct pointer.
 func Get(c context.Context, key *datastore.Key, val interface{}) error {
-	if val == nil { // GetMulti catches nil interface; we need to catch nil ptr here
+	// GetMulti catches nil interface; we need to catch nil ptr here.
+	if val == nil {
 		return datastore.ErrInvalidEntityType
 	}
 
@@ -163,12 +138,12 @@ type cacheItem struct {
 	state cacheState
 }
 
-// getMulti attempts to get entities from, memcache, then the datastore.
-// datastore. It also tries to replenish memcache if needed available. It does
-// this in such a way that GetMulti will never get stale results even if the
-// function, datastore or server fails at any point. The caching strategy is
-// borrowed from Python ndb with some improvements that eliminate some
-// consistency issues surrounding ndb, including http://goo.gl/3ByVlA.
+// getMulti attempts to get entities from, memcache, then the datastore. It also
+// tries to replenish memcache if needed available. It does this in such a way
+// that GetMulti will never get stale results even if the function, datastore or
+// server fails at any point. The caching strategy is borrowed from Python ndb
+// with improvements that eliminate some consistency issues surrounding ndb,
+// including http://goo.gl/3ByVlA.
 func getMulti(c context.Context,
 	keys []*datastore.Key, vals reflect.Value) error {
 
@@ -180,15 +155,20 @@ func getMulti(c context.Context,
 		cacheItems[i].state = miss
 	}
 
-	loadMemcache(c, cacheItems)
+	memcacheCtx, err := memcacheContext(c)
+	if err != nil {
+		return err
+	}
 
-	lockMemcache(c, cacheItems)
+	loadMemcache(memcacheCtx, cacheItems)
+
+	lockMemcache(memcacheCtx, cacheItems)
 
 	if err := loadDatastore(c, cacheItems, vals.Type()); err != nil {
 		return err
 	}
 
-	saveMemcache(c, cacheItems)
+	saveMemcache(memcacheCtx, cacheItems)
 
 	me, errsNil := make(appengine.MultiError, len(cacheItems)), true
 	for i, cacheItem := range cacheItems {
@@ -247,6 +227,22 @@ func loadMemcache(c context.Context, cacheItems []cacheItem) {
 			}
 		}
 	}
+}
+
+// itemLock creates a pseudorandom memcache lock value that enables each call of
+// Get/GetMulti to determine if a lock retrieved from memcache is the one it
+// created. This is only important when multiple calls of Get/GetMulti are
+// performed concurrently for the same previously uncached entity.
+func itemLock() []byte {
+	b := make([]byte, 4)
+	binary.LittleEndian.PutUint32(b, rand.Uint32())
+	return b
+}
+
+func init() {
+	// Seed the pseudorandom number generator to reduce the chance of itemLock
+	// collisions.
+	rand.Seed(time.Now().UnixNano())
 }
 
 func lockMemcache(c context.Context, cacheItems []cacheItem) {
@@ -360,7 +356,7 @@ func loadDatastore(c context.Context, cacheItems []cacheItem,
 			pl := vals[i]
 			val := cacheItems[index].val
 			if err := setValue(val, pl); err != nil {
-				return err
+				cacheItems[index].err = err
 			}
 
 			if cacheItems[index].state == internalLock {

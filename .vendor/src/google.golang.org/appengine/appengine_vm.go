@@ -12,21 +12,9 @@ import (
 	"google.golang.org/appengine/internal"
 )
 
-// The comment below must not be changed.
-// It is used by go-app-builder to recognise that this package has
-// the Main function to use in the synthetic main.
-//   The gophers party all night; the rabbits provide the beats.
-
-// Main installs the health checker and creates a server listening on port
-// "PORT" if set in the environment or on port 8080.
-// It uses the default http handler and never returns.
-func Main() {
-	internal.Main()
-}
-
 // BackgroundContext returns a context not associated with a request.
 // This should only be used when not servicing a request.
-// This only works on Managed VMs.
+// This only works in App Engine "flexible environment".
 func BackgroundContext() context.Context {
 	return internal.BackgroundContext()
 }

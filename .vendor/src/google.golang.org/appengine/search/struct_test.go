@@ -1,3 +1,7 @@
+// Copyright 2015 Google Inc. All rights reserved.
+// Use of this source code is governed by the Apache 2.0
+// license that can be found in the LICENSE file.
+
 package search
 
 import (
@@ -53,14 +57,16 @@ func TestLoadingStruct(t *testing.T) {
 			fields: []Field{
 				{Name: "Meaning", Value: float64(42)},
 			},
-			want: &struct{}{},
+			want:    &struct{}{},
+			wantErr: true,
 		},
 		{
 			desc: "Ignore unsettable field",
 			fields: []Field{
 				{Name: "meaning", Value: float64(42)},
 			},
-			want: &struct{ meaning float64 }{}, // field not populated.
+			want:    &struct{ meaning float64 }{}, // field not populated.
+			wantErr: true,
 		},
 		{
 			desc: "Error on missing facet",
@@ -82,6 +88,30 @@ func TestLoadingStruct(t *testing.T) {
 			want: &struct {
 				Set Atom `search:",facet"`
 			}{Atom("yes")},
+			wantErr: true,
+		},
+		{
+			desc: "Error setting ignored field",
+			fields: []Field{
+				{Name: "Set", Value: "yes"},
+				{Name: "Ignored", Value: "no"},
+			},
+			want: &struct {
+				Set     string
+				Ignored string `search:"-"`
+			}{Set: "yes"},
+			wantErr: true,
+		},
+		{
+			desc: "Error setting ignored facet",
+			meta: &DocumentMetadata{Facets: []Facet{
+				{Name: "Set", Value: Atom("yes")},
+				{Name: "Ignored", Value: Atom("no")},
+			}},
+			want: &struct {
+				Set     Atom `search:",facet"`
+				Ignored Atom `search:"-,facet"`
+			}{Set: Atom("yes")},
 			wantErr: true,
 		},
 	}
@@ -142,6 +172,21 @@ func TestSavingStruct(t *testing.T) {
 				info string
 				Legs float64 `search:",facet"`
 				fuzz Atom    `search:",facet"`
+			}{"Gopher", "Likes slide rules.", 4, Atom("furry")},
+			wantFields: []Field{
+				{Name: "Name", Value: "Gopher"},
+			},
+			wantFacets: []Facet{
+				{Name: "Legs", Value: float64(4)},
+			},
+		},
+		{
+			desc: "Ignore fields marked -",
+			doc: &struct {
+				Name string
+				Info string  `search:"-"`
+				Legs float64 `search:",facet"`
+				Fuzz Atom    `search:"-,facet"`
 			}{"Gopher", "Likes slide rules.", 4, Atom("furry")},
 			wantFields: []Field{
 				{Name: "Name", Value: "Gopher"},
