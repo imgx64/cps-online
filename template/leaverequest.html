@@ -1,0 +1,78 @@
+{{/*
+Copyright 2018 Ibrahim Ghazal. All rights reserved.
+Use of this source code is governed by a BSD-style
+license that can be found in the LICENSE file.
+*/}}
+
+{{define "title"}}Leave Request{{end}}
+{{define "content"}}
+<form class="form-horizontal" action="/leave/request/save" method="POST">
+	<div class="form-group">
+		<label class="col-sm-2 control-label" for="Requester">Requester</label>
+		<div class="col-sm-5">
+			<input type="input" id="Requester" name="Requester" class="form-control" disabled>
+			<span class="help-block"></span>
+		</div>
+	</div>
+	<div class="form-group">
+		<label class="col-sm-2 control-label" for="Status">Status</label>
+		<div class="col-sm-5">
+			<input type="input" id="Status" name="Status" class="form-control" disabled>
+			<span class="help-block"></span>
+		</div>
+	</div>
+	<div class="form-group">
+		<label class="col-sm-2 control-label" for="From">From</label>
+		<div class="col-sm-5">
+			<input type="date" id="From" name="From" class="form-control" required>
+			<span class="help-block"></span>
+		</div>
+	</div>
+	<div class="form-group">
+		<label class="col-sm-2 control-label" for="Type">Type</label>
+		<div class="col-sm-5">
+			<select id="Type" name="Type" class="form-control" required="required">
+				<option>Leave of Absence</option>
+				<option>Early Departure</option>
+			</select>
+			<span class="help-block"></span>
+		</div>
+	</div>
+	<div class="form-group">
+		<label class="col-sm-2 control-label" for="To">To</label>
+		<div class="col-sm-5">
+			<input type="date" id="To" name="To" class="form-control" required>
+			<span class="help-block"></span>
+		</div>
+		<div class="col-sm-5">
+			<input type="time" id="Time" name="Time" class="form-control" required>
+			<span class="help-block"></span>
+		</div>
+	</div>
+	<div class="form-group">
+		<label class="col-sm-2 control-label" for="RequesterComments">Requester Comments</label>
+		<div class="col-sm-10">
+			<textarea id="RequesterComments" name="RequesterComments" rows="5" class="form-control" required></textarea>
+			<span class="help-block"></span>
+		</div>
+	</div>
+	<div class="form-actions">
+		<input type="submit" name="submit" class="btn btn-default btn-primary" value="Save">
+		<input type="submit" name="submit" class="btn btn-default btn-danger" value="Cancel">
+		<a class="btn btn-default" href="/leave/myrequests">Back</a>
+	</div>
+	<div class="form-group">
+		<label class="col-sm-2 control-label" for="AdminComments">Admin Comments</label>
+		<div class="col-sm-10">
+			<textarea id="AdminComments" name="AdminComments" rows="5" class="form-control" required></textarea>
+			<span class="help-block"></span>
+		</div>
+	</div>
+	<div class="form-actions">
+		<input type="submit" name="submit" class="btn btn-default btn-primary" value="Approve">
+		<input type="submit" name="submit" class="btn btn-default btn-danger" value="Reject">
+		<a class="btn btn-default" href="/leave/allrequests">Back</a>
+	</div>
+</form>
+{{end}}
+

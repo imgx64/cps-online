@@ -31,6 +31,8 @@ var (
 	adminRole   = roles{Admin: true}
 	hrRole      = roles{HR: true}
 	teacherRole = roles{Teacher: true}
+
+	anyRole = roles{true, true, true, true}
 )
 
 func getUser(c context.Context) (user, error) {
