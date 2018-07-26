@@ -6,5 +6,36 @@ license that can be found in the LICENSE file.
 
 {{define "title"}}My Leave Requests{{end}}
 {{define "content"}}
+<p>
+	<a class="btn btn-default btn-primary btn-lg" href="/leave/request">New Request</a>
+</p>
+<div>
+	<table class="table table-bordered table-condensed">
+		<thead>
+			<tr>
+				<th scope="col">Type</th>
+				<th scope="col">From</th>
+				<th scope="col">To</th>
+				<th scope="col">Status</th>
+				<th scope="col">Options</th>
+			</tr>
+		</thead>
+		<tbody>
+			{{range .Requests}}
+			<tr>
+				<td>{{.Type}}</td>
+				<td>{{.StartDate | formatDate}}</td>
+				<td>{{if .Time.IsZero}}{{.EndDate | formatDate}}{{else}}{{.Time | formatTime}}{{end}}</td>
+				<td>{{.Status}}</td>
+				<td><a class="btn btn-default btn-sm" href="/leave/request?key={{.Key.Encode}}">View</a></td>
+			</tr>
+			{{else}}
+			<tr class="info">
+				<td colspan="5"><p class="text-center">No leave requests found.</p></td>
+			</tr>
+			{{end}}
+		</tbody>
+	</table>
+</div>
 {{end}}
 

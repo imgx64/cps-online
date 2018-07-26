@@ -35,6 +35,13 @@ indexes:
   - name: Subject
   - name: Date
 
+- kind: leaverequest
+  properties:
+  - name: RequesterKey
+  - name: StartDate
+  - name: Time
+  - name: EndDate
+
 - kind: student
   ancestor: yes
   properties:

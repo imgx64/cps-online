@@ -91,6 +91,30 @@ func getLeaveRequest(c context.Context, user user, keyEncoded string) (leaveRequ
 	return request, nil
 }
 
+func getUserLeaveRequests(c context.Context, user user) ([]leaveRequest, error) {
+	q := datastore.NewQuery("leaverequest")
+	q = q.Filter("RequesterKey =", user.Key())
+	q = q.Order("StartDate")
+	q = q.Order("Time")
+	q = q.Order("EndDate")
+
+	var requests []leaveRequest
+	keys, err := q.GetAll(c, &requests)
+	if err == datastore.ErrNoSuchEntity {
+		return []leaveRequest{}, nil
+	} else if err != nil {
+		return nil, err
+	}
+
+	for i, k := range keys {
+		request := requests[i]
+		request.Key = k
+		requests[i] = request
+	}
+
+	return requests, nil
+}
+
 func getRequesterName(c context.Context, requesterKey *datastore.Key) string {
 	if requesterKey.Kind() == "employee" {
 		var emp employeeType
@@ -205,8 +229,25 @@ func leaveAllrequestsHandler(w http.ResponseWriter, r *http.Request) {
 func leaveMyrequestsHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 
+	user, err := getUser(c)
+	if err != nil {
+		log.Errorf(c, "Could not get user: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	requests, err := getUserLeaveRequests(c, user)
+	if err != nil {
+		log.Errorf(c, "Could not get user leave requests: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
 	data := struct {
-	}{}
+		Requests []leaveRequest
+	}{
+		requests,
+	}
 
 	if err := render(w, r, "myleaverequests", data); err != nil {
 		log.Errorf(c, "Could not render template allrequests: %s", err)
