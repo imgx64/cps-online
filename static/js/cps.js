@@ -62,6 +62,27 @@
 				e.preventDefault();
 			}
 		});
+
+		$(".cps-js-leave-type").on("change", function(e) {
+			$("#EndDate").attr('disabled', true);
+			$("#Time").attr('disabled', true);
+
+			if ($(e.target).attr('disabled')) {
+				return;
+			}
+
+			if (e.target.value == "LoA") {
+				$("#EndDate").attr('disabled', false);
+				if ($("#EndDate").val() < $("#StartDate").val()) {
+					$("#EndDate").val($("#StartDate").val());
+				}
+				$("#Time").val('00:00');
+			} else if (e.target.value == "ED") {
+				$("#EndDate").val($("#StartDate").val());
+				$("#Time").attr('disabled',false);
+			}
+		});
+		$(".cps-js-leave-type").trigger("change");
 	});
 
 })(window.jQuery);
