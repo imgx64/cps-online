@@ -94,7 +94,16 @@ func render(w http.ResponseWriter, r *http.Request,
 
 var funcMap = htmltemplate.FuncMap{
 	"formatDate": func(t time.Time) string {
+		if t.IsZero() {
+			return ""
+		}
 		return t.Format("2006-01-02")
+	},
+	"formatTime": func(t time.Time) string {
+		if t.IsZero() {
+			return ""
+		}
+		return t.Format("15:04")
 	},
 	"equal": func(item1, item2 interface{}) bool {
 		return reflect.DeepEqual(item1, item2)
@@ -166,6 +175,21 @@ func maxAndWeight(max, weight float64) string {
 		return maxStr
 	}
 	return fmt.Sprintf("%s (%s)", maxStr, formatMarkTrim(weight))
+}
+
+func dateOnly(t time.Time) time.Time {
+	if t.IsZero() {
+		return t
+	}
+	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
+}
+
+func timeOnly(t time.Time) time.Time {
+	if t.IsZero() {
+		return t
+	}
+	// 1 nsec to make IsZero false
+	return time.Date(0, 0, 0, t.Hour(), t.Minute(), 0, 1, t.Location())
 }
 
 var countries = []string{
