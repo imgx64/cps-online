@@ -15,9 +15,28 @@ type user struct {
 	Name  string
 	Roles roles
 
-	Key      *datastore.Key
 	Employee *employeeType // nil if not employee
 	Student  *studentType  // nil if not student
+}
+
+func (user user) Key() *datastore.Key {
+	if user.Employee != nil {
+		return user.Employee.Key
+	}
+	if user.Student != nil {
+		return user.Student.Key
+	}
+	return nil
+}
+
+func (user user) FullName() string {
+	if user.Employee != nil {
+		return user.Employee.Name
+	}
+	if user.Student != nil {
+		return user.Student.Name
+	}
+	return ""
 }
 
 type roles struct {
@@ -44,7 +63,6 @@ func getUser(c context.Context) (user, error) {
 	name := u.String()
 
 	var userRoles roles
-	var key *datastore.Key
 	var empp *employeeType
 	var stup *studentType
 	if u.Admin {
@@ -56,7 +74,6 @@ func getUser(c context.Context) (user, error) {
 		}
 		// Don't fail if admin is not employee
 		if emp, err := getEmployeeFromEmail(c, u.Email); err == nil {
-			key = emp.Key
 			empp = &emp
 		}
 	} else {
@@ -64,7 +81,6 @@ func getUser(c context.Context) (user, error) {
 			userRoles = roles{
 				Student: true,
 			}
-			key = stu.Key
 			stup = &stu
 		} else {
 			emp, err := getEmployeeFromEmail(c, u.Email)
@@ -75,7 +91,6 @@ func getUser(c context.Context) (user, error) {
 				}, err
 			}
 			userRoles = emp.Roles
-			key = emp.Key
 			empp = &emp
 		}
 	}
@@ -85,7 +100,6 @@ func getUser(c context.Context) (user, error) {
 		Name:  name,
 		Roles: userRoles,
 
-		Key:      key,
 		Employee: empp,
 		Student:  stup,
 	}

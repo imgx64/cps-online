@@ -177,6 +177,22 @@ func maxAndWeight(max, weight float64) string {
 	return fmt.Sprintf("%s (%s)", maxStr, formatMarkTrim(weight))
 }
 
+func parseDate(s string) (time.Time, error) {
+	if s == "" {
+		var zeroTime time.Time
+		return zeroTime, nil
+	}
+	return time.Parse("2006-01-02", s)
+}
+
+func parseTime(s string) (time.Time, error) {
+	if s == "" {
+		var zeroTime time.Time
+		return zeroTime, nil
+	}
+	return time.Parse("15:04", s)
+}
+
 func dateOnly(t time.Time) time.Time {
 	if t.IsZero() {
 		return t

@@ -8,7 +8,7 @@ license that can be found in the LICENSE file.
 {{define "content"}}
 <form class="form-horizontal" action="/leave/request/save" method="POST">
 {{with .Request}}
-	<input type="hidden" name="Key" value="{{.Key}}">
+	<input type="hidden" name="Key" value="{{if .Key}}{{.Key.Encode}}{{end}}">
 	<div class="form-group">
 		<label class="col-sm-2 control-label" for="Requester">Requester</label>
 		<div class="col-sm-5">
