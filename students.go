@@ -28,7 +28,9 @@ const studentPrefix = "cps"
 const schoolDomain = "cps-bh.com"
 
 type studentType struct {
-	ID             string
+	ID  string
+	Key *datastore.Key `datastore:"-"`
+
 	Name           string
 	ArabicName     string
 	Gender         string
@@ -59,6 +61,7 @@ func getStudent(c context.Context, id string) (studentType, error) {
 	key := datastore.NewKey(c, "student", id, 0, akey)
 	var stu studentType
 	err = nds.Get(c, key, &stu)
+	stu.Key = key
 	if err != nil {
 		return studentType{}, err
 	}
@@ -80,6 +83,10 @@ func getStudentMulti(c context.Context, ids []string) ([]studentType, error) {
 	err = nds.GetMulti(c, keys, stus)
 	if err != nil {
 		return nil, err
+	}
+	for i, stu := range stus {
+		stu.Key = keys[i]
+		stus[i] = stu
 	}
 
 	return stus, nil
@@ -272,7 +279,8 @@ func (stu *studentType) save(c context.Context) error {
 			}
 			id := fmt.Sprintf("%s%d", studentPrefix, i)
 			stu.ID = id
-			_, err = nds.Put(c, datastore.NewKey(c, "student", id, 0, akey), stu)
+			stu.Key = datastore.NewKey(c, "student", id, 0, akey)
+			_, err = nds.Put(c, stu.Key, stu)
 			if err != nil {
 				return err
 			}

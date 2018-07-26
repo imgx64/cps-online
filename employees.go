@@ -23,7 +23,9 @@ import (
 )
 
 type employeeType struct {
-	ID             int64 `datastore:"-"`
+	ID  int64          `datastore:"-"`
+	Key *datastore.Key `datastore:"-"`
+
 	CPSEmail       string
 	Roles          roles
 	Enabled        bool
@@ -66,6 +68,7 @@ func getEmployee(c context.Context, id string) (employeeType, error) {
 		return employeeType{}, err
 	}
 	emp.ID = intID
+	emp.Key = key
 
 	return emp, err
 }
@@ -84,6 +87,7 @@ func getEmployees(c context.Context, enabled bool, typ string) ([]employeeType, 
 	for i, k := range keys {
 		e := employees[i]
 		e.ID = k.IntID()
+		e.Key = k
 		employees[i] = e
 	}
 
@@ -170,6 +174,7 @@ func getEmployeeFromEmail(c context.Context, email string) (employeeType, error)
 
 	emp := employees[0]
 	emp.ID = keys[0].IntID()
+	emp.Key = keys[0]
 
 	return emp, nil
 }
@@ -523,6 +528,7 @@ func employeesImportHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		emp.ID = intID
+		emp.Key = datastore.NewKey(c, "employee", "", intID, nil)
 		if isAdmin {
 			emp.CPSEmail = record[1]
 			emp.Roles = roles{

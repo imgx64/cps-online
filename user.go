@@ -6,6 +6,7 @@ package main
 
 import (
 	"golang.org/x/net/context"
+	"google.golang.org/appengine/datastore"
 	appengineuser "google.golang.org/appengine/user"
 )
 
@@ -14,7 +15,9 @@ type user struct {
 	Name  string
 	Roles roles
 
-	Student *studentType // nil if not student
+	Key      *datastore.Key
+	Employee *employeeType // nil if not employee
+	Student  *studentType  // nil if not student
 }
 
 type roles struct {
@@ -40,8 +43,10 @@ func getUser(c context.Context) (user, error) {
 
 	name := u.String()
 
-	var stup *studentType
 	var userRoles roles
+	var key *datastore.Key
+	var empp *employeeType
+	var stup *studentType
 	if u.Admin {
 		userRoles = roles{
 			Student: false,
@@ -49,12 +54,18 @@ func getUser(c context.Context) (user, error) {
 			HR:      true,
 			Teacher: true,
 		}
+		// Don't fail if admin is not employee
+		if emp, err := getEmployeeFromEmail(c, u.Email); err == nil {
+			key = emp.Key
+			empp = &emp
+		}
 	} else {
 		if stu, err := getStudentFromEmail(c, u.Email); err == nil {
-			stup = &stu
 			userRoles = roles{
 				Student: true,
 			}
+			key = stu.Key
+			stup = &stu
 		} else {
 			emp, err := getEmployeeFromEmail(c, u.Email)
 			if err != nil {
@@ -64,6 +75,8 @@ func getUser(c context.Context) (user, error) {
 				}, err
 			}
 			userRoles = emp.Roles
+			key = emp.Key
+			empp = &emp
 		}
 	}
 
@@ -72,7 +85,9 @@ func getUser(c context.Context) (user, error) {
 		Name:  name,
 		Roles: userRoles,
 
-		Student: stup,
+		Key:      key,
+		Employee: empp,
+		Student:  stup,
 	}
 
 	return user, nil
