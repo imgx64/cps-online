@@ -1,0 +1,6 @@
+cron:
+- description: "Daily Cloud Datastore Export"
+  url: /cloud-datastore-export?namespace_id=&output_url_prefix=gs://creativity-private-school-2015.appspot.com
+  target: cloud-datastore-admin
+  schedule: every 24 hours
+
