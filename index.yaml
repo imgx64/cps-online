@@ -42,6 +42,34 @@ indexes:
   - name: Time
   - name: EndDate
 
+- kind: leaverequest
+  properties:
+  - name: RequesterKeyKind
+  - name: StartDate
+  - name: Time
+  - name: EndDate
+
+- kind: leaverequest
+  properties:
+  - name: RequesterKeyKind
+  - name: Status
+  - name: StartDate
+  - name: Time
+  - name: EndDate
+
+- kind: leaverequest
+  properties:
+  - name: StartDate
+  - name: Time
+  - name: EndDate
+
+- kind: leaverequest
+  properties:
+  - name: Status
+  - name: StartDate
+  - name: Time
+  - name: EndDate
+
 - kind: student
   ancestor: yes
   properties:

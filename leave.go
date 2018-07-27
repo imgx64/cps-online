@@ -115,11 +115,41 @@ func getUserLeaveRequests(c context.Context, user user) ([]leaveRequest, error) 
 	return requests, nil
 }
 
+func searchLeaveRequests(c context.Context, status leaveRequestStatus, requesterKind string) ([]leaveRequest, error) {
+	q := datastore.NewQuery("leaverequest")
+	if status != "" {
+		q = q.Filter("Status =", status)
+	}
+	if requesterKind != "" {
+		q = q.Filter("RequesterKeyKind=", requesterKind)
+	}
+	q = q.Order("StartDate")
+	q = q.Order("Time")
+	q = q.Order("EndDate")
+
+	var requests []leaveRequest
+	keys, err := q.GetAll(c, &requests)
+	if err == datastore.ErrNoSuchEntity {
+		return []leaveRequest{}, nil
+	} else if err != nil {
+		return nil, err
+	}
+
+	for i, k := range keys {
+		request := requests[i]
+		request.Key = k
+		request.RequesterName = getRequesterName(c, request.RequesterKey)
+		requests[i] = request
+	}
+
+	return requests, nil
+}
+
 func getRequesterName(c context.Context, requesterKey *datastore.Key) string {
 	if requesterKey.Kind() == "employee" {
 		var emp employeeType
 		if err := nds.Get(c, requesterKey, &emp); err != nil {
-			// Ignoring error
+			log.Warningf(c, "Could not get employee name: %s", err)
 			return ""
 		}
 		return emp.Name
@@ -127,18 +157,20 @@ func getRequesterName(c context.Context, requesterKey *datastore.Key) string {
 	} else if requesterKey.Kind() == "student" {
 		var stu studentType
 		if err := nds.Get(c, requesterKey, &stu); err != nil {
-			// Ignoring error
+			log.Warningf(c, "Could not get student name: %s", err)
 			return ""
 		}
 
 		class, section, err := getStudentClass(c, stu.ID, getSchoolYear(c))
 		if err != nil {
-			// Ignoring error
+			log.Warningf(c, "Could not get student class and section: %s", err)
 			return stu.Name
 		}
+
 		return fmt.Sprintf("%s (%s%s)", stu.Name, class, section)
 	}
 
+	log.Warningf(c, "Could not get requester name: %s", requesterKey)
 	return ""
 }
 
@@ -191,6 +223,13 @@ const (
 	leaveRequestCanceled leaveRequestStatus = "C"
 )
 
+var leaveRequestStatuses = []leaveRequestStatus{
+	leaveRequestPending,
+	leaveRequestApproved,
+	leaveRequestRejected,
+	leaveRequestCanceled,
+}
+
 var leaveRequestStatusStrings = map[leaveRequestStatus]string{
 	leaveRequestPending:  "Pending",
 	leaveRequestApproved: "Approved",
@@ -216,8 +255,51 @@ func (lrs leaveRequestStatus) String() string {
 func leaveAllrequestsHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 
+	if err := r.ParseForm(); err != nil {
+		log.Errorf(c, "Could not parse form: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	status := leaveRequestStatus(r.Form.Get("Status"))
+	if status == "" {
+		status = leaveRequestPending
+	} else if status == "all" {
+		status = ""
+	}
+
+	requester := r.Form.Get("Requester")
+	requesterKind := ""
+	if requester == "All" {
+		requesterKind = ""
+	} else if requester == "Employees" {
+		requesterKind = "employee"
+	} else if requester == "Students" {
+		requesterKind = "student"
+	}
+
+	requests, err := searchLeaveRequests(c, status, requesterKind)
+	if err != nil {
+		log.Errorf(c, "Could not get user leave requests: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
 	data := struct {
-	}{}
+		Statuses []leaveRequestStatus
+
+		Status        leaveRequestStatus
+		RequesterKind string
+
+		Requests []leaveRequest
+	}{
+		leaveRequestStatuses,
+
+		status,
+		requesterKind,
+
+		requests,
+	}
 
 	if err := render(w, r, "allleaverequests", data); err != nil {
 		log.Errorf(c, "Could not render template allrequests: %s", err)
