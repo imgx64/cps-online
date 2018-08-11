@@ -93,18 +93,8 @@ func render(w http.ResponseWriter, r *http.Request,
 }
 
 var funcMap = htmltemplate.FuncMap{
-	"formatDate": func(t time.Time) string {
-		if t.IsZero() {
-			return ""
-		}
-		return t.Format("2006-01-02")
-	},
-	"formatTime": func(t time.Time) string {
-		if t.IsZero() {
-			return ""
-		}
-		return t.Format("15:04")
-	},
+	"formatDate": formatDate,
+	"formatTime": formatTime,
 	"equal": func(item1, item2 interface{}) bool {
 		return reflect.DeepEqual(item1, item2)
 	},
@@ -175,6 +165,20 @@ func maxAndWeight(max, weight float64) string {
 		return maxStr
 	}
 	return fmt.Sprintf("%s (%s)", maxStr, formatMarkTrim(weight))
+}
+
+func formatDate(t time.Time) string {
+	if t.IsZero() {
+		return ""
+	}
+	return t.Format("2006-01-02")
+}
+
+func formatTime(t time.Time) string {
+	if t.IsZero() {
+		return ""
+	}
+	return t.Format("15:04")
 }
 
 func parseDate(s string) (time.Time, error) {

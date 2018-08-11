@@ -79,6 +79,11 @@ var access = map[string]roles{
 	"/leave/myrequests":   anyRole,
 	"/leave/request":      anyRole,
 	"/leave/request/save": anyRole,
+	"/attendance":         hrRole,
+	"/attendance/save":    hrRole,
+	"/attendance/import":  hrRole,
+	"/attendance/export":  hrRole,
+	"/attendance/report":  hrRole,
 
 	"/reportcard":       studentRole,
 	"/documents":        studentRole,
@@ -136,6 +141,8 @@ var pages = []link{
 
 	{Name: "Review Leave Requests", URL: "/leave/allrequests"},
 	{Name: "My Leave Requests", URL: "/leave/myrequests"},
+	{Name: "Attendance", URL: "/attendance"},
+	{Name: "Attendance Report", URL: "/attendance/report"},
 }
 
 func canAccess(userRoles roles, url string) bool {

@@ -1,0 +1,69 @@
+{{/*
+Copyright 2018 Ibrahim Ghazal. All rights reserved.
+Use of this source code is governed by a BSD-style
+license that can be found in the LICENSE file.
+*/}}
+
+{{define "title"}}Attendance{{end}}
+{{define "content"}}
+<form class="form-inline" action="">
+	<label class="form-group" for="Date">Date:</label>
+	<div class="form-group">
+		<input type="date" id="Date" name="Date" class="form-control" value="{{.Date | formatDate}}">
+	</div>
+	<label class="form-group" for="Group">Group:</label>
+	<div class="form-group">
+		<select id="Group" name="Group" class="form-control">
+			<option {{if equal "employee" $.Group}}selected{{end}}
+				value="employee">Employees</option>
+			<!-- TODO: students -->
+		</select>
+	</div>
+	<div class="form-group">
+		<input type="submit" class="btn btn-default hidden-print" value="Go">
+	</div>
+</form>
+<form class="spacer" action="/attendance/save" method="post">
+	<table class="table table-bordered table-condensed">
+		<thead>
+			<tr>
+				<th scope="col">Name</th>
+				<th scope="col">From</th>
+				<th scope="col">To</th>
+			</tr>
+		</thead>
+		<tbody>
+			{{range $i, $_ := .Attendances}}
+			<tr>
+				<td>
+					<input type="hidden" name="key-{{$i}}" value="{{.UserKey.Encode}}">
+					{{.UserName}}
+				</td>
+				<td>
+					<input type="time" class="form-control"
+						name="from-{{$i}}" value="{{.From | formatTime}}">
+				</td>
+				<td>
+					<input type="time" class="form-control"
+						name="to-{{$i}}" value="{{.To | formatTime}}">
+				</td>
+			</tr>
+			{{end}}
+		</tbody>
+	</table>
+	<input type="submit" class="btn btn-default btn-primary hidden-print" value="Save">
+</form>
+<div class="hidden-print">
+	<h2>Export/Import</h2>
+	<a class="btn btn-default" href="/attendance/export?Date={{.Date | formatDate}}&Group={{.Group}}">Export Attendance</a>
+	<form class="form-inline spacer" action="/attendance/import" method="post" enctype="multipart/form-data">
+		<div class="form-group">
+			<input type="file" name="csvfile" accept="text/csv" class="form-control">
+		</div>
+		<div class="form-group">
+			<button type="submit" class="btn btn-default">Import Attendance</button>
+		</div>
+	</form>
+	<div class="spacer"></div>
+</div>
+{{end}}
