@@ -270,12 +270,8 @@ func leaveAllrequestsHandler(w http.ResponseWriter, r *http.Request) {
 
 	requester := r.Form.Get("Requester")
 	requesterKind := ""
-	if requester == "All" {
-		requesterKind = ""
-	} else if requester == "Employees" {
-		requesterKind = "employee"
-	} else if requester == "Students" {
-		requesterKind = "student"
+	if requester == "" || requester == "employee" || requester == "student" {
+		requesterKind = requester
 	}
 
 	requests, err := searchLeaveRequests(c, status, requesterKind)
@@ -302,7 +298,7 @@ func leaveAllrequestsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := render(w, r, "allleaverequests", data); err != nil {
-		log.Errorf(c, "Could not render template allrequests: %s", err)
+		log.Errorf(c, "Could not render template allleaverequests: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -332,7 +328,7 @@ func leaveMyrequestsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := render(w, r, "myleaverequests", data); err != nil {
-		log.Errorf(c, "Could not render template allrequests: %s", err)
+		log.Errorf(c, "Could not render template myleaverequests: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -384,7 +380,7 @@ func leaveRequestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := render(w, r, "leaverequest", data); err != nil {
-		log.Errorf(c, "Could not render template allrequests: %s", err)
+		log.Errorf(c, "Could not render template leaverequest: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}

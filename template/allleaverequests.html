@@ -7,7 +7,7 @@ license that can be found in the LICENSE file.
 {{define "title"}}Review Leave Requests{{end}}
 {{define "content"}}
 <form class="form-inline" action="">
-	<div class="form-group">Status:</div>
+	<label class="form-group" for="Status">Status:</label>
 	<div class="form-group">
 		<select id="Status" name="Status" class="form-control">
 			<option value="all">All</option>
@@ -17,12 +17,15 @@ license that can be found in the LICENSE file.
 			{{end}}
 		</select>
 	</div>
-	<div class="form-group">Requester:</div>
+	<label class="form-group" for="Requester">Requester:</label>
 	<div class="form-group">
 		<select id="Requester" name="Requester" class="form-control">
-			<option {{if equal "" $.RequesterKind}}selected{{end}}>All</option>
-			<option {{if equal "employee" $.RequesterKind}}selected{{end}}>Employees</option>
-			<option {{if equal "student" $.RequesterKind}}selected{{end}}>Students</option>
+			<option {{if equal "" $.RequesterKind}}selected{{end}}
+				value="">All</option>
+			<option {{if equal "employee" $.RequesterKind}}selected{{end}}
+				value="employee">Employees</option>
+			<option {{if equal "student" $.RequesterKind}}selected{{end}}
+				value="student">Students</option>
 		</select>
 	</div>
 	<div class="form-group">
