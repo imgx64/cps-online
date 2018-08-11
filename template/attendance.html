@@ -24,6 +24,8 @@ license that can be found in the LICENSE file.
 	</div>
 </form>
 <form class="spacer" action="/attendance/save" method="post">
+	<input type="hidden" name="Date" value="{{.Date | formatDate}}">
+	<input type="hidden" name="Group" value="{{.Group}}">
 	<table class="table table-bordered table-condensed">
 		<thead>
 			<tr>

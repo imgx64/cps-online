@@ -14,6 +14,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -139,6 +140,64 @@ func attendanceHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func attendanceSaveHandler(w http.ResponseWriter, r *http.Request) {
+	c := appengine.NewContext(r)
+
+	if err := r.ParseForm(); err != nil {
+		log.Errorf(c, "Could not parse form: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	date, err := parseDate(r.PostForm.Get("Date"))
+	if err != nil {
+		log.Errorf(c, "Invalid date: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	isError := false
+	for i := 0; true; i++ {
+		keyStr := r.PostForm.Get(fmt.Sprintf("key-%d", i))
+		if keyStr == "" {
+			break
+		}
+
+		key, err1 := datastore.DecodeKey(keyStr)
+		from, err2 := parseTime(r.PostForm.Get(fmt.Sprintf("from-%d", i)))
+		to, err3 := parseTime(r.PostForm.Get(fmt.Sprintf("to-%d", i)))
+		if err1 != nil || err2 != nil || err3 != nil {
+			log.Errorf(c, "Invalid attendance: %s %s %s", err1, err2, err3)
+			isError = true
+			continue
+		}
+
+		att := Attendance{
+			Date:    date,
+			UserKey: key,
+			From:    from,
+			To:      to,
+		}
+		log.Debugf(c, "%#v", att)
+
+		err = storeAttendance(c, att)
+		if err != nil {
+			log.Errorf(c, "Unable to store attendance: %s", err)
+			isError = true
+			continue
+		}
+	}
+
+	if isError {
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	urlValues := url.Values{
+		"Date":  []string{r.PostForm.Get("Date")},
+		"Group": []string{r.PostForm.Get("Group")},
+	}
+	redirectUrl := fmt.Sprintf("/attendance?%s", urlValues.Encode())
+	http.Redirect(w, r, redirectUrl, http.StatusFound)
 }
 
 func attendanceImportHandler(w http.ResponseWriter, r *http.Request) {
