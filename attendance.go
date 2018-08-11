@@ -11,6 +11,7 @@ import (
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/log"
 
+	"encoding/csv"
 	"errors"
 	"fmt"
 	"net/http"
@@ -204,6 +205,69 @@ func attendanceImportHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func attendanceExportHandler(w http.ResponseWriter, r *http.Request) {
+	c := appengine.NewContext(r)
+
+	if err := r.ParseForm(); err != nil {
+		log.Errorf(c, "Could not parse form: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	group := r.Form.Get("Group")
+	if group == "" {
+		group = "employee"
+	}
+
+	date, err := parseDate(r.Form.Get("Date"))
+	if err != nil {
+		log.Errorf(c, "Invalid date: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+	if date.IsZero() {
+		date = time.Now()
+	}
+
+	attendances, err := getGroupAttendances(c, date, group)
+	if err != nil {
+		log.Errorf(c, "Unable to get group attendance: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	filename := fmt.Sprintf("Attendance-%s-%s", group, date)
+
+	w.Header().Set("Content-Type", "text/csv")
+	// Force save as with filename
+	w.Header().Set("Content-Disposition",
+		fmt.Sprintf("attachment;filename=%s.csv", filename))
+
+	var errors []error
+	csvw := csv.NewWriter(w)
+	csvw.UseCRLF = true
+
+	fieldNames := []string{"", "Name", "Date", "From", "To"}
+	fieldMax := []string{"Do not modify this column", "", "yyyy-mm-dd", "24-hour format", "24-hour format"}
+	errors = append(errors, csvw.Write(fieldNames))
+	errors = append(errors, csvw.Write(fieldMax))
+
+	for _, att := range attendances {
+		var row []string
+		row = append(row, att.UserKey.Encode())
+		row = append(row, att.UserName)
+		row = append(row, formatDate(att.Date))
+		row = append(row, formatTime(att.From))
+		row = append(row, formatTime(att.To))
+		errors = append(errors, csvw.Write(row))
+	}
+
+	csvw.Flush()
+
+	for _, err := range errors {
+		if err != nil {
+			log.Errorf(c, "Error writing csv: %s", err)
+		}
+	}
 }
 
 func attendanceReportHandler(w http.ResponseWriter, r *http.Request) {
