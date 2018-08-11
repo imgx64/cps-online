@@ -14,8 +14,10 @@ import (
 	"encoding/csv"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
+	"reflect"
 	"time"
 )
 
@@ -202,7 +204,92 @@ func attendanceSaveHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func attendanceImportHandler(w http.ResponseWriter, r *http.Request) {
+	c := appengine.NewContext(r)
+
+	err := r.ParseMultipartForm(1e6)
+	if err != nil {
+		log.Errorf(c, "Could not parse form: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+	if r.MultipartForm == nil || len(r.MultipartForm.File["csvfile"]) != 1 {
+		log.Errorf(c, "empty file")
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	file, err := r.MultipartForm.File["csvfile"][0].Open()
+	if err != nil {
+		log.Errorf(c, "Could not open uploaded file: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+	defer file.Close()
+
+	csvr := csv.NewReader(file)
+	csvr.LazyQuotes = true
+	csvr.TrailingComma = true
+	errorMsg := ""
+	i := 0
+	for {
+		i++
+		record, err := csvr.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			var msg = fmt.Sprintf("%d: Invalid row: %s", i, err)
+			log.Errorf(c, msg)
+			errorMsg += msg + ", "
+			continue
+		}
+		if i == 1 {
+			// header
+			if !reflect.DeepEqual(record, attendanceFields) {
+				errorMsg = fmt.Sprintf("Invalid file format: %q", record)
+				log.Errorf(c, errorMsg)
+				break
+			}
+			continue
+		} else if i == 2 {
+			// descriptions
+			continue
+		}
+
+		var att Attendance
+		var err1, err2, err3, err4 error
+
+		att.UserKey, err1 = datastore.DecodeKey(record[0])
+		att.Date, err2 = parseDate(record[2])
+		att.From, err3 = parseTime(record[3])
+		att.To, err4 = parseTime(record[4])
+		if err1 != nil || err2 != nil || err3 != nil || err4 != nil {
+			var msg = fmt.Sprintf("%d: Invalid row: %s %s %s %s", i,
+				err1, err2, err2, err4)
+			log.Errorf(c, msg)
+			errorMsg += msg + ", "
+			continue
+		}
+
+		err = storeAttendance(c, att)
+		if err != nil {
+			var msg = fmt.Sprintf("%d: unable to save: %s", i, err)
+			log.Errorf(c, msg)
+			errorMsg += msg + ", "
+			continue
+		}
+	}
+
+	if errorMsg != "" {
+		// no errors
+		renderErrorMsg(w, r, http.StatusInternalServerError, errorMsg)
+		return
+	}
+
+	http.Redirect(w, r, "/attendance", http.StatusFound)
 }
+
+var attendanceFields []string = []string{"", "Name", "Date", "From", "To"}
 
 func attendanceExportHandler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
@@ -246,9 +333,8 @@ func attendanceExportHandler(w http.ResponseWriter, r *http.Request) {
 	csvw := csv.NewWriter(w)
 	csvw.UseCRLF = true
 
-	fieldNames := []string{"", "Name", "Date", "From", "To"}
 	fieldMax := []string{"Do not modify this column", "", "yyyy-mm-dd", "24-hour format", "24-hour format"}
-	errors = append(errors, csvw.Write(fieldNames))
+	errors = append(errors, csvw.Write(attendanceFields))
 	errors = append(errors, csvw.Write(fieldMax))
 
 	for _, att := range attendances {
