@@ -281,7 +281,6 @@ func attendanceImportHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if errorMsg != "" {
-		// no errors
 		renderErrorMsg(w, r, http.StatusInternalServerError, errorMsg)
 		return
 	}
@@ -357,4 +356,127 @@ func attendanceExportHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func attendanceReportHandler(w http.ResponseWriter, r *http.Request) {
+	c := appengine.NewContext(r)
+
+	if err := r.ParseForm(); err != nil {
+		log.Errorf(c, "Could not parse form: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	group := r.Form.Get("Group")
+
+	fromDate, err := parseDate(r.Form.Get("FromDate"))
+	if err != nil {
+		log.Errorf(c, "Invalid date: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+	if fromDate.IsZero() {
+		fromDate = time.Now()
+	}
+
+	toDate, err := parseDate(r.Form.Get("ToDate"))
+	if err != nil {
+		log.Errorf(c, "Invalid toDate: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+	if toDate.IsZero() {
+		toDate = time.Now()
+	}
+
+	duration := toDate.Sub(fromDate)
+	if duration < 0 {
+		renderErrorMsg(w, r, http.StatusBadRequest, "\"From\" must be before \"To\"")
+		return
+	}
+	day := time.Hour * 24
+	numDays := duration / day
+	if numDays > 31 {
+		renderErrorMsg(w, r, http.StatusBadRequest, "Can't show more than one month at a time")
+		return
+	}
+
+	var rows [][]string
+
+	// Row for dates
+	rows = append(rows, make([]string, 2, 2+numDays))
+
+	if group == "" {
+		// Do nothing
+	} else if group == "employee" {
+		employees, err := getEmployees(c, true, "all")
+		if err != nil {
+			log.Errorf(c, "Could not get employees: %s", err)
+			renderError(w, r, http.StatusInternalServerError)
+			return
+		}
+		for _, emp := range employees {
+			row := make([]string, 2, 2+numDays)
+			row[0] = datastore.NewKey(c, "employee", "", emp.ID, nil).Encode()
+			row[1] = emp.Name
+			rows = append(rows, row)
+		}
+	} else {
+		log.Errorf(c, "Unknown group: %s", group)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	for i, row := range rows {
+		var key *datastore.Key
+		if i != 0 {
+			key, err = datastore.DecodeKey(row[0])
+			if err != nil {
+				log.Errorf(c, "Could not decode key: %s", err)
+				renderError(w, r, http.StatusInternalServerError)
+				return
+			}
+		}
+
+		// TODO: get leaves
+
+		for date := fromDate; date.Before(toDate.Add(1)); date = date.Add(day) {
+			if i == 0 {
+				rows[i] = append(row, formatDate(date))
+				continue
+			}
+
+			att, err := getAttendance(c, date, key, "")
+			if err != nil {
+				log.Errorf(c, "Could not get attendance: %s", err)
+				renderError(w, r, http.StatusInternalServerError)
+				return
+			}
+			cell := fmt.Sprintf("%s - %s", formatTime(att.From), formatTime(att.To))
+
+			rows[i] = append(row, cell)
+		}
+	}
+
+	if len(rows) == 1 {
+		// No data
+		rows = nil
+	}
+
+	data := struct {
+		FromDate time.Time
+		ToDate   time.Time
+		Group    string
+
+		Rows [][]string
+	}{
+		fromDate,
+		toDate,
+		group,
+
+		rows,
+	}
+
+	if err := render(w, r, "attendancereport", data); err != nil {
+		log.Errorf(c, "Could not render template attendancereport: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
 }

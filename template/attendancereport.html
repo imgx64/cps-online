@@ -1,0 +1,41 @@
+{{/*
+Copyright 2018 Ibrahim Ghazal. All rights reserved.
+Use of this source code is governed by a BSD-style
+license that can be found in the LICENSE file.
+*/}}
+
+{{define "title"}}Attendance Report{{end}}
+{{define "content"}}
+<form class="form-inline" action="">
+	<label class="form-group" for="FromDate">From:</label>
+	<div class="form-group">
+		<input type="FromDate" id="FromDate" name="FromDate" class="form-control" value="{{.FromDate | formatDate}}">
+	</div>
+	<label class="form-group" for="ToDate">To:</label>
+	<div class="form-group">
+		<input type="ToDate" id="ToDate" name="ToDate" class="form-control" value="{{.ToDate | formatDate}}">
+	</div>
+	<label class="form-group" for="Group">Group:</label>
+	<div class="form-group">
+		<select id="Group" name="Group" class="form-control">
+			<option {{if equal "employee" $.Group}}selected{{end}}
+				value="employee">Employees</option>
+			<!-- TODO: students -->
+		</select>
+	</div>
+	<div class="form-group">
+		<input type="submit" class="btn btn-default hidden-print" value="Go">
+	</div>
+</form>
+<table class="table table-bordered table-condensed marks-table spacer">
+	{{range .Rows}}
+		<tr>
+		{{range $i, $_ := .}}
+			{{if gt $i 0}}
+			<td>{{.}}</td>
+			{{end}}
+		{{end}}
+		</tr>
+	{{end}}
+</table>
+{{end}}
