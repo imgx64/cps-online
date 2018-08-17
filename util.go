@@ -93,8 +93,10 @@ func render(w http.ResponseWriter, r *http.Request,
 }
 
 var funcMap = htmltemplate.FuncMap{
-	"formatDate": formatDate,
-	"formatTime": formatTime,
+	"formatDate":      formatDate,
+	"formatDateHuman": formatDateHuman,
+	"formatTime":      formatTime,
+	"formatTimeHuman": formatTimeHuman,
 	"equal": func(item1, item2 interface{}) bool {
 		return reflect.DeepEqual(item1, item2)
 	},
@@ -174,11 +176,25 @@ func formatDate(t time.Time) string {
 	return t.Format("2006-01-02")
 }
 
+func formatDateHuman(t time.Time) string {
+	if t.IsZero() {
+		return ""
+	}
+	return t.Format("02/01/2006")
+}
+
 func formatTime(t time.Time) string {
 	if t.IsZero() {
 		return ""
 	}
 	return t.Format("15:04")
+}
+
+func formatTimeHuman(t time.Time) string {
+	if t.IsZero() {
+		return ""
+	}
+	return t.Format("03:04PM")
 }
 
 func parseDate(s string) (time.Time, error) {

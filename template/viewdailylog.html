@@ -22,7 +22,7 @@ license that can be found in the LICENSE file.
 		<tbody>
 			{{range .Dailylogs}}
 			<tr>
-				<td>{{formatDate .Date}}</td>
+				<td>{{formatDateHuman .Date}}</td>
 				<td>{{cut .Behavior}}</td>
 				<td>{{.Attendance}}</td>
 				<td>{{cut .Details}}</td>

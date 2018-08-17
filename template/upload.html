@@ -65,7 +65,7 @@ license that can be found in the LICENSE file.
 		<tbody>
 			{{range .Documents}}
 			<tr>
-				<td>{{formatDate .UploadDate}}</td>
+				<td>{{formatDateHuman .UploadDate}}</td>
 				<td>{{if .Class}}{{.Class}}{{else}}All{{end}}</td>
 				<td>{{.Title}}</td>
 				<td>

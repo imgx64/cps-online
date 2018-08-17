@@ -49,8 +49,8 @@ license that can be found in the LICENSE file.
 			<tr>
 				<td>{{.RequesterName}}</td>
 				<td>{{.Type}}</td>
-				<td>{{.StartDate | formatDate}}</td>
-				<td>{{if .Time.IsZero}}{{.EndDate | formatDate}}{{else}}{{.Time | formatTime}}{{end}}</td>
+				<td>{{.StartDate | formatDateHuman}}</td>
+				<td>{{if .Time.IsZero}}{{.EndDate | formatDateHuman}}{{else}}{{.Time | formatTimeHuman}}{{end}}</td>
 				<td>{{.Status}}</td>
 				<td><a class="btn btn-default btn-sm" href="/leave/request?key={{.Key.Encode}}">View</a></td>
 			</tr>

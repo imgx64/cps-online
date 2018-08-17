@@ -9,7 +9,7 @@ license that can be found in the LICENSE file.
 {{with .Dailylog}}
 <form class="form-horizontal" action="/dailylog/save" method="POST">
 	<fieldset>
-		<legend>Daily Log for {{formatDate .Date}}</legend>
+		<legend>Daily Log for {{formatDateHuman .Date}}</legend>
 		<input type="hidden" name="ID" value={{.StudentID}}>
 		<input type="hidden" name="Date" value={{formatDate .Date}}>
 		<div class="form-group">

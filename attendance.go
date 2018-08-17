@@ -445,7 +445,7 @@ func attendanceReportHandler(w http.ResponseWriter, r *http.Request) {
 
 		for date := fromDate; date.Before(toDate.Add(1)); date = date.Add(day) {
 			if i == 0 {
-				row = append(row, formatDate(date))
+				row = append(row, formatDateHuman(date))
 				rows[i] = row
 				continue
 			}
@@ -456,14 +456,14 @@ func attendanceReportHandler(w http.ResponseWriter, r *http.Request) {
 				renderError(w, r, http.StatusInternalServerError)
 				return
 			}
-			cell := fmt.Sprintf("%s - %s", formatTime(att.From), formatTime(att.To))
+			cell := fmt.Sprintf("%s - %s", formatTimeHuman(att.From), formatTimeHuman(att.To))
 
 			for _, leaveRequest := range leaveRequests {
 				if leaveRequest.StartDate.Add(-1).Before(date) &&
 					date.Before(leaveRequest.EndDate.Add(1)) {
 
 					if !leaveRequest.Time.IsZero() {
-						cell += " (" + string(leaveRequest.Type) + " " + formatTime(leaveRequest.Time) + ")"
+						cell += " (" + string(leaveRequest.Type) + " " + formatTimeHuman(leaveRequest.Time) + ")"
 					} else {
 						cell += " (" + string(leaveRequest.Type) + ")"
 					}
