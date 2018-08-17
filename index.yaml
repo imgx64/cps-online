@@ -44,6 +44,12 @@ indexes:
 
 - kind: leaverequest
   properties:
+  - name: RequesterKey
+  - name: Status
+  - name: EndDate
+
+- kind: leaverequest
+  properties:
   - name: RequesterKeyKind
   - name: StartDate
   - name: Time

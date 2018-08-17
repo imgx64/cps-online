@@ -38,4 +38,9 @@ license that can be found in the LICENSE file.
 		</tr>
 	{{end}}
 </table>
+<div>
+{{range .LeaveTypes}}
+	<p><b>{{.Value}}</b>: {{.}}</p>
+{{end}}
+</div>
 {{end}}

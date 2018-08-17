@@ -426,6 +426,7 @@ func attendanceReportHandler(w http.ResponseWriter, r *http.Request) {
 
 	for i, row := range rows {
 		var key *datastore.Key
+		var leaveRequests []leaveRequest
 		if i != 0 {
 			key, err = datastore.DecodeKey(row[0])
 			if err != nil {
@@ -433,13 +434,19 @@ func attendanceReportHandler(w http.ResponseWriter, r *http.Request) {
 				renderError(w, r, http.StatusInternalServerError)
 				return
 			}
-		}
 
-		// TODO: get leaves
+			leaveRequests, err = getUserLeaveRequests2(c, key, leaveRequestApproved, fromDate)
+			if err != nil {
+				log.Errorf(c, "Could not get leave requests: %s", err)
+				renderError(w, r, http.StatusInternalServerError)
+				return
+			}
+		}
 
 		for date := fromDate; date.Before(toDate.Add(1)); date = date.Add(day) {
 			if i == 0 {
-				rows[i] = append(row, formatDate(date))
+				row = append(row, formatDate(date))
+				rows[i] = row
 				continue
 			}
 
@@ -451,7 +458,21 @@ func attendanceReportHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			cell := fmt.Sprintf("%s - %s", formatTime(att.From), formatTime(att.To))
 
-			rows[i] = append(row, cell)
+			for _, leaveRequest := range leaveRequests {
+				if leaveRequest.StartDate.Add(-1).Before(date) &&
+					date.Before(leaveRequest.EndDate.Add(1)) {
+
+					if !leaveRequest.Time.IsZero() {
+						cell += " (" + string(leaveRequest.Type) + " " + formatTime(leaveRequest.Time) + ")"
+					} else {
+						cell += " (" + string(leaveRequest.Type) + ")"
+					}
+					break
+				}
+			}
+
+			row = append(row, cell)
+			rows[i] = row
 		}
 	}
 
@@ -461,12 +482,14 @@ func attendanceReportHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := struct {
-		FromDate time.Time
-		ToDate   time.Time
-		Group    string
+		LeaveTypes []leaveType
+		FromDate   time.Time
+		ToDate     time.Time
+		Group      string
 
 		Rows [][]string
 	}{
+		leaveTypes,
 		fromDate,
 		toDate,
 		group,

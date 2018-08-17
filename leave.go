@@ -91,12 +91,30 @@ func getLeaveRequest(c context.Context, user user, keyEncoded string) (leaveRequ
 	return request, nil
 }
 
-func getUserLeaveRequests(c context.Context, user user) ([]leaveRequest, error) {
+func getUserLeaveRequests(c context.Context, userKey *datastore.Key) ([]leaveRequest, error) {
+	var zeroTime time.Time
+	return getUserLeaveRequests2(c, userKey, "", zeroTime)
+}
+
+func getUserLeaveRequests2(c context.Context, userKey *datastore.Key,
+	status leaveRequestStatus, fromDate time.Time) ([]leaveRequest, error) {
+
 	q := datastore.NewQuery("leaverequest")
-	q = q.Filter("RequesterKey =", user.Key())
-	q = q.Order("StartDate")
-	q = q.Order("Time")
-	q = q.Order("EndDate")
+	q = q.Filter("RequesterKey =", userKey)
+	if status != "" {
+		q = q.Filter("Status =", status)
+	}
+	if !fromDate.IsZero() {
+		q = q.Filter("EndDate >=", fromDate)
+	} else {
+		q = q.Order("StartDate")
+		q = q.Order("Time")
+		q = q.Order("EndDate")
+	}
+	// Only one inequality filter per query is supported.
+	//if !toDate.IsZero() {
+	//q = q.Filter("StartDate <=", toDate)
+	//}
 
 	var requests []leaveRequest
 	keys, err := q.GetAll(c, &requests)
@@ -314,7 +332,7 @@ func leaveMyrequestsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	requests, err := getUserLeaveRequests(c, user)
+	requests, err := getUserLeaveRequests(c, user.Key())
 	if err != nil {
 		log.Errorf(c, "Could not get user leave requests: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
