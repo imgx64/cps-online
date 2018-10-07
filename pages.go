@@ -70,6 +70,7 @@ var access = map[string]roles{
 	"/upload":           teacherRole,
 	"/upload/file":      teacherRole,
 	"/upload/link":      teacherRole,
+	"/upload/delete":    teacherRole,
 	"/dailylog":         teacherRole,
 	"/dailylog/student": teacherRole,
 	"/dailylog/edit":    teacherRole,

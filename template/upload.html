@@ -69,6 +69,7 @@ license that can be found in the LICENSE file.
 				<td>{{if .Class}}{{.Class}}{{else}}All{{end}}</td>
 				<td>{{.Title}}</td>
 				<td>
+					<form action="/upload/delete" method="POST" class="form-inline">
 					<a class="btn btn-default btn-sm"
 					{{if equal .URL ""}}
 						href="/download/{{.Filename}}?blobKey={{.BlobKey}}"
@@ -76,6 +77,10 @@ license that can be found in the LICENSE file.
 						href="{{.URL}}"
 					{{end}}
 						>Download</a>
+						<input type="hidden" name="key" value="{{.Key.IntID}}">
+						<input type="submit"
+						class="btn btn-danger btn-sm hidden-print are-you-sure" value="Delete">
+					</form>
 				</td>
 			</tr>
 			{{else}}
