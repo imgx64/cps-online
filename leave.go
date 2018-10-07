@@ -84,7 +84,7 @@ func getLeaveRequest(c context.Context, user user, keyEncoded string) (leaveRequ
 	if request.Type == LeaveOfAbsence {
 		var zeroTime time.Time
 		request.Time = zeroTime
-	} else if request.Type == EarlyDeparture {
+	} else if request.Type == EarlyDeparture || request.Type == LateArrival {
 		request.EndDate = request.StartDate
 	}
 
@@ -205,16 +205,19 @@ type leaveType string
 const (
 	LeaveOfAbsence leaveType = "LoA"
 	EarlyDeparture leaveType = "ED"
+	LateArrival    leaveType = "LA"
 )
 
 var leaveTypes = []leaveType{
 	LeaveOfAbsence,
 	EarlyDeparture,
+	LateArrival,
 }
 
 var leaveTypeStrings = map[leaveType]string{
 	LeaveOfAbsence: "Leave Of Absence",
 	EarlyDeparture: "Early Departure",
+	LateArrival:    "Late Arrival",
 }
 
 func (lt leaveType) Value() string {
@@ -475,7 +478,7 @@ func leaveRequestSaveHandler(w http.ResponseWriter, r *http.Request) {
 		if request.Type == LeaveOfAbsence {
 			var zeroTime time.Time
 			request.Time = zeroTime
-		} else if request.Type == EarlyDeparture {
+		} else if request.Type == EarlyDeparture || request.Type == LateArrival {
 			request.EndDate = request.StartDate
 		} else {
 			log.Errorf(c, "Invalid leave request. Type: %s", request.Type)

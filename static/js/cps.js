@@ -77,7 +77,7 @@
 					$("#EndDate").val($("#StartDate").val());
 				}
 				$("#Time").val('00:00');
-			} else if (e.target.value == "ED") {
+			} else if (e.target.value == "ED" || e.target.value == "LA") {
 				$("#EndDate").val($("#StartDate").val());
 				$("#Time").attr('disabled',false);
 			}
