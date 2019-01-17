@@ -52,6 +52,7 @@ func saveSubjects(c context.Context, sy, class string, subjects []string) error 
 }
 
 func getSubject(c context.Context, sy, class, subjectname string) (Subject, error) {
+
 	key := datastore.NewKey(c, "subjects",
 		fmt.Sprintf("%s-%s-%s", sy, class, subjectname), 0, nil)
 

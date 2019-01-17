@@ -180,7 +180,6 @@ func attendanceSaveHandler(w http.ResponseWriter, r *http.Request) {
 			From:    from,
 			To:      to,
 		}
-		log.Debugf(c, "%#v", att)
 
 		err = storeAttendance(c, att)
 		if err != nil {

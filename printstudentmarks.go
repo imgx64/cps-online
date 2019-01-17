@@ -109,7 +109,7 @@ func printStudentMarksHandler(w http.ResponseWriter, r *http.Request) {
 			subjectsMarks = append(subjectsMarks, mark)
 
 			studentMarksRows = append(studentMarksRows, studentMarksRow{
-				subject, gs.description(c, term), marks[term], letter})
+				subject, gs.description(c, sy, term), marks[term], letter})
 		}
 
 		average := total / float64(numInAverage)

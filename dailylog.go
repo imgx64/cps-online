@@ -236,7 +236,6 @@ func dailylogSaveHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	f := r.PostForm
-	log.Debugf(c, "%#v", f)
 	id := f.Get("ID")
 	date, err := time.Parse("2006-01-02", f.Get("Date"))
 	if err != nil {
