@@ -129,6 +129,16 @@ license that can be found in the LICENSE file.
 				</table>
 			</div>
 			{{end}}
+			<table class="cps-reportcard-attendance">
+				<tbody>
+					<tr>
+					{{$attDescriptions := .AttendanceDesc}}
+					{{range $i, $att := .Attendance}}
+						<td>{{(index $attDescriptions $i).Name}}: {{$att}}</td>
+					{{end}}
+					</tr>
+				</tbody>
+			</table>
 			<div class="cps-reportcard-footer">
 				<div class="cps-reportcard-signature">Class Teacher : ....................</div>
 				<div class="cps-reportcard-signature">Principal : ....................</div>

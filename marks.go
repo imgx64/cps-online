@@ -382,7 +382,7 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	subjects := getAllSubjects(c, sy)
-	subjects = append(subjects, "Behavior", "Remarks")
+	subjects = append(subjects, "Behavior", "Remarks", "Attendance")
 
 	classGroups := getClassGroups(c, sy)
 
@@ -930,7 +930,7 @@ func subjectsMapHandler(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 			if len(realClassSubjects) > 0 {
-				realClassSubjects = append(realClassSubjects, "Remarks", "Behavior")
+				realClassSubjects = append(realClassSubjects, "Remarks", "Behavior", "Attendance")
 				for _, section := range classGroup.Sections {
 					classSection := classGroup.Class + "|" + section
 					termMap[classSection] = realClassSubjects

@@ -112,7 +112,7 @@ func printAllHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		for _, sub := range subjects {
-			if sub == "Remarks" || sub == "Behavior" {
+			if sub == "Remarks" || sub == "Behavior" || sub == "Attendance" {
 				continue
 			}
 			maxCols = append(maxCols, colDescription{sub, 100, math.NaN(), false})
@@ -123,7 +123,7 @@ func printAllHandler(w http.ResponseWriter, r *http.Request) {
 			numInAverage := 0
 			var studentMarksArr []float64
 			for _, subject := range subjects {
-				if subject == "Remarks" || subject == "Behavior" {
+				if subject == "Remarks" || subject == "Behavior" || subject == "Attendance" {
 					continue
 				}
 				gs := getGradingSystem(c, sy, stu.Class, subject)
@@ -213,7 +213,7 @@ func printAllHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		subjectsData = append(subjectsData, sub)
 	}
-	subjectsData = append(subjectsData, "Behavior", "All")
+	subjectsData = append(subjectsData, "Behavior", "Attendance", "All")
 
 	data := struct {
 		ClassSection string

@@ -166,6 +166,9 @@ func getGradingSystem(c context.Context, sy, class, subjectname string) gradingS
 	if subjectname == "Behavior" {
 		return behaviorGradingSystem{}
 	}
+	if subjectname == "Attendance" {
+		return attendanceGradingSystem{}
+	}
 	// TODO: err
 	subject, err := getSubject(c, sy, class, subjectname)
 	if err != nil {
@@ -1122,4 +1125,215 @@ func (bgs behaviorGradingSystem) displayName() string {
 
 func (bgs behaviorGradingSystem) subjectInAverage() bool {
 	return false
+}
+
+type attendanceGradingSystem struct {
+}
+
+var enterAttendanceDesc = []colDescription{
+	{"Excused Absence (attendance system)", 99, 99, false},
+	{"Excused Absence (manual adjustment)", 99, 99, true},
+	{"Unexcused Absence", 99, 99, true},
+	{"Excused Tardiness (attendance system)", 99, 99, false},
+	{"Excused Tardiness (manual adjustment)", 99, 99, true},
+	{"Unexcused Tardiness", 99, 99, true},
+}
+
+var displayAttendanceDesc = []colDescription{
+	{"Excused Absence", 99, 99, false},
+	{"Unexcused Absence", 99, 99, false},
+	{"Excused Tardiness", 99, 99, false},
+	{"Unexcused Tardiness", 99, 99, false},
+}
+
+func semesterAttendanceDesc(q1Name, q2Name string) []colDescription {
+	return []colDescription{
+		{q1Name + "/Midterm Excused Absence", 99, 99, false},
+		{q2Name + " Excused Absence", 99, 99, false},
+		{"Semester Excused Absence (attendance system)", 99, 99, false},
+		{"Semester Excused Absence (manual adjustment)", 99, 99, true},
+		{"Total Excused Absence", 99, 99, false},
+
+		{q1Name + "/Midterm  Unexcused Absence", 99, 99, false},
+		{q2Name + " Unexcused Absence", 99, 99, false},
+		{"Semester Unexcused Absence", 99, 99, true},
+		{"Total Unexcused Absence", 99, 99, false},
+
+		{q1Name + "/Midterm  Excused Tardiness", 99, 99, false},
+		{q2Name + " Excused Tardiness", 99, 99, false},
+		{"Semester Excused Tardiness (attendance system)", 99, 99, false},
+		{"Semester Excused Tardiness (manual adjustment)", 99, 99, true},
+		{"Total Excused Tardiness", 99, 99, false},
+
+		{q1Name + "/Midterm  Unexcused Tardiness", 99, 99, false},
+		{q2Name + " Unexcused Tardiness", 99, 99, false},
+		{"Semester Unexcused Tardiness", 99, 99, true},
+		{"Total Unexcused Tardiness", 99, 99, false},
+	}
+}
+
+func (_ attendanceGradingSystem) description(c context.Context, sy string, term Term) []colDescription {
+	if term.Typ == Quarter {
+		return enterAttendanceDesc
+	} else if term.Typ == Midterm {
+		return enterAttendanceDesc
+	} else if term.Typ == Semester {
+		if term.N == 1 {
+			return semesterAttendanceDesc("Q1", "Q2")
+		} else if term.N == 2 {
+			return semesterAttendanceDesc("Q3", "Q4")
+		}
+	} else if term.Typ == EndOfYear {
+		var cols []colDescription
+		for _, desc := range displayAttendanceDesc {
+			for _, t := range []string{"S1", "S2", "Total"} {
+				name := t + " " + desc.Name
+				cols = append(cols, colDescription{name, 99, 99, false})
+			}
+		}
+		return cols
+	} else if term.Typ == WeekS1 || term.Typ == WeekS2 {
+		return nil
+	}
+	panic(fmt.Sprintf("Invalid term type: %d", term.Typ))
+}
+
+func (ags attendanceGradingSystem) evaluate(c context.Context, studentID, sy string, term Term, marks studentMarks) (err error) {
+	m := marks[term]
+	desc := ags.description(c, sy, term)
+
+	switch {
+	case m == nil: // first time to evaluate it
+		m = make([]float64, len(desc))
+		for i, _ := range desc {
+			m[i] = 0
+		}
+	case len(m) != len(desc): // sanity check
+		err = invalidNumberOfMarks
+		m = make([]float64, len(desc))
+		for i, _ := range desc {
+			m[i] = 0
+		}
+	}
+
+	// more sanity checks
+	for i, d := range desc {
+		if m[i] < 0 || m[i] > d.Max {
+			m[i] = 0
+			if err == nil {
+				err = invalidRangeOfMarks
+			}
+		}
+	}
+
+	// calculations
+	if term.Typ == Quarter {
+		m[0] = 0 // TODO: get from attendance system
+		m[3] = 0 // TODO: get from attendance system
+	} else if term.Typ == Midterm {
+		m[0] = 0 // TODO: get from attendance system
+		m[3] = 0 // TODO: get from attendance system
+	} else if term.Typ == Semester {
+		q2 := Term{Quarter, term.N * 2}
+		q1 := Term{Quarter, q2.N - 1}
+		mt := Term{Midterm, term.N}
+
+		ags.evaluate(c, studentID, sy, q1, marks)
+		ags.evaluate(c, studentID, sy, mt, marks)
+		ags.evaluate(c, studentID, sy, q2, marks)
+
+		q1M := marks[q1]
+		mtM := marks[mt]
+		q2M := marks[q2]
+
+		// Excused absence
+		m[0] = q1M[0] + q1M[1] + mtM[0] + mtM[1]
+		m[1] = q2M[0] + q2M[1]
+		m[2] = 0 // TODO: get from attendance system
+		// m[3]
+		m[4] = sumMarks(m[0:4]...)
+
+		// Unexcused absence
+		m[5] = q1M[2] + mtM[2]
+		m[6] = q2M[2]
+		// m[7]
+		m[8] = sumMarks(m[5:8]...)
+
+		// Excused tardiness
+		m[9] = q1M[3] + q1M[4] + mtM[3] + mtM[4]
+		m[10] = q2M[3] + q2M[4]
+		m[11] = 0 // TODO: get from attendance system
+		// m[12]
+		m[13] = sumMarks(m[9:13]...)
+
+		// Unexcused tardiness
+		m[14] = q1M[5] + mtM[5]
+		m[15] = q2M[5]
+		// m[16]
+		m[17] = sumMarks(m[14:17]...)
+
+	} else if term.Typ == EndOfYear {
+		s1 := Term{Semester, 1}
+		s2 := Term{Semester, 2}
+
+		ags.evaluate(c, studentID, sy, s1, marks)
+		ags.evaluate(c, studentID, sy, s2, marks)
+
+		s1M := marks[s1]
+		s2M := marks[s2]
+
+		// Excused absence
+		m[0] = s1M[4]
+		m[1] = s2M[4]
+		m[2] = m[0] + m[1]
+
+		// Unexcused absence
+		m[3] = s1M[8]
+		m[4] = s2M[8]
+		m[5] = m[3] + m[4]
+
+		// Excused tardiness
+		m[6] = s1M[13]
+		m[7] = s2M[13]
+		m[8] = m[6] + m[7]
+
+		// Unexcused tardiness
+		m[9] = s1M[17]
+		m[10] = s2M[17]
+		m[11] = m[9] + m[10]
+
+	} else if term.Typ == WeekS1 || term.Typ == WeekS2 {
+	}
+
+	marks[term] = m
+
+	return
+}
+
+func (_ attendanceGradingSystem) get100(term Term, marks studentMarks) float64 {
+	return 100
+}
+
+func (_ attendanceGradingSystem) getExam(term Term, marks studentMarks) float64 {
+	return math.NaN()
+}
+
+func (_ attendanceGradingSystem) ready(term Term, marks studentMarks) bool {
+	return true
+}
+
+func (_ attendanceGradingSystem) quarterWeight() float64 {
+	return math.NaN()
+}
+
+func (_ attendanceGradingSystem) semesterWeight() float64 {
+	return math.NaN()
+}
+
+func (_ attendanceGradingSystem) subjectInAverage() bool {
+	return false
+}
+
+func (_ attendanceGradingSystem) displayName() string {
+	return "Attendance"
 }

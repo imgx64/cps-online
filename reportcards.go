@@ -32,6 +32,9 @@ type reportcard struct {
 	Behavior     []float64
 	BehaviorDesc []colDescription
 
+	Attendance     []float64
+	AttendanceDesc []colDescription
+
 	LetterDesc   string
 	CalculateAll bool
 }
@@ -132,7 +135,7 @@ func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
-	subjects = append(subjects, "Behavior")
+	subjects = append(subjects, "Behavior", "Attendance")
 
 	for _, stu := range students {
 		rc := reportcard{
@@ -227,6 +230,26 @@ func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 			gs.evaluate(c, stu.ID, sy, term, marks)
 			if subject == "Behavior" {
 				rc.Behavior = marks[term]
+				continue
+			}
+			if subject == "Attendance" {
+				att := marks[term]
+				if term.Typ == Quarter || term.Typ == Midterm {
+					rc.Attendance = append(rc.Attendance, att[0]+att[1])
+					rc.Attendance = append(rc.Attendance, att[2])
+					rc.Attendance = append(rc.Attendance, att[3]+att[4])
+					rc.Attendance = append(rc.Attendance, att[5])
+				} else if term.Typ == Semester {
+					rc.Attendance = append(rc.Attendance, att[4])
+					rc.Attendance = append(rc.Attendance, att[8])
+					rc.Attendance = append(rc.Attendance, att[13])
+					rc.Attendance = append(rc.Attendance, att[17])
+				} else if term.Typ == EndOfYear {
+					rc.Attendance = append(rc.Attendance, att[2])
+					rc.Attendance = append(rc.Attendance, att[5])
+					rc.Attendance = append(rc.Attendance, att[8])
+					rc.Attendance = append(rc.Attendance, att[11])
+				}
 				continue
 			}
 
@@ -324,6 +347,7 @@ func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 		rc.Remark = remark
 
 		rc.BehaviorDesc = behaviorDesc
+		rc.AttendanceDesc = displayAttendanceDesc
 		rc.LetterDesc = ls.String()
 		rc.CalculateAll = calculateAll
 

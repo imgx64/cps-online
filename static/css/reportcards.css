@@ -251,3 +251,10 @@ td.cps-reportcard-remarks {
 	font-weight: bold;
 	background-color: #DDDDDD;
 }
+
+.cps-reportcard-attendance {
+	width: 100%;
+	table-layout: fixed;
+	text-align: center;
+	font-size: small;
+}
