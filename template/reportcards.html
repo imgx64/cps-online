@@ -6,7 +6,7 @@ license that can be found in the LICENSE file.
 
 {{define "title"}}Print Reportcards{{end}}
 {{define "content"}}
-<form class="form-inline" action="/reportcards/print">
+<form class="form-inline" action="/reportcards/select">
 	<div>
 		<select id="Term" name="Term" required="required" class="form-control col-sm-3">
 			{{range .Terms}}
@@ -39,7 +39,8 @@ license that can be found in the LICENSE file.
 		</label>
 	</div>
 	<div>
-		<input type="submit" class="btn btn-default" value="Go">
+		<button type="submit" class="btn btn-default" name="Select" value="all">Print class reportcards</button>
+		<button type="submit" class="btn btn-default">Select students</button>
 	</div>
 </form>
 {{end}}

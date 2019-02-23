@@ -12,6 +12,7 @@ import (
 	htmltemplate "html/template"
 	"math"
 	"net/http"
+	"net/url"
 	"path/filepath"
 )
 
@@ -57,6 +58,7 @@ type reportcardsRow struct {
 
 func init() {
 	http.HandleFunc("/reportcards", accessHandler(reportcardsHandler))
+	http.HandleFunc("/reportcards/select", accessHandler(reportcardsSelectHandler))
 	http.HandleFunc("/reportcards/print", accessHandler(reportcardsPrintHandler))
 }
 
@@ -79,6 +81,49 @@ func reportcardsHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err := render(w, r, "reportcards", data); err != nil {
 		log.Errorf(c, "Could not render template reportcards: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+}
+
+func reportcardsSelectHandler(w http.ResponseWriter, r *http.Request) {
+	c := appengine.NewContext(r)
+
+	if err := r.ParseForm(); err != nil {
+		log.Errorf(c, "Could not parse form: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	selected := r.Form.Get("Select")
+	r.Form.Del("Select")
+
+	if selected == "all" {
+		redirectURL := fmt.Sprintf("/reportcards/print?%s", r.Form.Encode())
+		http.Redirect(w, r, redirectURL, http.StatusFound)
+		return
+	}
+
+	sy := getSchoolYear(c)
+
+	classSection := r.Form.Get("ClassSection")
+	students, err := findStudents(c, sy, classSection)
+	if err != nil {
+		log.Errorf(c, "Could not retrieve students: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	data := struct {
+		Students  []studentClass
+		UrlValues url.Values
+	}{
+		Students:  students,
+		UrlValues: r.Form,
+	}
+
+	if err := render(w, r, "reportcardsselect", data); err != nil {
+		log.Errorf(c, "Could not render template reportcardsselect: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
@@ -113,6 +158,14 @@ func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 	calculateAll := r.Form.Get("CalculateAll") != ""
 	showQuarterCols := r.Form.Get("ShowQuarterColumns") != ""
 
+	var selected map[string]bool
+	if selectedIds, ok := r.Form["Select"]; ok {
+		selected = make(map[string]bool)
+		for _, selectedId := range selectedIds {
+			selected[selectedId] = true
+		}
+	}
+
 	var reportcards []reportcard
 
 	students, err := findStudents(c, sy, classSection)
@@ -138,6 +191,9 @@ func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 	subjects = append(subjects, "Behavior", "Attendance")
 
 	for _, stu := range students {
+		if selected != nil && !selected[stu.ID] {
+			continue
+		}
 		rc := reportcard{
 			SY:   sy,
 			Term: term,
