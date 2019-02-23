@@ -84,9 +84,9 @@ license that can be found in the LICENSE file.
 			<th scope="row">
 				<input type="text" class="cps-student-name" value="{{.Name}}" readonly="readonly">
 			</th>
+			{{$len := len .Marks}}
 			{{range $i, $m := .Marks}}
-			{{$c := index $cols $i}}
-			<td>
+			<td class="{{if and (last $i $len) (le $m 70.0)}}low-mark{{end}}">
 				{{mark $m}}
 			</td>
 			{{end}}

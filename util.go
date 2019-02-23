@@ -131,6 +131,9 @@ var funcMap = htmltemplate.FuncMap{
 		return m[key]
 	},
 	"maxAndWeight": maxAndWeight,
+	"last": func(i, len int) bool {
+		return i == len-1
+	},
 }
 
 func formatMark(mark float64) string {
