@@ -256,16 +256,26 @@ func dailylogSaveHandler(w http.ResponseWriter, r *http.Request) {
 		Details:    details,
 	}
 
+	isSave := false
+
 	if f.Get("submit") == "Delete" {
 		err = dailylog.delete(c)
 	} else {
 		err = dailylog.save(c)
+		isSave = true
 	}
 	if err != nil {
 		// TODO: message to user
 		log.Errorf(c, "Could not store dailylog: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
+	}
+
+	if isSave {
+		subject := "New Daily Log Added"
+		body := "A new daily log is added. To view it, go to: https://creativity-private-school-2015.appspot.com/viewdailylog/day?date=" + f.Get("Date")
+
+		sendStudentEmails(c, []string{id}, subject, body)
 	}
 
 	// TODO: message of success
