@@ -37,6 +37,15 @@ func getClassSections(c context.Context, sy string) map[string][]string {
 	return sections
 }
 
+func getClassSectionsOfClass(c context.Context, sy, class string) []string {
+	var classSections []string
+	for _, section := range getClassSections(c, sy)[class] {
+		classSection := fmt.Sprintf("%s|%s", class, section)
+		classSections = append(classSections, classSection)
+	}
+	return classSections
+}
+
 func parseClassSection(classSection string) (class, section string, err error) {
 	cs := strings.Split(classSection, "|")
 	if len(cs) != 2 {

@@ -181,6 +181,8 @@ func uploadFileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	sendDocumentEmails(c, class)
+
 	// TODO: message of success
 	http.Redirect(w, r, "/upload", http.StatusFound)
 }
@@ -224,8 +226,16 @@ func uploadLinkHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	sendDocumentEmails(c, class)
+
 	// TODO: message of success
 	http.Redirect(w, r, "/upload", http.StatusFound)
+}
+
+func sendDocumentEmails(c context.Context, class string) {
+	subject := "New Document Uploaded"
+	body := "A new document is uploaded. To view it, go to: https://creativity-private-school-2015.appspot.com/documents"
+	sendClassEmails(c, class, subject, body)
 }
 
 func documentsHandler(w http.ResponseWriter, r *http.Request) {
