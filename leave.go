@@ -35,7 +35,8 @@ type leaveRequest struct {
 	EndDate           time.Time // year, month, day
 	Type              leaveType
 	Time              time.Time // hour, minute. ED only
-	RequesterComments string    `datastore:",noindex"`
+	Term              string
+	RequesterComments string `datastore:",noindex"`
 
 	Status     leaveRequestStatus
 	HRComments string `datastore:",noindex"`
@@ -379,7 +380,7 @@ func leaveRequestHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	isHr, hasPermission := evalleaveRequestPermission(request, user)
+	isHr, hasPermission := evalLeaveRequestPermission(request, user)
 	if !hasPermission {
 		log.Errorf(c, "User doesn't have permission to view leave request: %s %s", user.Email, request.Key)
 		renderErrorMsg(w, r, http.StatusForbidden, "You do not have permission to view this leave request")
@@ -389,12 +390,14 @@ func leaveRequestHandler(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		LeaveTypes []leaveType
 		MinDate    time.Time
+		Terms      []Term
 
 		Request leaveRequest
 		HR      bool
 	}{
 		leaveTypes,
 		time.Now(),
+		terms,
 
 		request,
 		isHr,
@@ -414,6 +417,7 @@ const (
 	leaveSaveCancel  leaveSaveAction = "Cancel"
 	leaveSaveApprove leaveSaveAction = "Approve"
 	leaveSaveReject  leaveSaveAction = "Reject"
+	leaveSaveTerm    leaveSaveAction = "Save Term"
 )
 
 func leaveRequestSaveHandler(w http.ResponseWriter, r *http.Request) {
@@ -440,20 +444,29 @@ func leaveRequestSaveHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	isHr, hasPermission := evalleaveRequestPermission(request, user)
+	isHr, hasPermission := evalLeaveRequestPermission(request, user)
 	if !hasPermission {
 		log.Errorf(c, "User doesn't have permission to view leave request: %s %s", user.Email, request.Key)
 		renderErrorMsg(w, r, http.StatusForbidden, "You do not have permission to view this leave request")
 		return
 	}
 
-	if request.Finished() {
+	term := r.PostForm.Get("Term")
+	if term != "" {
+		if _, err := parseTerm(term); err != nil {
+			log.Errorf(c, "Invalid term: %s, %s", term, err)
+			renderErrorMsg(w, r, http.StatusInternalServerError, "Invalid term")
+			return
+		}
+	}
+
+	action := leaveSaveAction(r.PostForm.Get("submit"))
+
+	if request.Finished() && action != leaveSaveTerm {
 		log.Errorf(c, "Can't update finished leaveRequest. Status: %s", request.Status)
 		renderErrorMsg(w, r, http.StatusInternalServerError, "Can't update finished leave request")
 		return
 	}
-
-	action := leaveSaveAction(r.PostForm.Get("submit"))
 
 	if action == leaveSaveSave && !isHr && request.Status == "" {
 		// new
@@ -502,6 +515,7 @@ func leaveRequestSaveHandler(w http.ResponseWriter, r *http.Request) {
 		} else if action == leaveSaveApprove && isHr {
 			request.HRComments = r.PostForm.Get("HRComments")
 			request.Status = leaveRequestApproved
+			request.Term = term
 		} else if action == leaveSaveReject && isHr {
 			request.HRComments = r.PostForm.Get("HRComments")
 			request.Status = leaveRequestRejected
@@ -510,6 +524,8 @@ func leaveRequestSaveHandler(w http.ResponseWriter, r *http.Request) {
 			renderErrorMsg(w, r, http.StatusInternalServerError, "Can't update leave request")
 			return
 		}
+	} else if action == leaveSaveTerm && isHr {
+		request.Term = term
 	} else {
 		log.Errorf(c, "Can't update leaveRequest. Invalid action/isHr combination: %s %s", action, isHr)
 		renderErrorMsg(w, r, http.StatusInternalServerError, "Can't update leave request")
@@ -534,7 +550,7 @@ func leaveRequestSaveHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, redirectUrl, http.StatusFound)
 }
 
-func evalleaveRequestPermission(request leaveRequest, user user) (isHr, hasPermission bool) {
+func evalLeaveRequestPermission(request leaveRequest, user user) (isHr, hasPermission bool) {
 	if request.RequesterKey.Equal(user.Key()) {
 		// Handle case where HR is requesting a leave
 		// TODO: allow edit for HR

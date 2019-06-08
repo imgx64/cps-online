@@ -134,6 +134,7 @@ var funcMap = htmltemplate.FuncMap{
 	"last": func(i, len int) bool {
 		return i == len-1
 	},
+	"parseTerm": parseTerm,
 }
 
 func formatMark(mark float64) string {

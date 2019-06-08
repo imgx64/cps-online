@@ -51,7 +51,7 @@ license that can be found in the LICENSE file.
 				<td>{{.Type}}</td>
 				<td>{{.StartDate | formatDateHuman}}</td>
 				<td>{{if .Time.IsZero}}{{.EndDate | formatDateHuman}}{{else}}{{.Time | formatTimeHuman}}{{end}}</td>
-				<td>{{.Status}}</td>
+				<td>{{.Status}} {{if .Term}}({{parseTerm .Term}}){{end}}</td>
 				<td><a class="btn btn-default btn-sm" href="/leave/request?key={{.Key.Encode}}">View</a></td>
 			</tr>
 			{{else}}
