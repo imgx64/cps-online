@@ -36,6 +36,7 @@ type leaveRequest struct {
 	Type              leaveType
 	Time              time.Time // hour, minute. ED only
 	Term              string
+	SchoolYear        string
 	RequesterComments string `datastore:",noindex"`
 
 	Status     leaveRequestStatus
@@ -64,6 +65,7 @@ func getLeaveRequest(c context.Context, user user, keyEncoded string) (leaveRequ
 			RequesterKeyKind: requesterKey.Kind(),
 			RequesterName:    user.FullName(),
 			StartDate:        time.Now(),
+			SchoolYear:       getSchoolYear(c),
 		}
 	} else {
 		key, err := datastore.DecodeKey(keyEncoded)
@@ -77,6 +79,9 @@ func getLeaveRequest(c context.Context, user user, keyEncoded string) (leaveRequ
 
 		request.Key = key
 		request.RequesterName = getRequesterName(c, request.RequesterKey)
+		if request.SchoolYear == "" {
+			request.SchoolYear = getSchoolYear(c)
+		}
 	}
 
 	request.StartDate = dateOnly(request.StartDate)
