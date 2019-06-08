@@ -47,6 +47,7 @@ license that can be found in the LICENSE file.
 			<span class="help-block"></span>
 		</div>
 	</div>
+	{{if not (equal .RequesterKeyKind "student")}}
 	<div class="form-group">
 		<label class="col-sm-2 control-label" for="EndDate">End Date</label>
 		<div class="col-sm-5">
@@ -56,6 +57,7 @@ license that can be found in the LICENSE file.
 			<span class="help-block"></span>
 		</div>
 	</div>
+	{{end}}
 	<div class="form-group">
 		<label class="col-sm-2 control-label" for="Time">Time</label>
 		<div class="col-sm-5">

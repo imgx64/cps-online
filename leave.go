@@ -491,6 +491,9 @@ func leaveRequestSaveHandler(w http.ResponseWriter, r *http.Request) {
 		if request.Type == LeaveOfAbsence {
 			var zeroTime time.Time
 			request.Time = zeroTime
+			if request.EndDate.IsZero() {
+				request.EndDate = request.StartDate
+			}
 		} else if request.Type == EarlyDeparture || request.Type == LateArrival {
 			request.EndDate = request.StartDate
 		} else {
