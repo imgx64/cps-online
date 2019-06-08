@@ -571,3 +571,28 @@ func evalLeaveRequestPermission(request leaveRequest, user user) (isHr, hasPermi
 	}
 
 }
+
+func getApprovedLeavesLeaveTypeOnly(c context.Context, studentID string,
+	sy string, term Term) ([]leaveRequest, error) {
+	akey, err := findStudentsAncestor(c)
+	if err != nil {
+		return nil, err
+	}
+	studentKey := datastore.NewKey(c, "student", studentID, 0, akey)
+
+	q := datastore.NewQuery("leaverequest")
+	q = q.Filter("RequesterKey =", studentKey)
+	q = q.Filter("Status =", leaveRequestApproved)
+	q = q.Filter("SchoolYear =", sy)
+	q = q.Filter("Term =", term.Value())
+	q = q.Project("Type")
+
+	var requests []leaveRequest
+	_, err = q.GetAll(c, &requests)
+	if err == datastore.ErrNoSuchEntity {
+		return nil, nil
+	} else if err != nil {
+		return nil, err
+	}
+	return requests, nil
+}

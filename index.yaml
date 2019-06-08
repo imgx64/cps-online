@@ -38,6 +38,14 @@ indexes:
 - kind: leaverequest
   properties:
   - name: RequesterKey
+  - name: SchoolYear
+  - name: Status
+  - name: Term
+  - name: Type
+
+- kind: leaverequest
+  properties:
+  - name: RequesterKey
   - name: StartDate
   - name: Time
   - name: EndDate

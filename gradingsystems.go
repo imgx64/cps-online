@@ -1228,11 +1228,9 @@ func (ags attendanceGradingSystem) evaluate(c context.Context, studentID, sy str
 
 	// calculations
 	if term.Typ == Quarter {
-		m[0] = 0 // TODO: get from attendance system
-		m[3] = 0 // TODO: get from attendance system
+		m[0], m[3] = getApprovedAbsenceAndTardiness(c, studentID, sy, term)
 	} else if term.Typ == Midterm {
-		m[0] = 0 // TODO: get from attendance system
-		m[3] = 0 // TODO: get from attendance system
+		m[0], m[3] = getApprovedAbsenceAndTardiness(c, studentID, sy, term)
 	} else if term.Typ == Semester {
 		q2 := Term{Quarter, term.N * 2}
 		q1 := Term{Quarter, q2.N - 1}
@@ -1246,10 +1244,12 @@ func (ags attendanceGradingSystem) evaluate(c context.Context, studentID, sy str
 		mtM := marks[mt]
 		q2M := marks[q2]
 
+		excusedAbsence, excusedTardiness := getApprovedAbsenceAndTardiness(c, studentID, sy, term)
+
 		// Excused absence
 		m[0] = q1M[0] + q1M[1] + mtM[0] + mtM[1]
 		m[1] = q2M[0] + q2M[1]
-		m[2] = 0 // TODO: get from attendance system
+		m[2] = excusedAbsence
 		// m[3]
 		m[4] = sumMarks(m[0:4]...)
 
@@ -1262,7 +1262,7 @@ func (ags attendanceGradingSystem) evaluate(c context.Context, studentID, sy str
 		// Excused tardiness
 		m[9] = q1M[3] + q1M[4] + mtM[3] + mtM[4]
 		m[10] = q2M[3] + q2M[4]
-		m[11] = 0 // TODO: get from attendance system
+		m[11] = excusedTardiness
 		// m[12]
 		m[13] = sumMarks(m[9:13]...)
 
@@ -1336,4 +1336,25 @@ func (_ attendanceGradingSystem) subjectInAverage() bool {
 
 func (_ attendanceGradingSystem) displayName() string {
 	return "Attendance"
+}
+
+func getApprovedAbsenceAndTardiness(c context.Context, studentID string,
+	sy string, term Term) (float64, float64) {
+	requests, err := getApprovedLeavesLeaveTypeOnly(c, studentID, sy, term)
+	if err != nil {
+		log.Errorf(c, "Could not get approved leaves: %s %s %s %s", studentID, sy, term, err)
+		return math.NaN(), math.NaN()
+	}
+	var absence, tardiness float64
+	for _, request := range requests {
+		if request.Type == LeaveOfAbsence {
+			absence++
+		} else if request.Type == EarlyDeparture ||
+			request.Type == LateArrival {
+			tardiness++
+		} else {
+			log.Errorf(c, "Unknown leaveType: %s", request.Type)
+		}
+	}
+	return absence, tardiness
 }
