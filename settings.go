@@ -25,6 +25,7 @@ func init() {
 	http.HandleFunc("/settings/addschoolyear", accessHandler(settingsAddSYHandler))
 	http.HandleFunc("/settings/addsubject", accessHandler(settingsAddSubjectHandler))
 	http.HandleFunc("/settings/deletesubject", accessHandler(settingsDeleteSubjectHandler))
+	http.HandleFunc("/settings/addstream", accessHandler(settingsAddStreamHandler))
 	http.HandleFunc("/settings/access", accessHandler(settingsAccessHandler))
 	http.HandleFunc("/gradinggroups/details", accessHandler(gradingGroupsDetailsHandler))
 	http.HandleFunc("/gradinggroups/save", accessHandler(gradingGroupsSaveHandler))
@@ -172,6 +173,31 @@ func saveAllSubjects(c context.Context, sy string, subjects []string) error {
 	return nil
 }
 
+type streamsSettings struct {
+	Value []string
+}
+
+func getAllStreams(c context.Context, sy string) []string {
+	key := datastore.NewKey(c, "settings", "streams-"+sy, 0, nil)
+
+	setting := streamsSettings{}
+	if err := nds.Get(c, key, &setting); err != nil {
+		log.Warningf(c, "Could not get streams: %s\n. Returning empty slice instead", err)
+		return []string{}
+	}
+
+	return setting.Value
+}
+
+func saveAllStreams(c context.Context, sy string, streams []string) error {
+	key := datastore.NewKey(c, "settings", "streams-"+sy, 0, nil)
+	_, err := nds.Put(c, key, &streamsSettings{streams})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 type staffAccessSetting struct {
 	Value bool
 }
@@ -274,6 +300,8 @@ func settingsHandler(w http.ResponseWriter, r *http.Request) {
 
 	subjects := getAllSubjects(c, sy)
 
+	streams := getAllStreams(c, sy)
+
 	gradingGroups := getGradingGroups(c, sy)
 
 	data := struct {
@@ -288,6 +316,7 @@ func settingsHandler(w http.ResponseWriter, r *http.Request) {
 		SY          string
 
 		ClassSettings []classSetting
+		Streams       []string
 
 		Subjects      []string
 		GradingGroups []string
@@ -305,6 +334,7 @@ func settingsHandler(w http.ResponseWriter, r *http.Request) {
 		sy,
 
 		settings,
+		streams,
 
 		subjects,
 		gradingGroups,
@@ -497,6 +527,42 @@ func settingsDeleteSubjectHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err := saveAllSubjects(c, sy, newSubjects); err != nil {
 		log.Errorf(c, "Could not save subjects: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	// TODO: message of success
+	http.Redirect(w, r, "/settings", http.StatusFound)
+}
+
+func settingsAddStreamHandler(w http.ResponseWriter, r *http.Request) {
+	c := appengine.NewContext(r)
+
+	sy := getSchoolYear(c)
+
+	if err := r.ParseForm(); err != nil {
+		log.Errorf(c, "Could not parse form: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	stream := r.PostForm.Get("stream")
+	if stream == "" {
+		renderErrorMsg(w, r, http.StatusBadRequest, "Empty subject")
+		return
+	}
+
+	streams := getAllStreams(c, sy)
+	for _, s := range streams {
+		if s == stream {
+			renderErrorMsg(w, r, http.StatusBadRequest, "Stream already exists")
+			return
+		}
+	}
+
+	streams = append(streams, stream)
+	if err := saveAllStreams(c, sy, streams); err != nil {
+		log.Errorf(c, "Could not save streams: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}

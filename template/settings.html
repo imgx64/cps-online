@@ -88,8 +88,8 @@ license that can be found in the LICENSE file.
 </form>
 <div class="spacer">
 </div>
-<form  action="/settings/savesections" method="POST">
-	<fieldset>
+<fieldset>
+	<form  action="/settings/savesections" method="POST">
 		<legend>Classes</legend>
 		<table>
 		<thead>
@@ -140,26 +140,45 @@ license that can be found in the LICENSE file.
 		{{end}}
 		</tbody>
 		</table>
-	</fieldset>
-	<div>
-		<input type="submit" class="btn btn-default" value="Save">
-	</div>
-</form>
-<div class="spacer">
-</div>
-<form action="/settings/addclass" method="POST">
-	<fieldset>
-		<legend>Add class</legend>
+		<div>
+			<input type="submit" class="btn btn-default" value="Save">
+		</div>
+	</form>
+	<br>
+	<form action="/settings/addclass" method="POST">
 		<div class="form-inline">
 			<div class="form-group">
 				<input type="text" name="class" class="form-control" placeholder="Class name" required="required">
 			</div>
 			<div class="form-group">
-				<input type="submit" class="btn btn-default are-you-sure" value="Add">
+				<input type="submit" class="btn btn-default are-you-sure" value="Add class">
 			</div>
 		</div>
-	</fieldset>
-</form>
+	</form>
+</fieldset>
+<div class="spacer">
+</div>
+<fieldset>
+	<legend>Streams</legend>
+	<table>
+	{{range .Streams}}
+		<tr>
+			<th>{{.}}</th>
+		</tr>
+	{{end}}
+	</table>
+	<br>
+	<form action="/settings/addstream" method="POST">
+		<div class="form-inline">
+			<div class="form-group">
+				<input type="text" name="stream" class="form-control" placeholder="Stream name" required="required">
+			</div>
+			<div class="form-group">
+				<input type="submit" class="btn btn-default" value="Add stream">
+			</div>
+		</div>
+	</form>
+</fieldset>
 <div class="spacer">
 </div>
 <fieldset>
