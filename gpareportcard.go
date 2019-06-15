@@ -93,10 +93,11 @@ func gpaReportcardHandler(w http.ResponseWriter, r *http.Request) {
 	for _, sy := range getSchoolYears(c) {
 		var gpaRows []GPARow
 
-		class, _, err := getStudentClass(c, id, sy)
+		cs, err := getStudentClass(c, id, sy)
 		if err != nil {
 			continue
 		}
+		class, _ := cs.Class, cs.Section
 		if class == "" {
 			continue
 		}

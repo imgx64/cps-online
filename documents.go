@@ -255,12 +255,13 @@ func documentsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	stu := *user.Student
-	class, _, err := getStudentClass(c, stu.ID, sy)
+	cs, err := getStudentClass(c, stu.ID, sy)
 	if err != nil {
 		log.Errorf(c, "Could not get user: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
+	class, _ := cs.Class, cs.Section
 
 	classDocuments, err := getDocuments(c, class)
 	if err != nil {

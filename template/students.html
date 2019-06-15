@@ -55,7 +55,7 @@ license that can be found in the LICENSE file.
 			<tr>
 				<td>{{.ID}}</td>
 				<td>{{.Name}}</td>
-				<td>{{.Class}}{{.Section}}</td>
+				<td>{{.Class}}{{.Section}}{{if .Stream}} ({{.Stream}}){{end}}</td>
 				<td>
 					<a class="btn btn-default btn-sm" href="/students/details?id={{.ID}}">Edit</a>
 					<a class="btn btn-default btn-sm" href="/printstudentmarks?id={{.ID}}">Print Marks</a>

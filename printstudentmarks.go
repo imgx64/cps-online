@@ -51,12 +51,13 @@ func printStudentMarksHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	class, section, err := getStudentClass(c, stu.ID, sy)
+	cs, err := getStudentClass(c, stu.ID, sy)
 	if err != nil {
 		log.Errorf(c, "Could not get user: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
+	class, section := cs.Class, cs.Section
 
 	subjects, err := getSubjects(c, sy, class)
 	if err != nil {

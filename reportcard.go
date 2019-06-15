@@ -58,12 +58,13 @@ func reportcardHandler(w http.ResponseWriter, r *http.Request) {
 
 	calculateAll := true
 
-	class, section, err := getStudentClass(c, stu.ID, sy)
+	cs, err := getStudentClass(c, stu.ID, sy)
 	if err != nil {
 		log.Errorf(c, "Could not get user: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
+	class, section := cs.Class, cs.Section
 
 	publish := published(c, term)
 	if term == (Term{}) {

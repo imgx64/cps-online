@@ -46,11 +46,12 @@ license that can be found in the LICENSE file.
 			</div>
 		</div>
 		<div class="form-group">
-			<label class="col-sm-2 control-label" for="classSection">Class</label>
+			<label class="col-sm-2 control-label" for="classSection">Class/Stream</label>
 			<div class="col-sm-5">
 				<table>
 				{{range .SYs}}
 				{{$sy := .}}
+				{{$sc := (index $.SC $sy)}}
 				<tr>
 					<th>{{.}}</th>
 					<td>
@@ -60,11 +61,22 @@ license that can be found in the LICENSE file.
 						{{$class := .Class}}
 						<optgroup label="{{.Class}}">
 							{{range .Sections}}
-							<option value="{{$class}}|{{.}}"
-							{{if equal (printf "%s|%s" $class .) (index $.SC $sy)}} selected="selected"{{end}}
-							>{{$class}}{{.}}</option>
+							{{$section := .}}
+							<option value="{{$class}}|{{$section}}"
+							{{if and (equal $sc.Class $class) (equal $sc.Section $section)}} selected="selected"{{end}}
+							>{{$class}}{{$section}}</option>
 							{{end}}
 						</optgroup>
+						{{end}}
+					</select>
+					</td>
+					<td>
+					<select name="Stream-{{.}}" class="form-control">
+						<option value=""></option>
+						{{range (index $.Streams .)}}
+							<option value="{{.}}"
+							{{if equal $sc.Stream .}} selected="selected"{{end}}
+							>{{.}}</option>
 						{{end}}
 					</select>
 					</td>
@@ -88,7 +100,7 @@ license that can be found in the LICENSE file.
 				<select id="Nationality" name="Nationality" class="form-control">
 					<option></option>
 					{{$country := .S.Nationality}}
-					{{range .C}}
+					{{range .Countries}}
 					<option {{if equal . $country}}selected="selected"{{end}}
 					value="{{.}}">{{.}}</option>
 					{{end}}

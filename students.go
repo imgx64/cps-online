@@ -51,6 +51,7 @@ type studentClass struct {
 	SY      string
 	Class   string
 	Section string
+	Stream  string
 }
 
 func getStudent(c context.Context, id string) (studentType, error) {
@@ -170,6 +171,7 @@ func getUnassignedStudents(c context.Context, sy string) ([]studentClass, error)
 			stu.ID,
 			stu.Name,
 			sy,
+			"",
 			"",
 			"",
 		})
@@ -339,23 +341,23 @@ func getStudentFromEmail(c context.Context, email string) (studentType, error) {
 	return stu, nil
 }
 
-func getStudentClass(c context.Context, id, sy string) (class, section string, err error) {
+func getStudentClass(c context.Context, id, sy string) (studentClass, error) {
 	keyStr := fmt.Sprintf("%s|%s", id, sy)
 	key := datastore.NewKey(c, "studentclass", keyStr, 0, nil)
 
 	var sc studentClass
-	err = nds.Get(c, key, &sc)
+	err := nds.Get(c, key, &sc)
 	if err == datastore.ErrNoSuchEntity {
-		return "", "", nil
+		return sc, nil
 	} else if err != nil {
-		return "", "", err
+		return sc, err
 	}
 
-	return sc.Class, sc.Section, nil
+	return sc, nil
 
 }
 
-func saveStudentClass(c context.Context, id, name, sy, class, section string) error {
+func saveStudentClass(c context.Context, id, name, sy, class, section, stream string) error {
 	if class == "" || section == "" {
 		return deleteStudentClass(c, id, sy)
 	}
@@ -386,6 +388,7 @@ func saveStudentClass(c context.Context, id, name, sy, class, section string) er
 		sy,
 		class,
 		section,
+		stream,
 	})
 	if err != nil {
 		return err
@@ -469,7 +472,7 @@ func studentsDetailsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var stu studentType
-	var studentClasses map[string]string
+	var studentClasses map[string]studentClass
 	var err error
 
 	if id := r.Form.Get("id"); id == "new" {
@@ -484,37 +487,41 @@ func studentsDetailsHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		studentClasses = make(map[string]string)
+		studentClasses = make(map[string]studentClass)
 		for _, sy := range schoolYears {
-			class, section, err := getStudentClass(c, id, sy)
+			sc, err := getStudentClass(c, id, sy)
 			if err != nil {
 				log.Errorf(c, "Could not get student class: %s", err)
 				continue
 			}
-			if class != "" && section != "" {
-				studentClasses[sy] = class + "|" + section
+			if sc.Class != "" && sc.Section != "" {
+				studentClasses[sy] = sc
 			}
 		}
 	}
 
 	classGroups := make(map[string][]classGroup)
+	streams := make(map[string][]string)
 	for _, sy := range schoolYears {
 		classGroups[sy] = getClassGroups(c, sy)
+		streams[sy] = getAllStreams(c, sy)
 	}
 
 	data := struct {
 		S  studentType
-		SC map[string]string
+		SC map[string]studentClass
 
-		SYs []string
-		CGs map[string][]classGroup
-		C   []string
+		SYs       []string
+		CGs       map[string][]classGroup
+		Streams   map[string][]string
+		Countries []string
 	}{
 		stu,
 		studentClasses,
 
 		schoolYears,
 		classGroups,
+		streams,
 		countries,
 	}
 
@@ -582,8 +589,9 @@ func studentsSaveHandler(w http.ResponseWriter, r *http.Request) {
 	// Save class assignments
 	for _, sy := range getSchoolYears(c) {
 		class, section, err := parseClassSection(f.Get("ClassSection-" + sy))
+		stream := f.Get("Stream-" + sy)
 		if err == nil {
-			err := saveStudentClass(c, stu.ID, stu.Name, sy, class, section)
+			err := saveStudentClass(c, stu.ID, stu.Name, sy, class, section, stream)
 			if err != nil {
 				log.Errorf(c, "Could not save student class: %s", err)
 			}
@@ -616,6 +624,7 @@ var studentFields = []string{
 	"EmergencyPhone",
 	"HealthInfo",
 	"Comments",
+	"Stream",
 }
 
 // used for CSV
@@ -627,6 +636,7 @@ var studentFieldsDesc = []string{
 	"",
 	"",
 	"YYYY-MM-DD",
+	"",
 	"",
 	"",
 	"",
@@ -745,7 +755,8 @@ func studentsImportHandler(w http.ResponseWriter, r *http.Request) {
 
 		class := record[4]
 		section := record[5]
-		err = saveStudentClass(c, stu.ID, stu.Name, sy, class, section)
+		stream := record[15]
+		err = saveStudentClass(c, stu.ID, stu.Name, sy, class, section, stream)
 		if err != nil {
 			errors = append(errors, fmt.Errorf("Error in row %d: %s", i, err))
 			continue

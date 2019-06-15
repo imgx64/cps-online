@@ -185,11 +185,12 @@ func getRequesterName(c context.Context, requesterKey *datastore.Key) string {
 			return ""
 		}
 
-		class, section, err := getStudentClass(c, stu.ID, getSchoolYear(c))
+		cs, err := getStudentClass(c, stu.ID, getSchoolYear(c))
 		if err != nil {
 			log.Warningf(c, "Could not get student class and section: %s", err)
 			return stu.Name
 		}
+		class, section := cs.Class, cs.Section
 
 		return fmt.Sprintf("%s (%s%s)", stu.Name, class, section)
 	}
