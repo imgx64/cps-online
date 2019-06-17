@@ -52,7 +52,7 @@ func storeCompletion(c context.Context, classSection string, term Term,
 
 type completionRow struct {
 	ClassSection string
-	NumStudents  int
+	NumStudents  map[string]int
 	Completion   map[string]int
 }
 
@@ -96,21 +96,29 @@ func completionHandler(w http.ResponseWriter, r *http.Request) {
 
 				classSection := fmt.Sprintf("%s|%s", class, section)
 
-				numStudents, err := findStudentsCount(c, sy, classSection)
-				if err != nil {
-					log.Errorf(c, "Could not retrieve number of students: %s", err)
-					renderError(w, r, http.StatusInternalServerError)
-					return
-				}
-				cr.NumStudents = numStudents
-
+				numStudentsStream := make(map[string]int)
+				cr.NumStudents = make(map[string]int)
 				cr.Completion = make(map[string]int)
 				for _, subject := range subjects {
-					if getGradingSystem(c, sy, class, subject) == nil {
+					gs := getGradingSystem(c, sy, class, subject)
+					if gs == nil {
 						// class doesn't have subject
 						cr.Completion[subject] = -1
+					} else if subjectSubject, ok := gs.(Subject); ok {
+						stream := subjectSubject.Stream
+						numStudentsStream[stream], ok = numStudentsStream[stream]
+						if !ok {
+							numStudentsStream[stream], err = findStudentsCount(c, sy, classSection, stream)
+							if err != nil {
+								log.Errorf(c, "Could not retrieve number of students: %s", err)
+								renderError(w, r, http.StatusInternalServerError)
+								return
+							}
+						}
+						cr.NumStudents[subject] = numStudentsStream[stream]
 					}
 				}
+
 				cr.Completion["Remarks"] = 0
 				completions, err := getCompletions(c, term, classSection)
 				if err != nil {

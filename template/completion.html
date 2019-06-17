@@ -46,11 +46,12 @@ license that can be found in the LICENSE file.
 	<tbody>
 		{{$subjects := .Subjects}}
 		{{range .CompletionRows}}
+		{{$cr := .}}
 		<tr>
 			<th scope="row">{{.ClassSection}}</th>
-			{{$n := .NumStudents}}
 			{{$comp := .Completion}}
 			{{range $subjects}}
+				{{$n := index $cr.NumStudents .}}
 				{{$sn := index $comp .}}
 				{{if equal $sn -1}}
 				<td></td>

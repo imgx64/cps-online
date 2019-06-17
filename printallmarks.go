@@ -167,6 +167,9 @@ func printAllHandler(w http.ResponseWriter, r *http.Request) {
 		prevClass := ""
 		for _, stu := range students {
 			if gs := getGradingSystem(c, sy, stu.Class, subject); gs != nil {
+				if !gs.inStream(stu.Stream) {
+					continue
+				}
 				if stu.Class != prevClass {
 					cols = gs.description(c, sy, term)
 					if len(cols) > maxLen {

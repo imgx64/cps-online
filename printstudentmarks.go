@@ -83,7 +83,7 @@ func printStudentMarksHandler(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 			gs := getGradingSystem(c, sy, class, subject)
-			if gs == nil {
+			if gs == nil || !gs.inStream(cs.Stream) {
 				continue
 			}
 			// TODO: don't loop over terms outside

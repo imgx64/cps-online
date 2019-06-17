@@ -180,7 +180,7 @@ func getUnassignedStudents(c context.Context, sy string) ([]studentClass, error)
 	return unassignedStudents, nil
 }
 
-func findStudentsCount(c context.Context, sy, classSection string) (int, error) {
+func findStudentsCount(c context.Context, sy, classSection, stream string) (int, error) {
 	if classSection == "|" || classSection == "" {
 		unassignedStudents, err := getUnassignedStudents(c, sy)
 		if err != nil {
@@ -191,6 +191,9 @@ func findStudentsCount(c context.Context, sy, classSection string) (int, error) 
 
 	q := datastore.NewQuery("studentclass")
 	q = q.Filter("SY =", sy)
+	if stream != "" {
+		q = q.Filter("Stream =", stream)
+	}
 
 	var class, section string
 	if classSection != "all" {

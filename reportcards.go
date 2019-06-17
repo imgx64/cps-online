@@ -268,7 +268,7 @@ func reportcardsPrintHandler(w http.ResponseWriter, r *http.Request) {
 			}
 
 			gs := getGradingSystem(c, sy, stu.Class, subject)
-			if gs == nil {
+			if gs == nil || !gs.inStream(stu.Stream) {
 				continue
 			}
 
@@ -495,7 +495,7 @@ func reportcardsGpaTermHandler(w http.ResponseWriter, r *http.Request) {
 		for _, subject := range subjects {
 
 			gs := getGradingSystem(c, sy, class, subject)
-			if gs == nil {
+			if gs == nil || !gs.inStream(stu.Stream) {
 				continue
 			}
 

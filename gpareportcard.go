@@ -126,7 +126,7 @@ func gpaReportcardHandler(w http.ResponseWriter, r *http.Request) {
 		for _, subject := range subjects {
 
 			gs := getGradingSystem(c, sy, class, subject)
-			if gs == nil {
+			if gs == nil || !gs.inStream(cs.Stream) {
 				continue
 			}
 

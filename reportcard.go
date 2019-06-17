@@ -93,7 +93,7 @@ func reportcardHandler(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 			gs := getGradingSystem(c, sy, class, subject)
-			if gs == nil {
+			if gs == nil || !gs.inStream(cs.Stream) {
 				continue
 			}
 			marks, err := getStudentMarks(c, stu.ID, sy, subject)

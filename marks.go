@@ -357,6 +357,9 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 			}
 
 			for _, s := range students {
+				if !gs.inStream(s.Stream) {
+					continue
+				}
 				var m studentMarks
 				if term.Typ == WeekS1 || term.Typ == WeekS2 {
 					m = make(studentMarks)
@@ -504,6 +507,9 @@ func marksSaveHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		for _, s := range students {
+			if !gs.inStream(s.Stream) {
+				continue
+			}
 			var m studentMarks
 			if term.Typ == WeekS1 || term.Typ == WeekS2 {
 				m = make(studentMarks)
@@ -607,6 +613,9 @@ func marksExportHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		for _, s := range students {
+			if !gs.inStream(s.Stream) {
+				continue
+			}
 			var m studentMarks
 			if term.Typ == WeekS1 || term.Typ == WeekS2 {
 				m = make(studentMarks)
@@ -799,6 +808,9 @@ func marksImportHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		for _, s := range students {
+			if !gs.inStream(s.Stream) {
+				continue
+			}
 			marksRecord, ok := csvMarks[s.ID]
 			if !ok {
 				log.Errorf(c, "Student not found in class: %s", s.ID)

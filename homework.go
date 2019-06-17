@@ -399,6 +399,11 @@ func homeworkStudentHandler(w http.ResponseWriter, r *http.Request) {
 	var subjectHomeworks []subjectHomework
 
 	for _, subject := range subjects {
+		if subjectSubject, err := getSubject(c, sy, class, subject); err == nil {
+			if !subjectSubject.inStream(cs.Stream) {
+				continue
+			}
+		}
 
 		hws, err := getHomework(c, sy, class, section, subject)
 		if err != nil {
