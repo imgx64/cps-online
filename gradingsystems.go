@@ -154,6 +154,7 @@ type gradingSystem interface {
 	semesterWeight() float64
 	subjectInAverage() bool
 	displayName() string
+	inStream(stream string) bool
 }
 
 type letterType struct {
@@ -342,6 +343,7 @@ type Subject struct {
 	// TODO: add SY, Class
 	ShortName          string
 	Description        string
+	Stream             string
 	CalculateInAverage bool
 	S1Credits          float64
 	S2Credits          float64
@@ -1019,6 +1021,10 @@ func (s Subject) displayName() string {
 	return s.Description
 }
 
+func (s Subject) inStream(stream string) bool {
+	return s.Stream == "" || stream == s.Stream
+}
+
 // behaviorGradingSystem contains behavrior. There are no calculations to make
 type behaviorGradingSystem struct {
 }
@@ -1119,12 +1125,16 @@ func (bgs behaviorGradingSystem) semesterWeight() float64 {
 	return math.NaN()
 }
 
+func (bgs behaviorGradingSystem) subjectInAverage() bool {
+	return false
+}
+
 func (bgs behaviorGradingSystem) displayName() string {
 	return "Behavior"
 }
 
-func (bgs behaviorGradingSystem) subjectInAverage() bool {
-	return false
+func (bgs behaviorGradingSystem) inStream(stream string) bool {
+	return true
 }
 
 type attendanceGradingSystem struct {
@@ -1336,6 +1346,10 @@ func (_ attendanceGradingSystem) subjectInAverage() bool {
 
 func (_ attendanceGradingSystem) displayName() string {
 	return "Attendance"
+}
+
+func (_ attendanceGradingSystem) inStream(stream string) bool {
+	return true
 }
 
 func getApprovedAbsenceAndTardiness(c context.Context, studentID string,

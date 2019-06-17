@@ -317,6 +317,8 @@ func subjectsDetailsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	streams := getAllStreams(c, sy)
+
 	gradingColumnChoices := []gradingColumnChoice{
 		{noGrading, gradingColumnTypeStrings[noGrading]},
 		{directGrading, gradingColumnTypeStrings[directGrading]},
@@ -334,6 +336,7 @@ func subjectsDetailsHandler(w http.ResponseWriter, r *http.Request) {
 
 	data := struct {
 		AvailableSubjects        []string
+		Streams                  []string
 		GradingColumnChoices     []gradingColumnChoice
 		WeekGradingColumnChoices []gradingColumnChoice
 		SemesterTypes            []semesterType
@@ -346,6 +349,7 @@ func subjectsDetailsHandler(w http.ResponseWriter, r *http.Request) {
 		Classes  []string
 	}{
 		availableSubjects,
+		streams,
 		gradingColumnChoices,
 		weekGradingColumnChoices,
 		semesterTypes,
@@ -398,6 +402,7 @@ func subjectsSaveHandler(w http.ResponseWriter, r *http.Request) {
 
 		subjectname := r.PostForm.Get("ShortName")
 		description := r.PostForm.Get("Description")
+		stream := r.PostForm.Get("Stream")
 		copySubject := r.PostForm.Get("CopyShortName")
 		copyClass := r.PostForm.Get("CopyClass")
 
@@ -410,6 +415,7 @@ func subjectsSaveHandler(w http.ResponseWriter, r *http.Request) {
 
 		subjectToCopy.ShortName = subjectname
 		subjectToCopy.Description = description
+		subjectToCopy.Stream = stream
 
 		err = saveSubject(c, sy, class, subjectToCopy)
 		if err != nil {
@@ -429,6 +435,7 @@ func subjectsSaveHandler(w http.ResponseWriter, r *http.Request) {
 
 	subject.ShortName = r.PostForm.Get("ShortName")
 	subject.Description = r.PostForm.Get("Description")
+	subject.Stream = r.PostForm.Get("Stream")
 	subject.CalculateInAverage = r.PostForm.Get("CalculateInAverage") == "on"
 	s1credits, err := strconv.ParseFloat(r.PostForm.Get("S1Credits"), 64)
 	if err != nil {

@@ -40,6 +40,19 @@ license that can be found in the LICENSE file.
 		</div>
 
 		<div class="form-group">
+			<label class="col-sm-3 control-label" for="Stream">Stream</label>
+			<div class="col-sm-5">
+				<select id="Stream" name="Stream" class="form-control">
+					<option></option>
+					{{range .Streams}}
+					<option {{if equal . $.Subject.Stream}}selected="selected"{{end}}>{{.}}</option>
+					{{end}}
+				</select>
+				<span class="help-block"></span>
+			</div>
+		</div>
+
+		<div class="form-group">
 			<label class="col-sm-3 control-label" for="Description">Description</label>
 			<div class="col-sm-5">
 				<input type="text" id="Description" name="Description"
