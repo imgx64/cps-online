@@ -304,6 +304,11 @@ func settingsHandler(w http.ResponseWriter, r *http.Request) {
 
 	gradingGroups := getGradingGroups(c, sy)
 
+	progressReports, err := getAllProgressReportSettings(c, sy)
+	if err != nil {
+		log.Warningf(c, "Could not get ProgressReportSettings: %s", err)
+	}
+
 	data := struct {
 		SectionChoices      []string
 		LetterSystemChoices []string
@@ -318,8 +323,9 @@ func settingsHandler(w http.ResponseWriter, r *http.Request) {
 		ClassSettings []classSetting
 		Streams       []string
 
-		Subjects      []string
-		GradingGroups []string
+		Subjects        []string
+		GradingGroups   []string
+		ProgressReports map[string][]ProgressReportSettings
 
 		NextSchoolYear string
 	}{
@@ -338,6 +344,7 @@ func settingsHandler(w http.ResponseWriter, r *http.Request) {
 
 		subjects,
 		gradingGroups,
+		progressReports,
 
 		nextSchoolYear,
 	}

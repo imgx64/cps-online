@@ -237,5 +237,34 @@ license that can be found in the LICENSE file.
 </fieldset>
 <div class="spacer">
 </div>
+<fieldset>
+	<legend>Progress Reports</legend>
+	<table>
+		<thead>
+			<th scope="col" style="min-width: 50px">Class</th>
+			<th scope="col">Edit Progress Reports</th>
+		</thead>
+		<tbody>
+		{{range $class, $prss := $.ProgressReports}}
+		<tr>
+			<th scope="row">
+				Grade {{$class}}:
+			</th>
+			<td>
+				{{range $prss}}
+				<a href="/progressreports/settings?class={{.Class}}&shortName={{.ShortName}}" class="btn btn-default">{{.ShortName}}</a>
+				{{end}}
+			</td>
+		</tr>
+		{{end}}
+		</tbody>
+	</table>
+	<br>
+	<div>
+		<a href="/progressreports/settings" class="btn btn-default">Add</a>
+	</div>
+</fieldset>
+<div class="spacer">
+</div>
 {{end}}
 

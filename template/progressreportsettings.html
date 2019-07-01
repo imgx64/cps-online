@@ -1,0 +1,101 @@
+{{/*
+Copyright 2013 Ibrahim Ghazal. All rights reserved.
+Use of this source code is governed by a BSD-style
+license that can be found in the LICENSE file.
+*/}}
+
+{{define "title"}}Progress Report Settings{{end}}
+{{define "content"}}
+<form action="/progressreports/settings/save" method="POST" class="form-horizontal">
+	<fieldset>
+		<legend>Progress Report Settings</legend>
+		<div class="form-group">
+			<label class="col-sm-3 control-label" for="Class">Class</label>
+			<div class="col-sm-5">
+				{{if $.PRS.Class}}
+				<input type="text" id="Class" name="Class"
+				value="{{$.PRS.Class}}" class="form-control"
+				required="required" readonly="readonly">
+				{{else}}
+				<select id="Class" name="Class" class="form-control" required="required">
+					<option></option>
+					{{range .Classes}}
+						<option>{{.}}</option>
+					{{end}}
+				</select>
+				{{end}}
+				<span class="help-block"></span>
+			</div>
+		</div>
+
+		<div class="form-group">
+			<label class="col-sm-3 control-label" for="ShortName">Short Name</label>
+			<div class="col-sm-5">
+				<input type="text" id="ShortName" name="ShortName"
+				value="{{$.PRS.ShortName}}" class="form-control"
+				required="required" {{if $.PRS.ShortName}}readonly="readonly"{{end}}>
+				<span class="help-block">Can't be changed once saved.</span>
+			</div>
+		</div>
+
+		<div class="form-group">
+			<label class="col-sm-3 control-label" for="Description">Description</label>
+			<div class="col-sm-5">
+				<input type="text" id="Description" name="Description"
+				value="{{$.PRS.Description}}"
+				class="form-control" required="required">
+				<span class="help-block">Shown on Progress Reportcards</span>
+			</div>
+		</div>
+
+		<div class="form-group">
+			<label class="col-sm-3 control-label" for="Language">Language</label>
+			<div class="col-sm-5">
+				<select id="Language" name="Language" class="form-control" required="required">
+					<option></option>
+					{{range .Languages}}
+						<option {{if equal $.PRS.Language .}}selected="selected"{{end}}>{{.}}</option>
+					{{end}}
+				</select>
+				<span class="help-block"></span>
+			</div>
+		</div>
+
+		<legend>Progress Report Rows</legend>
+		<table id="progress-report-rows-table">
+		<thead>
+			<th scope="col" style="width: 80%">Description</th>
+			<th scope="col">Type</th>
+		</thead>
+		<tbody>
+		{{range $i, $prr := $.PRS.Rows}}
+		{{/* Edit cps.js when editing this */}}
+		<tr>
+			<td>
+				<input type="text" name="prr-description-{{$i}}" class="form-control" required="required" value="{{$prr.Description}}">
+			</td>
+			<td>
+				<select id="prr-type-{{$i}}" name="prr-type-{{$i}}" class="form-control" required="required">
+					<option></option>
+					<option value="Section" {{if $prr.Section}}selected="selected"{{end}}>Section header</option>
+					<option value="CMRENA" {{if not $prr.Section}}selected="selected"{{end}}>C, M, R, E, N/A</option>
+					<option value="Delete">Delete</option>
+				</select>
+			</td>
+		</tr>
+		{{end}}
+		</table>
+		<div>
+			<input type="button" class="btn btn-default add-progress-report-row" value="Add row">
+		</div>
+
+		<legend></legend>
+		<div>
+			<input type="submit" name="submit" class="btn btn-default" value="Save">
+		</div>
+	</fieldset>
+</form>
+<div class="spacer">
+</div>
+{{end}}
+

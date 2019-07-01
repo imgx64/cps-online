@@ -84,6 +84,17 @@ indexes:
   - name: Time
   - name: EndDate
 
+- kind: progress_report_settings
+  properties:
+  - name: SchoolYear
+  - name: Class
+  - name: ShortName
+
+- kind: progress_report_settings
+  properties:
+  - name: SchoolYear
+  - name: ShortName
+
 - kind: student
   ancestor: yes
   properties:

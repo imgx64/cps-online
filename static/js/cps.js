@@ -82,7 +82,38 @@
 				$("#Time").attr('disabled',false);
 			}
 		});
+
 		$(".cps-js-leave-type").trigger("change");
+
+		$(".add-progress-report-row").click(function(e) {
+			var tbody = $("#progress-report-rows-table > tbody");
+			var i = tbody.children("tr").length;
+			tbody.append(
+				$("<tr></tr>").append(
+					$("<td></td>").append(
+						$("<input></input>", {
+							type: "text",
+							name: "prr-description-" + i,
+							class: "form-control",
+							required: "required"
+						}),
+					),
+					$("<td></td>").append(
+						$("<select></select>", {
+							id: "prr-type-" + i,
+							name: "prr-type-" + i,
+							class: "form-control",
+							required: "required"
+						}).append(
+							$("<option></option>"),
+							$("<option></option>", {value: "Section", text: "Section header"}),
+							$("<option></option>", {value: "CMRENA", text: "C, M, R, E, N/A"}),
+							$("<option></option>", {value: "Delete", text: "Delete"})
+						)
+					)
+				)
+			);
+		});
 	});
 
 })(window.jQuery);

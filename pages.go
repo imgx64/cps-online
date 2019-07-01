@@ -88,6 +88,12 @@ var access = map[string]roles{
 	"/attendance/export":  hrRole,
 	"/attendance/report":  hrRole,
 
+	"/progressreports/settings":      hrRole,
+	"/progressreports/settings/save": hrRole,
+	"/progressreports/report":        teacherRole,
+	"/progressreports/report/save":   teacherRole,
+	"/progressreports/report/print":  teacherRole,
+
 	"/reportcard":       studentRole,
 	"/documents":        studentRole,
 	"/viewdailylog":     studentRole,
