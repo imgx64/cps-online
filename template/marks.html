@@ -98,6 +98,13 @@ license that can be found in the LICENSE file.
 							class="form-control input-sm cps-grid">
 						</div>
 					</td>
+				{{else if equal $subject "Progress Reports"}}
+					{{range $.Cols}}
+					<td class="cps-remarks">
+						<a class="btn btn-default btn-sm" href="/progressreports/report?StudentId={{$id}}&ShortName={{.Name}}&Term={{$.Term.Value}}">Edit</a>
+						<a class="btn btn-default btn-sm" href="/progressreports/report/print?StudentId={{$id}}&ShortName={{.Name}}&Term={{$.Term.Value}}">Print</a>
+					</td>
+					{{end}}
 				{{else}}
 					{{range $i, $m := .Marks}}
 					{{$c := index $cols $i}}

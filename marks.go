@@ -337,6 +337,32 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 				}
 				studentRows = append(studentRows, studentRow{s.ID, s.Name, nil, rem})
 			}
+		} else if subject == "Progress Reports" {
+			subjectDisplayName = "Progress Reports"
+
+			progressReports, err := getClassProgressReportSettings(c, sy, class)
+			if err != nil {
+				log.Errorf(c, "Could not get progress reports: %s", err)
+				renderError(w, r, http.StatusInternalServerError)
+				return
+			}
+
+			for _, prs := range progressReports {
+				cols = append(cols, colDescription{Name: prs.ShortName})
+			}
+
+			if len(cols) > 0 {
+				students, err := findStudents(c, sy, classSection)
+				if err != nil {
+					log.Errorf(c, "Could not get students: %s", err)
+					renderError(w, r, http.StatusInternalServerError)
+					return
+				}
+
+				for _, s := range students {
+					studentRows = append(studentRows, studentRow{s.ID, s.Name, nil, ""})
+				}
+			}
 		} else if gs := getGradingSystem(c, sy, class, subject); gs != nil {
 			cols = gs.description(c, sy, term)
 			if len(cols) == 0 {
@@ -385,7 +411,7 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	subjects := getAllSubjects(c, sy)
-	subjects = append(subjects, "Behavior", "Remarks", "Attendance")
+	subjects = append(subjects, "Behavior", "Remarks", "Attendance", "Progress Reports")
 
 	classGroups := getClassGroups(c, sy)
 
@@ -406,21 +432,21 @@ func marksHandler(w http.ResponseWriter, r *http.Request) {
 		Cols     []colDescription
 		Students []studentRow
 	}{
-		Term:    term,
-		Class:   class,
-		Section: section,
-		Subject: subject,
+		term,
+		class,
+		section,
+		subject,
 
-		SubjectDisplayName: subjectDisplayName,
+		subjectDisplayName,
 
-		Terms:       terms,
-		WeekS1Terms: weekS1Terms,
-		WeekS2Terms: weekS2Terms,
-		CG:          classGroups,
-		Subjects:    subjects,
+		terms,
+		weekS1Terms,
+		weekS2Terms,
+		classGroups,
+		subjects,
 
-		Cols:     cols,
-		Students: studentRows,
+		cols,
+		studentRows,
 	}
 
 	if err := render(w, r, "marks", data); err != nil {

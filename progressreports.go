@@ -12,9 +12,11 @@ import (
 	"google.golang.org/appengine/log"
 
 	"fmt"
+	htmltemplate "html/template"
 	"net/http"
-	//"strconv"
-	//"strings"
+	"net/url"
+	"path/filepath"
+	"strconv"
 )
 
 func init() {
@@ -95,6 +97,60 @@ func saveProgressReportSettings(c context.Context, prs ProgressReportSettings) e
 		return err
 	}
 	return nil
+}
+
+type ProgressReportData struct {
+	Marks    []string
+	Comments string
+	Teacher  int64
+}
+
+func getProgressReportData(c context.Context, term Term, shortName string, studentId string) (ProgressReportData, error) {
+	keyStr := fmt.Sprintf("%s|%s|%s", term.Value(), shortName, studentId)
+	key := datastore.NewKey(c, "progress_report_data", keyStr, 0, nil)
+
+	var prd ProgressReportData
+	err := nds.Get(c, key, &prd)
+	if err == datastore.ErrNoSuchEntity {
+		return ProgressReportData{}, nil
+	} else if err != nil {
+		return ProgressReportData{}, err
+	}
+	return prd, nil
+}
+
+func saveProgressReportData(c context.Context, term Term, shortName string, studentId string, prd ProgressReportData) error {
+	keyStr := fmt.Sprintf("%s|%s|%s", term.Value(), shortName, studentId)
+	key := datastore.NewKey(c, "progress_report_data", keyStr, 0, nil)
+
+	_, err := nds.Put(c, key, &prd)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type ProgressReportMark struct {
+	Value        string
+	Number       string
+	Letter       string
+	ArabicLetter string
+}
+
+var progressReportMarks = []ProgressReportMark{
+	{"1", "1", "C", "1"},
+	{"2", "2", "M", "2"},
+	{"3", "3", "R", "3"},
+	{"4", "4", "E", "4"},
+	{"0", "0", "N/A", "غ/م"},
+}
+
+var progressReportMarksMap = map[string]ProgressReportMark{
+	"1": progressReportMarks[0],
+	"2": progressReportMarks[1],
+	"3": progressReportMarks[2],
+	"4": progressReportMarks[3],
+	"0": progressReportMarks[4],
 }
 
 func progressreportsSettingsHandler(w http.ResponseWriter, r *http.Request) {
@@ -189,8 +245,327 @@ func progressreportsSettingsSaveHandler(w http.ResponseWriter, r *http.Request) 
 	http.Redirect(w, r, "/settings", http.StatusFound)
 }
 
-func progressreportsReportHandler(w http.ResponseWriter, r *http.Request) {}
+func progressreportsReportHandler(w http.ResponseWriter, r *http.Request) {
+	c := appengine.NewContext(r)
 
-func progressreportsReportSaveHandler(w http.ResponseWriter, r *http.Request) {}
+	sy := getSchoolYear(c)
 
-func progressreportsReportPrintHandler(w http.ResponseWriter, r *http.Request) {}
+	if err := r.ParseForm(); err != nil {
+		log.Errorf(c, "Could not parse form: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	stu, err := getStudent(c, r.Form.Get("StudentId"))
+	if err != nil {
+		log.Errorf(c, "Could not retrieve student details: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+	sc, err := getStudentClass(c, stu.ID, sy)
+	if err != nil {
+		log.Errorf(c, "Could not retrieve student class details: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	term, err := parseTerm(r.Form.Get("Term"))
+	if err != nil {
+		log.Errorf(c, "Could not parse term: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	shortName := r.Form.Get("ShortName")
+	prs, err := getProgressReportSettings(c, sy, sc.Class, shortName)
+	if err != nil {
+		log.Errorf(c, "Could not retrieve progress report settings: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	var studentName string
+	if prs.Language == "Arabic" && stu.ArabicName != "" {
+		studentName = stu.ArabicName
+	} else {
+		studentName = stu.Name
+	}
+
+	teachers, err := getEmployees(c, true, "Teacher")
+	if err != nil {
+		log.Errorf(c, "Could not get teachers: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	prd, err := getProgressReportData(c, term, prs.ShortName, stu.ID)
+	if err != nil {
+		log.Errorf(c, "Could not get ProgressReportData: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	if len(prd.Marks) < len(prs.Rows) {
+		prd.Marks = append(prd.Marks, make([]string, len(prs.Rows)-len(prd.Marks))...)
+	}
+
+	if prd.Teacher == 0 {
+		user, err := getUser(c)
+		if err == nil && user.Roles.Teacher {
+			emp, err := getEmployeeFromEmail(c, user.Email)
+			if err == nil {
+				prd.Teacher = emp.ID
+			}
+		}
+	}
+
+	data := struct {
+		Teachers []employeeType
+		Marks    []ProgressReportMark
+
+		Class       string
+		Section     string
+		Term        Term
+		PRS         ProgressReportSettings
+		StudentId   string
+		StudentName string
+
+		PRD ProgressReportData
+	}{
+		teachers,
+		progressReportMarks,
+
+		sc.Class,
+		sc.Section,
+		term,
+		prs,
+		stu.ID,
+		studentName,
+
+		prd,
+	}
+
+	if err := render(w, r, "progressreport", data); err != nil {
+		log.Errorf(c, "Could not render template progressreport: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+}
+
+func progressreportsReportSaveHandler(w http.ResponseWriter, r *http.Request) {
+	c := appengine.NewContext(r)
+
+	sy := getSchoolYear(c)
+
+	if err := r.ParseForm(); err != nil {
+		log.Errorf(c, "Could not parse form: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	stu, err := getStudent(c, r.PostForm.Get("StudentId"))
+	if err != nil {
+		log.Errorf(c, "Could not retrieve student details: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+	sc, err := getStudentClass(c, stu.ID, sy)
+	if err != nil {
+		log.Errorf(c, "Could not retrieve student class details: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	term, err := parseTerm(r.PostForm.Get("Term"))
+	if err != nil {
+		log.Errorf(c, "Could not parse term: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	shortName := r.PostForm.Get("ShortName")
+	prs, err := getProgressReportSettings(c, sy, sc.Class, shortName)
+	if err != nil {
+		log.Errorf(c, "Could not retrieve progress report settings: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	marks := make([]string, len(prs.Rows))
+
+	for i, row := range prs.Rows {
+		if row.Section || row.Deleted {
+			continue
+		}
+		marks[i] = r.PostForm.Get(fmt.Sprintf("ProgressReportMark-%d", i))
+	}
+
+	teacherId, err := strconv.ParseInt(r.PostForm.Get("Teacher"), 10, 64)
+	if err != nil {
+		log.Errorf(c, "Could not parse teacher ID: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	prd := ProgressReportData{
+		Marks:    marks,
+		Comments: r.PostForm.Get("Comments"),
+		Teacher:  teacherId,
+	}
+
+	if err := saveProgressReportData(c, term, prs.ShortName, stu.ID, prd); err != nil {
+		log.Errorf(c, "Could not save ProgressReportData: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	urlValues := url.Values{
+		"Term":         []string{term.Value()},
+		"ClassSection": []string{fmt.Sprintf("%s|%s", sc.Class, sc.Section)},
+		"Subject":      []string{"Progress Reports"},
+	}
+	redirectURL := fmt.Sprintf("/marks?%s", urlValues.Encode())
+	http.Redirect(w, r, redirectURL, http.StatusFound)
+}
+
+func progressreportsReportPrintHandler(w http.ResponseWriter, r *http.Request) {
+	c := appengine.NewContext(r)
+
+	sy := getSchoolYear(c)
+
+	if err := r.ParseForm(); err != nil {
+		log.Errorf(c, "Could not parse form: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	stu, err := getStudent(c, r.Form.Get("StudentId"))
+	if err != nil {
+		log.Errorf(c, "Could not retrieve student details: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+	sc, err := getStudentClass(c, stu.ID, sy)
+	if err != nil {
+		log.Errorf(c, "Could not retrieve student class details: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	term, err := parseTerm(r.Form.Get("Term"))
+	if err != nil {
+		log.Errorf(c, "Could not parse term: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	shortName := r.Form.Get("ShortName")
+	prs, err := getProgressReportSettings(c, sy, sc.Class, shortName)
+	if err != nil {
+		log.Errorf(c, "Could not retrieve progress report settings: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	var studentName string
+	if prs.Language == "Arabic" && stu.ArabicName != "" {
+		studentName = stu.ArabicName
+	} else {
+		studentName = stu.Name
+	}
+
+	prd, err := getProgressReportData(c, term, prs.ShortName, stu.ID)
+	if err != nil {
+		log.Errorf(c, "Could not get ProgressReportData: %s", err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+
+	if len(prd.Marks) < len(prs.Rows) {
+		prd.Marks = append(prd.Marks, make([]string, len(prs.Rows)-len(prd.Marks))...)
+	}
+
+	var teacherName string
+	if prd.Teacher != 0 {
+		emp, err := getEmployee(c, fmt.Sprintf("%d", prd.Teacher))
+		if err != nil {
+			log.Errorf(c, "Could not get teacher: %s", err)
+			renderError(w, r, http.StatusInternalServerError)
+			return
+		}
+		if prs.Language == "Arabic" && emp.ArabicName != "" {
+			teacherName = emp.ArabicName
+		} else {
+			teacherName = emp.Name
+		}
+	}
+
+	var absence, tardiness float64
+	attM, err := getStudentMarks(c, stu.ID, sy, "Attendance")
+	if err != nil {
+		log.Errorf(c, "Could not get Attendance: %s", err)
+	} else {
+		// see attendanceGradingSystem
+		gs := getGradingSystem(c, sy, sc.Class, "Attendance")
+		gs.evaluate(c, stu.ID, sy, term, attM)
+		m := attM[term]
+		for i, n := range m {
+			if i < len(m)/2 {
+				absence += n
+			} else {
+				tardiness += n
+			}
+		}
+	}
+
+	data := struct {
+		Marks []ProgressReportMark
+
+		SY          string
+		Class       string
+		Section     string
+		Term        Term
+		PRS         ProgressReportSettings
+		StudentName string
+
+		PRD         ProgressReportData
+		TeacherName string
+		Absence     float64
+		Tardiness   float64
+	}{
+		progressReportMarks,
+
+		sy,
+		sc.Class,
+		sc.Section,
+		term,
+		prs,
+		studentName,
+
+		prd,
+		teacherName,
+		absence,
+		tardiness,
+	}
+
+	var templateName string
+	if prs.Language == "Arabic" {
+		templateName = "progressreportprintarabic.html"
+	} else {
+		templateName = "progressreportprint.html"
+	}
+
+	// Note: not using render() because we don't want the base template
+	templateFile := filepath.Join("template", templateName)
+	tmpl, err := htmltemplate.New(templateName).Funcs(funcMap).ParseFiles(templateFile)
+	if err != nil {
+		log.Errorf(c, "Could not parse template %s: %s", templateName, err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+	if err := tmpl.Execute(w, data); err != nil {
+		log.Errorf(c, "Could not execute template %s: %s", templateName, err)
+		renderError(w, r, http.StatusInternalServerError)
+		return
+	}
+}

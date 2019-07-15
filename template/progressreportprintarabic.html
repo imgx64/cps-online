@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<title>Progress Reportcard | Creativity Private School</title>
+
+		<!-- Styles -->
+		<link href="/static/css/html5-doctor-reset-stylesheet.min.css" rel="stylesheet">
+		<link href="/static/css/reportcards.css" rel="stylesheet">
+		<style>
+		@page {
+			size: A4 portrait;
+		}
+		</style>
+	</head>
+
+	<body dir="rtl">
+		<div class="cps-reportcard">
+			<div class="cps-reportcard-main cps-reportcard-one">
+				<div class="cps-reportcard-header">
+					<img src="/static/img/cps-logo-100.png" alt="CPS Logo" class="cps-reportcard-cps-logo">
+					<img src="/static/img/advanced_logo.png" alt="AdvancED Logo" class="cps-reportcard-advanced-logo">
+					<img src="/static/img/cambridge_logo.jpg" alt="Cambridge Associate School Logo" class="cps-reportcard-cambridge-logo">
+					<p class="cps-reportcard-kob">Kingdom of Bahrain</p>
+					<p class="cps-reportcard-cps">Creativity Private School</p>
+					<p class="cps-reportcard-ltlt">"Learners Today, Leaders Tomorrow"</p>
+					<p class="cps-reportcard-sy">School Year {{$.SY}}</p>
+					<p class="cps-reportcard-qsf">{{$.PRS.Description}}</p>
+				</div>
+				<div class="cps-reportcard-name-class">
+					<div class="cps-reportcard-name"><strong>اسم الطالب:</strong> {{.StudentName}}</div>
+					<div class="cps-reportcard-class"><strong>اسم المعلمة:</strong> {{.TeacherName}}</div>
+				</div>
+				<div class="cps-reportcard-name-class">
+					<div class="cps-reportcard-name"><strong>الفصل الدراسي:</strong> {{.Term}}</div>
+					<div class="cps-reportcard-class"><strong>الصف:</strong> {{.Class}}{{.Section}}</div>
+				</div>
+				<table class="cps-reportcard-marks cps-progress-reportcard">
+					<thead>
+					</thead>
+					<tbody>
+						<tr>
+							<td>
+								<p><strong>ملاحظة لأولياء الأمور</strong></p>
+								الهدف من هذا التقرير هو إعلامكم بمدى تقدم الطفل/ الطفلة. وحيث أن مستوى النمو العقلي والقدرات تختلف من طفل لأخر فإننا نحثكم على التشجيع والتفهم عند مناقشة هذا التقرير
+							</td>
+						</tr>
+					</tbody>
+				</table>
+				<div>&nbsp;</div>
+				<table style="width: 100%">
+					<tr>
+						<td style="width: 15%"></td>
+						<td style="width: 70%">
+							<table class="cps-reportcard-marks cps-progress-reportcard" style="table-layout: fixed;">
+								<thead>
+									<tr>
+										<th>1</th>
+										<th>2</th>
+										<th>3</th>
+										<th>4</th>
+										<th>غ/م</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr>
+										<td>دائما</td>
+										<td>غالبا</td>
+										<td>أحيانا</td>
+										<td>ليس بعد</td>
+										<td>غير مقرر</td>
+									</tr>
+								</tbody>
+							</table>
+						</td>
+						<td style="width: 15%"></td>
+					</tr>
+				</table>
+				<div>&nbsp;</div>
+				<table class="cps-reportcard-marks cps-progress-reportcard">
+				{{range $i, $_ := $.PRS.Rows}}
+					{{if .Deleted}}
+					{{else if .Section}}
+					<tr>
+						<th>{{.Description}}</th>
+						<th>التقدير</th>
+					</tr>
+					{{else}}
+					<tr>
+						<td>{{.Description}}</td>
+						<td>
+						{{range $.Marks}}
+						{{if equal .Value (index $.PRD.Marks $i)}}{{.ArabicLetter}}{{end}}
+						{{end}}
+						</td>
+					</tr>
+					{{end}}
+				{{end}}
+				</table>
+				<div>&nbsp;</div>
+				<table style="width:100%;">
+					<tr style="padding: 5px;">
+						<td style="width: 5%"></td>
+						<td style="width: 30%; padding: 5px; text-align: start; border: black solid 3px; border-left: none">قد أنسى</td>
+						<td style="width: 30%; padding: 5px; text-align: center; border: black solid 3px; border-left: none; border-right: none">قد أتذكر عندما أرى</td>
+						<td style="width: 30%; padding: 5px; text-align: end; border: black solid 3px; border-right: none">أفهم عندما أعمل</td>
+						<td style="width: 5%"></td>
+					</tr>
+				</table>
+			</div>
+		</div>
+	</body>
+</html>
+

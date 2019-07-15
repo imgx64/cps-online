@@ -258,3 +258,11 @@ td.cps-reportcard-remarks {
 	text-align: center;
 	font-size: small;
 }
+
+.cps-reportcard-marks.cps-progress-reportcard {
+	table-layout: auto;
+}
+
+.cps-reportcard-marks.cps-progress-reportcard td {
+    font-size: 15px;
+}

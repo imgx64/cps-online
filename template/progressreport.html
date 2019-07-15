@@ -1,0 +1,69 @@
+{{/*
+Copyright 2013 Ibrahim Ghazal. All rights reserved.
+Use of this source code is governed by a BSD-style
+license that can be found in the LICENSE file.
+*/}}
+
+{{define "title"}}Edit Progress Report{{end}}
+{{define "content"}}
+<form action="/progressreports/report/save" method="post">
+	<input type="hidden" name="Term" value="{{$.Term.Value}}">
+	<input type="hidden" name="ShortName" value="{{$.PRS.ShortName}}">
+	<input type="hidden" name="StudentId" value="{{$.StudentId}}">
+	<h3>Progress Report</h3>
+	<h4>Name: <b>{{$.StudentName}}</b></h4>
+	<h4>Grading Period: <b>{{$.Term}}</b></h4>
+	<h4>Class: <b>{{$.Class}}{{$.Section}}</b></h4>
+	<h4>Teacher:
+		<select id="Teacher" name="Teacher" class="form-control" style="display:inline; width: 40%" required>
+			<option></option>
+			{{$teacher := $.PRD.Teacher}}
+			{{range .Teachers}}
+				<option {{if equal .ID $teacher}}selected="selected"{{end}} value="{{.ID}}">{{.Name}}</option>
+			{{end}}
+		</select>
+	</h4>
+
+	<table class="table table-bordered table-condensed">
+		<tbody>
+		{{range $i, $_ := $.PRS.Rows}}
+			{{if .Deleted}}
+			{{else if .Section}}
+			<tr>
+				<th colspan="2" style="background-color: #dddddd">{{.Description}}</th>
+			</tr>
+			{{else}}
+			<tr>
+				<th scope="row">{{.Description}}</th>
+				<td>
+					<select id="ProgressReportMark-{{$i}}" name="ProgressReportMark-{{$i}}" class="form-control">
+						<option></option>
+						{{range $.Marks}}
+							<option {{if equal .Value (index $.PRD.Marks $i)}}selected="selected"{{end}} value="{{.Value}}">{{.Number}} ({{.Letter}})</option>
+						{{end}}
+					</select>
+				</td>
+			</tr>
+			{{end}}
+		{{end}}
+		</tbody>
+	</table>
+
+	<table class="table table-bordered table-condensed">
+		<tbody>
+			<tr>
+				<th scope="row">
+					Comments
+				</th>
+				<td class="cps-remarks">
+					<div>
+						<textarea name="Comments" class="form-control input-sm cps-grid">{{$.PRD.Comments}}</textarea>
+					</div>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+
+	<input type="submit" class="btn btn-default btn-primary hidden-print" value="Save">
+</form>
+{{end}}

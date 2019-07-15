@@ -86,6 +86,12 @@ indexes:
 
 - kind: progress_report_settings
   properties:
+  - name: Class
+  - name: SchoolYear
+  - name: ShortName
+
+- kind: progress_report_settings
+  properties:
   - name: SchoolYear
   - name: Class
   - name: ShortName

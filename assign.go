@@ -150,7 +150,7 @@ func assignHandler(w http.ResponseWriter, r *http.Request) {
 	classGroups := getClassGroups(c, sy)
 
 	subjects := getAllSubjects(c, sy)
-	subjects = append(subjects, "Behavior", "Remarks", "Attendance")
+	subjects = append(subjects, "Behavior", "Remarks", "Attendance", "Progress Reports")
 
 	data := struct {
 		CG       []classGroup
