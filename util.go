@@ -144,6 +144,13 @@ func formatMark(mark float64) string {
 	return fmt.Sprintf("%.2f", mark)
 }
 
+func formatPercent(mark float64) string {
+	if math.IsNaN(mark) {
+		return ""
+	}
+	return fmt.Sprintf("%.2f%%", mark)
+}
+
 func formatMarkTrim(mark float64) string {
 	if mark == 0 {
 		return "0"

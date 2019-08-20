@@ -114,6 +114,24 @@
 				)
 			);
 		});
+
+		$(".add-report-classes-row").click(function(e) {
+			var template = document.getElementById("add-report-classes-row-template");
+			var clone = document.importNode(template.content, true);
+
+			var tbody = document.querySelector("#report-classes-row-table > tbody");
+			var rowButton = document.querySelector("#add-report-classes-row-button");
+			tbody.insertBefore(clone, rowButton);
+		});
+
+		$(".add-report-subjects-row").click(function(e) {
+			var template = document.getElementById("add-report-subjects-row-template");
+			var clone = document.importNode(template.content, true);
+
+			var tbody = document.querySelector("#report-subjects-row-table > tbody");
+			var rowButton = document.querySelector("#add-report-subjects-row-button");
+			tbody.insertBefore(clone, rowButton);
+		});
 	});
 
 })(window.jQuery);
