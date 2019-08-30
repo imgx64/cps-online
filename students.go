@@ -627,7 +627,7 @@ var studentFields = []string{
 	"EmergencyPhone",
 	"HealthInfo",
 	"Comments",
-	"Stream",
+	"Stream for School Year",
 }
 
 // used for CSV
@@ -855,6 +855,7 @@ func studentsExportHandler(w http.ResponseWriter, r *http.Request) {
 		row = append(row, stu.EmergencyPhone)
 		row = append(row, stu.HealthInfo)
 		row = append(row, stu.Comments)
+		row = append(row, stuClass.Stream)
 
 		errors = append(errors, csvw.Write(row))
 	}
