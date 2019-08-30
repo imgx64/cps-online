@@ -16,6 +16,7 @@
 	</head>
 
 	<body dir="rtl">
+		{{range $r := $.Reports}}
 		<div class="cps-reportcard">
 			<div class="cps-reportcard-main cps-reportcard-one">
 				<div class="cps-reportcard-header">
@@ -29,12 +30,12 @@
 					<p class="cps-reportcard-qsf">{{$.PRS.Description}}</p>
 				</div>
 				<div class="cps-reportcard-name-class">
-					<div class="cps-reportcard-name"><strong>اسم الطالب:</strong> {{.StudentName}}</div>
-					<div class="cps-reportcard-class"><strong>اسم المعلمة:</strong> {{.TeacherName}}</div>
+					<div class="cps-reportcard-name"><strong>اسم الطالب:</strong> {{$r.StudentName}}</div>
+					<div class="cps-reportcard-class"><strong>اسم المعلمة:</strong> {{$r.PRD.TeacherName}}</div>
 				</div>
 				<div class="cps-reportcard-name-class">
-					<div class="cps-reportcard-name"><strong>الفصل الدراسي:</strong> {{.Term}}</div>
-					<div class="cps-reportcard-class"><strong>الصف:</strong> {{.Class}}{{.Section}}</div>
+					<div class="cps-reportcard-name"><strong>الفصل الدراسي:</strong> {{$.Term}}</div>
+					<div class="cps-reportcard-class"><strong>الصف:</strong> {{$.Class}}{{$.Section}}</div>
 				</div>
 				<table class="cps-reportcard-marks cps-progress-reportcard">
 					<thead>
@@ -91,7 +92,7 @@
 						<td>{{.Description}}</td>
 						<td>
 						{{range $.Marks}}
-						{{if equal .Value (index $.PRD.Marks $i)}}{{.ArabicLetter}}{{end}}
+						{{if equal .Value (index $r.PRD.Marks $i)}}{{.ArabicLetter}}{{end}}
 						{{end}}
 						</td>
 					</tr>
@@ -110,6 +111,7 @@
 				</table>
 			</div>
 		</div>
+		{{end}}
 	</body>
 </html>
 

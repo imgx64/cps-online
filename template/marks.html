@@ -123,6 +123,18 @@ license that can be found in the LICENSE file.
 				</td>
 			</tr>
 		{{end}}
+		{{if equal .Subject "Progress Reports"}}
+			<tr>
+				<th scope="row">
+					<input type="text" class="cps-student-name" value="Print all progress reports" readonly="readonly">
+				</th>
+					{{range $.Cols}}
+					<td class="cps-remarks">
+						<a class="btn btn-default btn-sm" href="/progressreports/report/print?ClassSection={{$.Class}}|{{$.Section}}&ShortName={{.Name}}&Term={{$.Term.Value}}">Print</a>
+					</td>
+					{{end}}
+			</tr>
+		{{end}}
 		</tbody>
 	</table>
 	<input type="submit" class="btn btn-default btn-primary hidden-print" value="Save">

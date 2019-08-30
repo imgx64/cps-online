@@ -16,6 +16,7 @@
 	</head>
 
 	<body>
+		{{range $r := $.Reports}}
 		<div class="cps-reportcard">
 			<div class="cps-reportcard-main cps-reportcard-one">
 				<div class="cps-reportcard-header">
@@ -29,12 +30,12 @@
 					<p class="cps-reportcard-qsf">{{$.PRS.Description}}</p>
 				</div>
 				<div class="cps-reportcard-name-class">
-					<div class="cps-reportcard-name"><strong>Name:</strong> {{.StudentName}}</div>
-					<div class="cps-reportcard-class"><strong>Teacher:</strong> {{.TeacherName}}</div>
+					<div class="cps-reportcard-name"><strong>Name:</strong> {{$r.StudentName}}</div>
+					<div class="cps-reportcard-class"><strong>Teacher:</strong> {{$r.PRD.TeacherName}}</div>
 				</div>
 				<div class="cps-reportcard-name-class">
-					<div class="cps-reportcard-name"><strong>Grading Period:</strong> {{.Term}}</div>
-					<div class="cps-reportcard-class"><strong>Class:</strong> {{.Class}}{{.Section}}</div>
+					<div class="cps-reportcard-name"><strong>Grading Period:</strong> {{$.Term}}</div>
+					<div class="cps-reportcard-class"><strong>Class:</strong> {{$.Class}}{{$.Section}}</div>
 				</div>
 				<table class="cps-reportcard-marks cps-progress-reportcard">
 					<thead>
@@ -113,7 +114,7 @@
 					<tr>
 						<td>{{.Description}}</td>
 						{{range $.Marks}}
-						<td>{{if equal .Value (index $.PRD.Marks $i)}}&#x2713;{{end}}</td>
+						<td>{{if equal .Value (index $r.PRD.Marks $i)}}&#x2713;{{end}}</td>
 						{{end}}
 					</tr>
 					{{end}}
@@ -142,8 +143,8 @@
 								</tr>
 								<tr>
 									<th>No. of Days</th>
-									<td>{{.Absence}}</td>
-									<td>{{.Tardiness}}</td>
+									<td>{{$r.Absence}}</td>
+									<td>{{$r.Tardiness}}</td>
 								</tr>
 							</table>
 						</td>
@@ -154,7 +155,7 @@
 								</tr>
 								<tr>
 									<td style="height: 100px">
-										{{$.PRD.Comments}}
+										{{$r.PRD.Comments}}
 									</td>
 								</tr>
 							</table>
@@ -168,6 +169,7 @@
 				<div class="cps-reportcard-signature">Parent's Signature:<br/><br/>...................................</div>
 			</div>
 		</div>
+		{{end}}
 	</body>
 </html>
 

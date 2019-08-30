@@ -100,9 +100,17 @@ func saveProgressReportSettings(c context.Context, prs ProgressReportSettings) e
 }
 
 type ProgressReportData struct {
-	Marks    []string
-	Comments string
-	Teacher  int64
+	Marks       []string
+	Comments    string
+	Teacher     int64
+	TeacherName string `datastore:"-"`
+}
+
+type ProgressReportPrintData struct {
+	StudentName string
+	PRD         ProgressReportData
+	Absence     float64
+	Tardiness   float64
 }
 
 func getProgressReportData(c context.Context, term Term, shortName string, studentId string) (ProgressReportData, error) {
@@ -439,19 +447,6 @@ func progressreportsReportPrintHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	stu, err := getStudent(c, r.Form.Get("StudentId"))
-	if err != nil {
-		log.Errorf(c, "Could not retrieve student details: %s", err)
-		renderError(w, r, http.StatusInternalServerError)
-		return
-	}
-	sc, err := getStudentClass(c, stu.ID, sy)
-	if err != nil {
-		log.Errorf(c, "Could not retrieve student class details: %s", err)
-		renderError(w, r, http.StatusInternalServerError)
-		return
-	}
-
 	term, err := parseTerm(r.Form.Get("Term"))
 	if err != nil {
 		log.Errorf(c, "Could not parse term: %s", err)
@@ -460,92 +455,142 @@ func progressreportsReportPrintHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	shortName := r.Form.Get("ShortName")
-	prs, err := getProgressReportSettings(c, sy, sc.Class, shortName)
+
+	var students []studentType
+	var class, section string
+
+	if _, ok := r.Form["StudentId"]; ok {
+		stu, err := getStudent(c, r.Form.Get("StudentId"))
+		if err != nil {
+			log.Errorf(c, "Could not retrieve student details: %s", err)
+			renderError(w, r, http.StatusInternalServerError)
+			return
+		}
+		sc, err := getStudentClass(c, stu.ID, sy)
+		if err != nil {
+			log.Errorf(c, "Could not retrieve student class details: %s", err)
+			renderError(w, r, http.StatusInternalServerError)
+			return
+		}
+
+		students = []studentType{stu}
+		class = sc.Class
+		section = sc.Section
+
+	} else if _, ok := r.Form["ClassSection"]; ok {
+		class, section, err = parseClassSection(r.Form.Get("ClassSection"))
+		if err != nil {
+			log.Errorf(c, "Invalid ClassSection: %s", err)
+			renderError(w, r, http.StatusInternalServerError)
+			return
+		}
+
+		scs, err := findStudents(c, sy, class+"|"+section)
+		if err != nil {
+			log.Errorf(c, "Invalid ClassSection: %s", err)
+			renderError(w, r, http.StatusInternalServerError)
+			return
+		}
+
+		for _, sc := range scs {
+			stu, err := getStudent(c, sc.ID)
+			if err != nil {
+				log.Errorf(c, "Could not retrieve student details: %s", err)
+				continue
+			}
+			students = append(students, stu)
+		}
+
+	}
+
+	prs, err := getProgressReportSettings(c, sy, class, shortName)
 	if err != nil {
 		log.Errorf(c, "Could not retrieve progress report settings: %s", err)
 		renderError(w, r, http.StatusInternalServerError)
 		return
 	}
 
-	var studentName string
-	if prs.Language == "Arabic" && stu.ArabicName != "" {
-		studentName = stu.ArabicName
-	} else {
-		studentName = stu.Name
-	}
+	var reports []ProgressReportPrintData
 
-	prd, err := getProgressReportData(c, term, prs.ShortName, stu.ID)
-	if err != nil {
-		log.Errorf(c, "Could not get ProgressReportData: %s", err)
-		renderError(w, r, http.StatusInternalServerError)
-		return
-	}
+	for _, stu := range students {
+		var studentName string
+		if prs.Language == "Arabic" && stu.ArabicName != "" {
+			studentName = stu.ArabicName
+		} else {
+			studentName = stu.Name
+		}
 
-	if len(prd.Marks) < len(prs.Rows) {
-		prd.Marks = append(prd.Marks, make([]string, len(prs.Rows)-len(prd.Marks))...)
-	}
-
-	var teacherName string
-	if prd.Teacher != 0 {
-		emp, err := getEmployee(c, fmt.Sprintf("%d", prd.Teacher))
+		prd, err := getProgressReportData(c, term, prs.ShortName, stu.ID)
 		if err != nil {
-			log.Errorf(c, "Could not get teacher: %s", err)
+			log.Errorf(c, "Could not get ProgressReportData: %s", err)
 			renderError(w, r, http.StatusInternalServerError)
 			return
 		}
-		if prs.Language == "Arabic" && emp.ArabicName != "" {
-			teacherName = emp.ArabicName
-		} else {
-			teacherName = emp.Name
-		}
-	}
 
-	var absence, tardiness float64
-	attM, err := getStudentMarks(c, stu.ID, sy, "Attendance")
-	if err != nil {
-		log.Errorf(c, "Could not get Attendance: %s", err)
-	} else {
-		// see attendanceGradingSystem
-		gs := getGradingSystem(c, sy, sc.Class, "Attendance")
-		gs.evaluate(c, stu.ID, sy, term, attM)
-		m := attM[term]
-		for i, n := range m {
-			if i < len(m)/2 {
-				absence += n
+		if len(prd.Marks) < len(prs.Rows) {
+			prd.Marks = append(prd.Marks, make([]string, len(prs.Rows)-len(prd.Marks))...)
+		}
+
+		if prd.Teacher != 0 {
+			emp, err := getEmployee(c, fmt.Sprintf("%d", prd.Teacher))
+			if err != nil {
+				log.Errorf(c, "Could not get teacher: %s", err)
+				renderError(w, r, http.StatusInternalServerError)
+				return
+			}
+			if prs.Language == "Arabic" && emp.ArabicName != "" {
+				prd.TeacherName = emp.ArabicName
 			} else {
-				tardiness += n
+				prd.TeacherName = emp.Name
 			}
 		}
+
+		var absence, tardiness float64
+		attM, err := getStudentMarks(c, stu.ID, sy, "Attendance")
+		if err != nil {
+			log.Errorf(c, "Could not get Attendance: %s", err)
+		} else {
+			// see attendanceGradingSystem
+			gs := getGradingSystem(c, sy, class, "Attendance")
+			gs.evaluate(c, stu.ID, sy, term, attM)
+			m := attM[term]
+			for i, n := range m {
+				if i < len(m)/2 {
+					absence += n
+				} else {
+					tardiness += n
+				}
+			}
+		}
+
+		reports = append(reports, ProgressReportPrintData{
+			studentName,
+			prd,
+			absence,
+			tardiness,
+		})
 	}
 
 	data := struct {
 		Marks []ProgressReportMark
 
-		SY          string
-		Class       string
-		Section     string
-		Term        Term
-		PRS         ProgressReportSettings
-		StudentName string
+		SY      string
+		Class   string
+		Section string
+		Term    Term
+		PRS     ProgressReportSettings
 
-		PRD         ProgressReportData
-		TeacherName string
-		Absence     float64
-		Tardiness   float64
+		Reports []ProgressReportPrintData
 	}{
 		progressReportMarks,
 
 		sy,
-		sc.Class,
-		sc.Section,
+		class,
+		section,
 		term,
 		prs,
-		studentName,
 
-		prd,
-		teacherName,
-		absence,
-		tardiness,
+		reports,
 	}
 
 	var templateName string
